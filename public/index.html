@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EMS Apply</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #080d18;
+  --s1: #0c1422;
+  --s2: #0f1c30;
+  --border: #162340;
+  --border2: #1e3260;
+  --cyan: #00d4c8;
+  --cyan2: #00ffe8;
+  --red: #ff4757;
+  --green: #00e676;
+  --amber: #ffb300;
+  --text: #dde8ff;
+  --muted: #4a6890;
+  --muted2: #7a9cc0;
+  --radius: 12px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SCANLINE TEXTURE ── */
+body::before {
+  content:'';
+  position:fixed;inset:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,200,.013) 2px, rgba(0,212,200,.013) 4px);
+  pointer-events:none;z-index:0;
+}
+
+/* ── AMBIENT GLOW ── */
+body::after {
+  content:'';
+  position:fixed;
+  top:-20%;left:50%;transform:translateX(-50%);
+  width:700px;height:400px;
+  background: radial-gradient(ellipse, rgba(0,212,200,.06) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+/* ── LAYOUT ── */
+.shell {
+  position:relative;z-index:1;
+  max-width:680px;margin:0 auto;
+  padding:28px 18px 80px;
+}
+
+/* ── HEADER ── */
+.header {
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:28px;
+}
+
+.logo {
+  width:52px;height:52px;border-radius:10px;
+  background: linear-gradient(135deg, #0c2a2a, #0a1e2e);
+  border:1px solid rgba(0,212,200,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;
+  box-shadow: 0 0 18px rgba(0,212,200,.1), inset 0 0 10px rgba(0,212,200,.04);
+  flex-shrink:0;
+}
+
+.header-text h1 {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:28px;font-weight:800;letter-spacing:1px;
+  color:#fff;
+}
+
+.header-text p {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;color:var(--cyan);
+  letter-spacing:2px;text-transform:uppercase;
+  margin-top:2px;
+}
+
+/* ── STEPPER ── */
+.stepper {
+  display:grid;grid-template-columns:repeat(5,1fr);
+  gap:4px;margin-bottom:24px;
+}
+
+.step-node {
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  cursor:default;
+}
+
+.step-dot {
+  width:100%;height:3px;border-radius:2px;
+  background:var(--border2);
+  transition: background .4s, box-shadow .4s;
+  position:relative;overflow:hidden;
+}
+
+.step-dot::after {
+  content:'';position:absolute;inset:0;
+  background: linear-gradient(90deg, var(--cyan), var(--cyan2));
+  transform:translateX(-100%);
+  transition:transform .5s cubic-bezier(.4,0,.2,1);
+}
+
+.step-node.done .step-dot { background:rgba(0,212,200,.2); }
+.step-node.done .step-dot::after { transform:translateX(0); }
+.step-node.active .step-dot::after { transform:translateX(-30%); }
+
+.step-label {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);
+  transition:color .3s;
+  white-space:nowrap;
+}
+.step-node.active .step-label { color:var(--cyan); }
+.step-node.done .step-label { color:var(--muted2); }
+
+/* ── NOTICE ── */
+.notice {
+  background:linear-gradient(135deg,rgba(0,212,200,.06),rgba(0,0,0,0));
+  border:1px solid rgba(0,212,200,.15);
+  border-left:3px solid var(--cyan);
+  border-radius:var(--radius);
+  padding:12px 16px;
+  font-size:13px;line-height:1.6;
+  color:var(--muted2);
+  margin-bottom:22px;
+}
+.notice strong { color:var(--text); }
+
+/* ── PANELS ── */
+.panel { display:none; }
+.panel.active {
+  display:block;
+  animation: slideIn .35s cubic-bezier(.4,0,.2,1);
+}
+.panel.slide-out {
+  animation: slideOut .25s cubic-bezier(.4,0,.2,1) forwards;
+}
+
+@keyframes slideIn {
+  from { opacity:0; transform:translateX(22px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+@keyframes slideOut {
+  from { opacity:1; transform:translateX(0); }
+  to   { opacity:0; transform:translateX(-22px); }
+}
+
+/* ── CARD ── */
+.card {
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:22px;
+  margin-bottom:14px;
+  transition:border-color .3s;
+}
+.card:focus-within { border-color:var(--border2); }
+
+.section-label {
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:20px;
+}
+
+.section-tag {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--bg);background:var(--cyan);
+  padding:3px 8px;border-radius:4px;
+  font-weight:500;
+}
+
+.section-title {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:18px;font-weight:700;letter-spacing:.5px;
+  color:var(--text);
+}
+
+/* ── FIELDS ── */
+.field { margin-bottom:18px; }
+.field:last-child { margin-bottom:0; }
+
+.field label {
+  display:block;
+  font-size:12px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;
+  color:var(--muted2);
+  margin-bottom:7px;
+}
+
+.field-hint {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;color:var(--muted);
+  margin-top:5px;
+}
+
+input[type=text], textarea {
+  width:100%;padding:12px 14px;
+  border-radius:10px;
+  border:1px solid var(--border2);
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Instrument Sans',sans-serif;font-size:14px;
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+
+input[type=text]:focus, textarea:focus {
+  border-color:var(--cyan);
+  box-shadow:0 0 0 3px rgba(0,212,200,.1);
+}
+
+input.err, textarea.err { border-color:var(--red)!important; box-shadow:0 0 0 3px rgba(255,71,87,.08)!important; }
+input.ok { border-color:rgba(0,230,118,.4); }
+
+textarea { min-height:110px;resize:vertical;line-height:1.6; }
+
+.row2 { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+@media(max-width:500px){.row2{grid-template-columns:1fr;}}
+
+
+
+/* ── RADIO MCQ ── */
+.options { display:flex;flex-direction:column;gap:8px;margin-top:6px; }
+
+.opt {
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;border-radius:10px;
+  border:1px solid var(--border2);
+  background:var(--bg);
+  cursor:pointer;
+  transition:border-color .2s,background .2s,transform .15s;
+  user-select:none;
+}
+.opt:hover { border-color:rgba(0,212,200,.4);background:rgba(0,212,200,.04); }
+
+.opt input[type=radio] { display:none; }
+
+.opt-radio {
+  width:18px;height:18px;border-radius:50%;
+  border:2px solid var(--border2);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .2s,background .2s;
+}
+
+.opt-radio::after {
+  content:'';width:8px;height:8px;border-radius:50%;
+  background:var(--cyan);transform:scale(0);
+  transition:transform .2s cubic-bezier(.175,.885,.32,1.275);
+}
+
+.opt input:checked ~ .opt-radio {
+  border-color:var(--cyan);
+  background:rgba(0,212,200,.1);
+}
+.opt input:checked ~ .opt-radio::after { transform:scale(1); }
+
+.opt:has(input:checked) {
+  border-color:rgba(0,212,200,.4);
+  background:rgba(0,212,200,.05);
+}
+.opt:has(input:checked) .opt-letter { color:var(--cyan); }
+
+.opt.err-opt { border-color:rgba(255,71,87,.4)!important; }
+
+.opt-letter {
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;
+  color:var(--muted);min-width:14px;
+  transition:color .2s;
+}
+.opt-text { font-size:13.5px;color:var(--text);line-height:1.4; }
+
+.q-block { margin-bottom:20px; }
+.q-block:last-child { margin-bottom:0; }
+
+.q-head {
+  display:flex;align-items:flex-start;gap:10px;
+  margin-bottom:9px;
+}
+.q-num {
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;
+  color:var(--cyan);background:rgba(0,212,200,.1);
+  border:1px solid rgba(0,212,200,.2);
+  padding:2px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0;
+  margin-top:1px;
+}
+.q-text { font-size:14px;color:var(--muted2);line-height:1.5; }
+
+/* ── REVIEW PANEL ── */
+.review-section { margin-bottom:18px; }
+
+.review-title {
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--cyan);margin-bottom:10px;
+  padding-bottom:6px;border-bottom:1px solid var(--border2);
+}
+
+.review-row {
+  display:flex;gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid rgba(22,35,64,.8);
+  font-size:13px;
+}
+.review-row:last-child { border-bottom:none; }
+
+.review-q { color:var(--muted);min-width:30px;font-family:'IBM Plex Mono',monospace;font-size:11px; }
+.review-a { color:var(--text);line-height:1.5;flex:1; }
+.review-badge {
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  padding:2px 7px;border-radius:4px;flex-shrink:0;align-self:flex-start;
+  margin-top:1px;
+}
+.badge-ok { background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.25); }
+.badge-warn { background:rgba(255,179,0,.1);color:var(--amber);border:1px solid rgba(255,179,0,.25); }
+
+/* ── NAVIGATION ── */
+.nav {
+  display:flex;gap:10px;justify-content:space-between;
+  margin-top:20px;
+}
+
+.btn-back, .btn-next, .btn-submit {
+  cursor:pointer;border:none;border-radius:10px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:16px;font-weight:700;letter-spacing:1px;
+  padding:13px 26px;
+  transition:opacity .2s,transform .15s,box-shadow .2s;
+}
+
+.btn-back {
+  background:var(--s2);border:1px solid var(--border2);
+  color:var(--muted2);
+}
+.btn-back:hover { color:var(--text);border-color:var(--muted); }
+
+.btn-next {
+  background:var(--cyan);color:#040e14;
+  box-shadow:0 4px 18px rgba(0,212,200,.2);
+  margin-left:auto;
+}
+.btn-next:hover:not(:disabled) { opacity:.9;transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,212,200,.35); }
+.btn-next:active:not(:disabled) { transform:translateY(0); }
+.btn-next:disabled { opacity:.4;cursor:not-allowed; }
+
+.btn-submit {
+  background:linear-gradient(135deg,#00c2b8,#00ffe8);
+  color:#040e14;
+  box-shadow:0 4px 24px rgba(0,212,200,.3);
+  margin-left:auto;
+}
+.btn-submit:hover:not(:disabled) { opacity:.9;transform:translateY(-1px); }
+.btn-submit:disabled { opacity:.4;cursor:not-allowed; }
+
+/* ── STATUS ── */
+#status { margin-top:12px;font-size:13px;text-align:center;min-height:20px; }
+.msg-ok { color:var(--green); }
+.msg-err { color:var(--red); }
+
+/* ── SUCCESS ── */
+#successScreen {
+  display:none;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;
+  padding:70px 20px;gap:18px;
+}
+#successScreen.show { display:flex; }
+
+.success-ring {
+  width:90px;height:90px;border-radius:50%;
+  background:rgba(0,230,118,.07);
+  border:2px solid rgba(0,230,118,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:40px;
+  animation:pop .5s cubic-bezier(.175,.885,.32,1.275);
+  box-shadow:0 0 40px rgba(0,230,118,.15);
+}
+
+@keyframes pop {
+  from{transform:scale(.4);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+
+.success-title {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:36px;font-weight:800;letter-spacing:1px;
+  color:var(--green);
+}
+.success-sub { color:var(--muted2);max-width:340px;line-height:1.6;font-size:14px; }
+
+.success-code {
+  font-family:'IBM Plex Mono',monospace;font-size:11px;
+  background:var(--s1);border:1px solid var(--border2);
+  border-radius:8px;padding:8px 16px;color:var(--cyan);
+  letter-spacing:2px;
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">🚑</div>
+    <div class="header-text">
+      <h1>EMS APPLY</h1>
+      <p>Emergency Medical Services</p>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <div id="formWrap">
+
+    <!-- STEPPER -->
+    <div class="stepper">
+      <div class="step-node active" id="sn0"><div class="step-dot"></div><div class="step-label">Info</div></div>
+      <div class="step-node" id="sn1"><div class="step-dot"></div><div class="step-label">MCQ</div></div>
+      <div class="step-node" id="sn2"><div class="step-dot"></div><div class="step-label">Open</div></div>
+      <div class="step-node" id="sn3"><div class="step-dot"></div><div class="step-label">Scenarios</div></div>
+      <div class="step-node" id="sn4"><div class="step-dot"></div><div class="step-label">Review</div></div>
+    </div>
+
+    <div class="notice">
+      <strong>Clean Medical RP Standards.</strong> Answer honestly and professionally. All submissions go directly to the EMS Discord review channel.
+    </div>
+
+    <!-- STEP 0 — INFO -->
+    <div class="panel active" id="p0">
+      <div class="card">
+        <div class="section-label">
+          <span class="section-tag">01</span>
+          <span class="section-title">Applicant Info</span>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>RP Full Name</label>
+            <input type="text" id="fullName" placeholder="e.g., John Doe" autocomplete="off"/>
+          </div>
+          <div class="field">
+            <label>Discord Username</label>
+            <input type="text" id="discordUser" placeholder="e.g., charaf" autocomplete="off"/>
+            <div class="field-hint">// username, not your ID</div>
+          </div>
+        </div>
+      </div>
+      <div class="nav">
+        <button class="btn-next" onclick="goNext(0)">Next — MCQ →</button>
+      </div>
+    </div>
+
+    <!-- STEP 1 — MCQ -->
+    <div class="panel" id="p1">
+      <div class="card">
+        <div class="section-label">
+          <span class="section-tag">02</span>
+          <span class="section-title">Multiple Choice — Q1 to Q5</span>
+        </div>
+
+        <div class="q-block">
+          <div class="q-head"><span class="q-num">Q1</span><span class="q-text">What is the main role of EMS in RP?</span></div>
+          <div class="options" id="opts_q1">
+            <label class="opt"><input type="radio" name="q1" value="A"/><span class="opt-radio"></span><span class="opt-letter">A</span><span class="opt-text">Fight gangs</span></label>
+            <label class="opt"><input type="radio" name="q1" value="B"/><span class="opt-radio"></span><span class="opt-letter">B</span><span class="opt-text">Save lives and treat injured people</span></label>
+            <label class="opt"><input type="radio" name="q1" value="C"/><span class="opt-radio"></span><span class="opt-letter">C</span><span class="opt-text">Investigate cases</span></label>
+            <label class="opt"><input type="radio" name="q1" value="D"/><span class="opt-radio"></span><span class="opt-letter">D</span><span class="opt-text">Arrest criminals</span></label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <div class="q-head"><span class="q-num">Q2</span><span class="q-text">You find someone unconscious on the ground. What is the first thing you do?</span></div>
+          <div class="options" id="opts_q2">
+            <label class="opt"><input type="radio" name="q2" value="A"/><span class="opt-radio"></span><span class="opt-letter">A</span><span class="opt-text">Take a picture</span></label>
+            <label class="opt"><input type="radio" name="q2" value="B"/><span class="opt-radio"></span><span class="opt-letter">B</span><span class="opt-text">Ask what happened</span></label>
+            <label class="opt"><input type="radio" name="q2" value="C"/><span class="opt-radio"></span><span class="opt-letter">C</span><span class="opt-text">Secure the scene and check breathing</span></label>
+            <label class="opt"><input type="radio" name="q2" value="D"/><span class="opt-radio"></span><span class="opt-letter">D</span><span class="opt-text">Call the police immediately</span></label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <div class="q-head"><span class="q-num">Q3</span><span class="q-text">Is EMS allowed to use weapons if they feel threatened?</span></div>
+          <div class="options" id="opts_q3">
+            <label class="opt"><input type="radio" name="q3" value="A"/><span class="opt-radio"></span><span class="opt-letter">A</span><span class="opt-text">Yes, always</span></label>
+            <label class="opt"><input type="radio" name="q3" value="B"/><span class="opt-radio"></span><span class="opt-letter">B</span><span class="opt-text">No, their role is strictly medical</span></label>
+            <label class="opt"><input type="radio" name="q3" value="C"/><span class="opt-radio"></span><span class="opt-letter">C</span><span class="opt-text">Only during wars</span></label>
+            <label class="opt"><input type="radio" name="q3" value="D"/><span class="opt-radio"></span><span class="opt-letter">D</span><span class="opt-text">Only with captain approval</span></label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <div class="q-head"><span class="q-num">Q4</span><span class="q-text">The medical helicopter can be used by:</span></div>
+          <div class="options" id="opts_q4">
+            <label class="opt"><input type="radio" name="q4" value="A"/><span class="opt-radio"></span><span class="opt-letter">A</span><span class="opt-text">Any EMS member</span></label>
+            <label class="opt"><input type="radio" name="q4" value="B"/><span class="opt-radio"></span><span class="opt-letter">B</span><span class="opt-text">Only those who passed the flight exam and received admin approval</span></label>
+            <label class="opt"><input type="radio" name="q4" value="C"/><span class="opt-radio"></span><span class="opt-letter">C</span><span class="opt-text">High ranks only</span></label>
+            <label class="opt"><input type="radio" name="q4" value="D"/><span class="opt-radio"></span><span class="opt-letter">D</span><span class="opt-text">Any experienced EMS</span></label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <div class="q-head"><span class="q-num">Q5</span><span class="q-text">During an active shootout, EMS should:</span></div>
+          <div class="options" id="opts_q5">
+            <label class="opt"><input type="radio" name="q5" value="A"/><span class="opt-radio"></span><span class="opt-letter">A</span><span class="opt-text">Enter immediately</span></label>
+            <label class="opt"><input type="radio" name="q5" value="B"/><span class="opt-radio"></span><span class="opt-letter">B</span><span class="opt-text">Wait until police secure the scene</span></label>
+            <label class="opt"><input type="radio" name="q5" value="C"/><span class="opt-radio"></span><span class="opt-letter">C</span><span class="opt-text">Leave the area</span></label>
+            <label class="opt"><input type="radio" name="q5" value="D"/><span class="opt-radio"></span><span class="opt-letter">D</span><span class="opt-text">Call the gang</span></label>
+          </div>
+        </div>
+
+      </div>
+      <div class="nav">
+        <button class="btn-back" onclick="goBack(1)">← Back</button>
+        <button class="btn-next" onclick="goNext(1)">Next — Open Questions →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 — OPEN QUESTIONS -->
+    <div class="panel" id="p2">
+      <div class="card">
+        <div class="section-label">
+          <span class="section-tag">03</span>
+          <span class="section-title">Open Questions — Q6 to Q8</span>
+        </div>
+
+        <div class="q-block">
+          <div class="q-head"><span class="q-num">Q6</span><span class="q-text">Explain Medical RP and why EMS must respect it.</span></div>
+          <textarea id="q6" placeholder="Describe what Medical RP is and why it matters..."></textarea>
+        </div>
+
+        <div class="q-block">
+          <div class="q-head"><span class="q-num">Q7</span><span class="q-text">If someone is declared dead and there is clear video evidence, what do you do?</span></div>
+          <textarea id="q7" placeholder="Explain your approach step by step..."></textarea>
+        </div>
+
+        <div class="q-block">
+          <div class="q-head"><span class="q-num">Q8</span><span class="q-text">How do you deal with a patient who is insulting or breaking RP?</span></div>
+          <textarea id="q8" placeholder="Describe how you handle this professionally..."></textarea>
+        </div>
+
+      </div>
+      <div class="nav">
+        <button class="btn-back" onclick="goBack(2)">← Back</button>
+        <button class="btn-next" onclick="goNext(2)">Next — Scenarios →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 — SCENARIOS -->
+    <div class="panel" id="p3">
+      <div class="card">
+        <div class="section-label">
+          <span class="section-tag">04</span>
+          <span class="section-title">Practical Scenarios — Q9 to Q10</span>
+        </div>
+
+        <div class="q-block">
+          <div class="q-head"><span class="q-num">Q9</span><span class="q-text">Car crash: one is conscious and talking, one is unconscious. Who do you treat first and why?</span></div>
+          <textarea id="q9" placeholder="Explain your triage decision and reasoning..."></textarea>
+        </div>
+
+        <div class="q-block">
+          <div class="q-head"><span class="q-num">Q10</span><span class="q-text">You treated a patient, but they immediately run and start fighting. What do you do?</span></div>
+          <textarea id="q10" placeholder="Describe your response in this scenario..."></textarea>
+        </div>
+
+      </div>
+      <div class="nav">
+        <button class="btn-back" onclick="goBack(3)">← Back</button>
+        <button class="btn-next" onclick="goNext(3)">Review Application →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 — REVIEW -->
+    <div class="panel" id="p4">
+      <div class="card">
+        <div class="section-label">
+          <span class="section-tag">05</span>
+          <span class="section-title">Review & Submit</span>
+        </div>
+        <div id="reviewBody"></div>
+      </div>
+      <div class="nav">
+        <button class="btn-back" onclick="goBack(4)">← Edit</button>
+        <button class="btn-submit" id="submitBtn" onclick="submitForm()">Submit Application ↗</button>
+      </div>
+      <div id="status"></div>
+    </div>
+
+  </div><!-- /formWrap -->
+
+  <!-- SUCCESS -->
+  <div id="successScreen">
+    <div class="success-ring">✔</div>
+    <div class="success-title">Submitted!</div>
+    <p class="success-sub">Your application has been sent to the EMS Discord review channel. We'll reach out via Discord.</p>
+    <div class="success-code" id="refCode">REF — —</div>
+  </div>
+
+</div><!-- /shell -->
+<script>
+// ── State ────────────────────────────────────────────────────────
+const CORRECT = { q1:'B', q2:'C', q3:'B', q4:'B', q5:'B' };
+let currentStep = 0;
+
+// ── Get values ───────────────────────────────────────────────────
+function getInput(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function getMCQ(name){ const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ''; }
+
+// ── Validation per step ──────────────────────────────────────────
+function validateStep(step){
+  let ok = true;
+
+  const mark = (id, bad) => {
+    const el = document.getElementById(id);
+    if(el){ el.classList.toggle('err', bad); if(bad && ok){ el.scrollIntoView({behavior:'smooth',block:'center'}); ok=false; } }
+  };
+
+  const markOpts = (name) => {
+    const checked = document.querySelector(`input[name="${name}"]:checked`);
+    if(!checked){
+      document.getElementById('opts_'+name).querySelectorAll('.opt').forEach(o=>o.classList.add('err-opt'));
+      if(ok){ document.getElementById('opts_'+name).scrollIntoView({behavior:'smooth',block:'center'}); ok=false; }
+    } else {
+      document.getElementById('opts_'+name).querySelectorAll('.opt').forEach(o=>o.classList.remove('err-opt'));
+    }
+    return !!checked;
+  };
+
+  if(step===0){
+    mark('fullName',   getInput('fullName').length < 2);
+    mark('discordUser',getInput('discordUser').length < 2);
+  }
+  if(step===1){ ['q1','q2','q3','q4','q5'].forEach(markOpts); ok = !document.querySelector('.err-opt'); }
+  if(step===2){
+    ['q6','q7','q8'].forEach(id=>{
+      const bad = getInput(id).length === 0;
+      mark(id, bad);
+      if(bad) ok=false;
+    });
+  }
+  if(step===3){
+    ['q9','q10'].forEach(id=>{
+      const bad = getInput(id).length === 0;
+      mark(id, bad);
+      if(bad) ok=false;
+    });
+  }
+
+  return ok;
+}
+
+// ── Stepper ──────────────────────────────────────────────────────
+function updateStepper(step){
+  for(let i=0;i<5;i++){
+    const n = document.getElementById('sn'+i);
+    n.classList.remove('active','done');
+    if(i < step) n.classList.add('done');
+    if(i === step) n.classList.add('active');
+  }
+}
+
+// ── Navigation ───────────────────────────────────────────────────
+function showPanel(from, to){
+  const pFrom = document.getElementById('p'+from);
+  const pTo   = document.getElementById('p'+to);
+  pFrom.classList.add('slide-out');
+  setTimeout(()=>{
+    pFrom.classList.remove('active','slide-out');
+    pTo.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }, 240);
+}
+
+function goNext(step){
+  if(!validateStep(step)) return;
+  if(step===3) buildReview();
+  showPanel(step, step+1);
+  currentStep = step+1;
+  updateStepper(step+1);
+}
+
+function goBack(step){
+  showPanel(step, step-1);
+  currentStep = step-1;
+  updateStepper(step-1);
+}
+
+// ── Review builder ───────────────────────────────────────────────
+const MCQ_MAP = {
+  q1:{q:'Main role of EMS?', opts:{A:'Fight gangs',B:'Save lives and treat injured',C:'Investigate cases',D:'Arrest criminals'}},
+  q2:{q:'Found unconscious patient?', opts:{A:'Take a picture',B:'Ask what happened',C:'Secure scene and check breathing',D:'Call police'}},
+  q3:{q:'EMS use weapons?', opts:{A:'Yes, always',B:'No, strictly medical',C:'Only during wars',D:'With captain approval'}},
+  q4:{q:'Helicopter usage?', opts:{A:'Any EMS',B:'Flight exam + admin approval',C:'High ranks only',D:'Experienced EMS'}},
+  q5:{q:'During active shootout?', opts:{A:'Enter immediately',B:'Wait for police clearance',C:'Leave area',D:'Call the gang'}},
+};
+
+const OPEN_MAP = {
+  q6:'Medical RP explanation',
+  q7:'Declared dead with evidence',
+  q8:'Patient breaking RP',
+  q9:'Car crash triage',
+  q10:'Patient runs after treatment'
+};
+
+function buildReview(){
+  const body = document.getElementById('reviewBody');
+  let html = '';
+
+  // Info
+  html += `<div class="review-section">
+    <div class="review-title">// Applicant Info</div>
+    <div class="review-row"><div class="review-q">Name</div><div class="review-a">${esc(getInput('fullName'))}</div></div>
+    <div class="review-row"><div class="review-q">Discord</div><div class="review-a">${esc(getInput('discordUser'))}</div></div>
+  </div>`;
+
+  // MCQ
+  html += `<div class="review-section"><div class="review-title">// Multiple Choice</div>`;
+  for(const [k,v] of Object.entries(MCQ_MAP)){
+    const ans = getMCQ(k);
+    const correct = CORRECT[k]===ans;
+    html += `<div class="review-row">
+      <div class="review-q">${k.toUpperCase()}</div>
+      <div class="review-a">${esc(ans+') '+v.opts[ans])}</div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // Open
+  html += `<div class="review-section"><div class="review-title">// Open & Scenarios</div>`;
+  for(const [k,label] of Object.entries(OPEN_MAP)){
+    const val = getInput(k);
+    const preview = val.length > 120 ? val.slice(0,120)+'…' : val;
+    html += `<div class="review-row">
+      <div class="review-q">${k.toUpperCase()}</div>
+      <div class="review-a"><span style="color:var(--muted2);font-size:12px;display:block;margin-bottom:3px">${label}</span>${esc(preview)}</div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  body.innerHTML = html;
+}
+
+function esc(s){ if(!s) return '<em style="color:var(--muted)">—</em>'; const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+
+// ── Submit ───────────────────────────────────────────────────────
+async function submitForm(){
+  const btn = document.getElementById('submitBtn');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  status.innerHTML = '';
+
+  const payload = {
+    fullName:    getInput('fullName'),
+    discordUser: getInput('discordUser'),
+    mcq: { q1:getMCQ('q1'), q2:getMCQ('q2'), q3:getMCQ('q3'), q4:getMCQ('q4'), q5:getMCQ('q5') },
+    mcqScore:    ['q1','q2','q3','q4','q5'].filter(k=>getMCQ(k)===CORRECT[k]).length,
+    open: { q6:getInput('q6'), q7:getInput('q7'), q8:getInput('q8'), q9:getInput('q9'), q10:getInput('q10') },
+    submittedAt: new Date().toISOString()
+  };
+
+  try {
+    const r = await fetch('/submit', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if(!r.ok) throw new Error(`Server error ${r.status}`);
+
+    // Show success
+    const ref = 'EMS-' + Date.now().toString(36).toUpperCase();
+    document.getElementById('refCode').textContent = 'REF ' + ref;
+    document.getElementById('formWrap').style.display = 'none';
+    document.getElementById('successScreen').classList.add('show');
+
+  } catch(e){
+    status.innerHTML = `<span class="msg-err">❌ ${e.message} — please try again.</span>`;
+    btn.disabled = false;
+    btn.textContent = 'Submit Application ↗';
+  }
+}
+</script>
+</body>
+</html>
