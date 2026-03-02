@@ -229,6 +229,42 @@ textarea { min-height:110px;resize:vertical;line-height:1.6; }
 .row2 { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
 @media(max-width:500px){.row2{grid-template-columns:1fr;}}
 
+.id-howto {
+  margin-top:8px;
+  border:1px solid var(--border2);
+  border-radius:8px;
+  overflow:hidden;
+  font-size:12px;
+}
+
+.id-howto-title {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;
+  background:rgba(0,212,200,.05);
+  color:var(--cyan);
+  cursor:pointer;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;letter-spacing:.5px;
+  user-select:none;
+  transition:background .2s;
+}
+.id-howto-title:hover { background:rgba(0,212,200,.1); }
+
+.id-howto-body {
+  display:none;
+  padding:12px 14px;
+  background:var(--bg);
+  color:var(--muted2);
+  line-height:1.8;
+}
+.id-howto-body.open { display:block; }
+
+.id-howto-body ol {
+  padding-left:18px;
+}
+.id-howto-body li { margin-bottom:2px; }
+.id-howto-body strong { color:var(--text); }
+
 
 
 /* ── RADIO MCQ ── */
@@ -447,9 +483,24 @@ textarea { min-height:110px;resize:vertical;line-height:1.6; }
             <input type="text" id="fullName" placeholder="e.g., John Doe" autocomplete="off"/>
           </div>
           <div class="field">
-            <label>Discord Username</label>
-            <input type="text" id="discordUser" placeholder="e.g., charaf" autocomplete="off"/>
-            <div class="field-hint">// username, not your ID</div>
+            <label>Discord ID</label>
+            <input type="text" id="discordUser" placeholder="e.g., 123456789012345678" autocomplete="off"/>
+            <div class="field-hint">// 17–19 digit numeric ID</div>
+            <div class="id-howto">
+              <div class="id-howto-title" onclick="toggleHowto()">
+                <span>❓ How to get your Discord ID</span>
+                <span id="howtoArrow">▾</span>
+              </div>
+              <div class="id-howto-body" id="howtoBody">
+                <ol>
+                  <li>Open Discord (desktop or browser)</li>
+                  <li>Go to <strong>Settings → Advanced</strong></li>
+                  <li>Enable <strong>Developer Mode</strong></li>
+                  <li>Right-click your username anywhere</li>
+                  <li>Click <strong>Copy User ID</strong></li>
+                </ol>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -609,6 +660,14 @@ textarea { min-height:110px;resize:vertical;line-height:1.6; }
 // ── State ────────────────────────────────────────────────────────
 const CORRECT = { q1:'B', q2:'C', q3:'B', q4:'B', q5:'B' };
 let currentStep = 0;
+
+// ── Discord ID howto toggle ───────────────────────────────────────
+function toggleHowto(){
+  const body  = document.getElementById('howtoBody');
+  const arrow = document.getElementById('howtoArrow');
+  const open  = body.classList.toggle('open');
+  arrow.textContent = open ? '▴' : '▾';
+}
 
 // ── Get values ───────────────────────────────────────────────────
 function getInput(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
