@@ -3,40 +3,31 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>EMS ABRAMS — الخدمات الطبية الطارئة</title>
+<title>EMS ABRAMS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Oxanium:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Oxanium:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
-:root{
-  --bg:#04050a;--s1:#080b14;--s2:#0b0f1c;
-  --border:#141928;--bord2:#1e2540;
-  --red:#dc2626;--red2:#ef4444;--red3:#fca5a5;
-  --blue:#1d4ed8;--blue2:#3b82f6;--blue3:#93c5fd;
-  --text:#e8eaf6;--muted:#3d4a6b;--muted2:#6b7fa8;
-  --gold:#f59e0b;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
+:root{--bg:#04050a;--s1:#080b14;--border:#141928;--bord2:#1e2540;--red:#dc2626;--red2:#ef4444;--blue:#1d4ed8;--blue2:#3b82f6;--blue3:#93c5fd;--text:#e8eaf6;--muted:#3d4a6b;--muted2:#6b7fa8;--gold:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
 body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:.35}
-.bg-canvas{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 1000px 700px at -10% -20%,rgba(220,38,38,.12) 0%,transparent 60%),radial-gradient(ellipse 800px 600px at 110% 110%,rgba(29,78,216,.14) 0%,transparent 60%);animation:bgShift 12s ease-in-out infinite alternate}
-@keyframes bgShift{0%{opacity:1}100%{opacity:.8}}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:.35}
+.bg-canvas{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 1000px 700px at -10% -20%,rgba(220,38,38,.12) 0%,transparent 60%),radial-gradient(ellipse 800px 600px at 110% 110%,rgba(29,78,216,.14) 0%,transparent 60%)}
 .bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(29,78,216,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(29,78,216,.04) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%)}
-.scroll-progress{position:fixed;top:0;left:0;width:0%;height:3px;background:linear-gradient(90deg,var(--red),var(--blue));z-index:1001;transition:width .1s}
+.scroll-progress{position:fixed;top:0;left:0;width:0%;height:3px;background:linear-gradient(90deg,var(--red),var(--blue));z-index:1001}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:70px;background:rgba(4,5,10,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(29,78,216,.15)}
 .nav-logo{display:flex;align-items:center;gap:12px;font-family:'Oxanium',monospace;font-size:20px;font-weight:800;color:#fff;letter-spacing:2px;text-decoration:none}
-.nav-logo-icon{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--red),#7f1d1d);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(220,38,38,.4);border:1px solid rgba(220,38,38,.3)}
-.nav-links{display:flex;align-items:center;gap:32px;direction:rtl}
+.nav-logo-icon{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--red),#7f1d1d);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(220,38,38,.4)}
+.nav-links{display:flex;align-items:center;gap:28px}
 .nav-links a{font-size:14px;font-weight:500;color:var(--muted2);text-decoration:none;transition:color .2s}
 .nav-links a:hover{color:#fff}
-.nav-apply-btn{font-family:'Oxanium',monospace;font-size:13px;font-weight:700;background:linear-gradient(135deg,var(--red),var(--blue));color:#fff;padding:9px 22px;border-radius:8px;text-decoration:none;border:none;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 20px rgba(220,38,38,.3);transition:all .2s;white-space:nowrap}
-.nav-apply-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(220,38,38,.45)}
+.nav-apply-btn{font-family:'Oxanium',monospace;font-size:13px;font-weight:700;background:linear-gradient(135deg,var(--red),var(--blue));color:#fff;padding:9px 22px;border-radius:8px;text-decoration:none;letter-spacing:1px;box-shadow:0 4px 20px rgba(220,38,38,.3);transition:all .2s;white-space:nowrap}
+.nav-apply-btn:hover{transform:translateY(-2px)}
 .nav-mobile-btn{display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer}
 @media(max-width:768px){.nav-links{display:none}.nav-mobile-btn{display:block}}
 .hero{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:120px 20px 80px;flex-direction:column}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--blue3);background:rgba(29,78,216,.1);border:1px solid rgba(29,78,216,.25);padding:6px 16px;border-radius:20px;margin-bottom:28px;animation:fadeUp .6s ease .1s both}
-.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--blue2);box-shadow:0 0 8px var(--blue2);animation:pulse 2s ease infinite}
+.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--blue2);animation:pulse 2s ease infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .hero-title{font-family:'Oxanium',monospace;font-size:clamp(48px,10vw,120px);font-weight:800;line-height:.9;letter-spacing:-2px;color:#fff;margin-bottom:8px;animation:fadeUp .6s ease .2s both}
 .hero-title .red{color:transparent;background:linear-gradient(135deg,var(--red),var(--red2));-webkit-background-clip:text;background-clip:text;display:block}
@@ -45,28 +36,24 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 .hero-sub strong{color:var(--text)}
 .hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;animation:fadeUp .6s ease .4s both}
 .btn-primary{display:inline-flex;align-items:center;gap:8px;font-family:'Oxanium',monospace;font-size:15px;font-weight:700;letter-spacing:1px;background:linear-gradient(135deg,var(--red),#991b1b);color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;box-shadow:0 4px 28px rgba(220,38,38,.4);transition:all .25s;border:none;cursor:pointer}
-.btn-primary:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(220,38,38,.55)}
+.btn-primary:hover{transform:translateY(-3px)}
 .btn-secondary{display:inline-flex;align-items:center;gap:8px;font-family:'Oxanium',monospace;font-size:15px;font-weight:700;letter-spacing:1px;background:transparent;color:var(--blue3);padding:14px 32px;border-radius:10px;text-decoration:none;border:1px solid rgba(59,130,246,.35);transition:all .25s}
 .btn-secondary:hover{background:rgba(29,78,216,.12);border-color:var(--blue2);transform:translateY(-3px)}
-.scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);animation:fadeUp .6s ease 1s both}
-.scroll-line{width:1px;height:40px;background:linear-gradient(var(--muted),transparent);animation:scrollLine 2s ease infinite}
-@keyframes scrollLine{0%,100%{height:40px;opacity:.5}50%{height:20px;opacity:1}}
 .hero-stats{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin-top:60px;animation:fadeUp .6s ease .5s both}
 .h-stat{text-align:center}
-.h-stat-val{font-family:'Oxanium',monospace;font-size:36px;font-weight:800;color:#fff;line-height:1}
+.h-stat-val{font-family:'Oxanium',monospace;font-size:36px;font-weight:800;color:#fff}
 .h-stat-val span{color:var(--red2)}
-.h-stat-label{font-size:12px;color:var(--muted2);margin-top:4px;letter-spacing:.5px}
+.h-stat-label{font-size:12px;color:var(--muted2);margin-top:4px}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 section{position:relative;z-index:1;padding:100px 5%}
-.section-header{text-align:center;margin-bottom:64px}
 .section-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--blue2);margin-bottom:16px;display:block}
 .section-title{font-family:'Oxanium',monospace;font-size:clamp(28px,5vw,48px);font-weight:800;color:#fff;line-height:1.1}
 .section-title .accent{color:var(--red2)}
 .section-desc{font-size:16px;color:var(--muted2);max-width:500px;margin:16px auto 0;line-height:1.8}
+.section-header{text-align:center;margin-bottom:64px}
 .divider{position:relative;z-index:1;height:1px;margin:0 5%;background:linear-gradient(90deg,transparent,rgba(29,78,216,.3),rgba(220,38,38,.3),transparent)}
 .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;max-width:1100px;margin:0 auto}
 @media(max-width:768px){.about-grid{grid-template-columns:1fr;gap:40px}}
-.about-text{direction:rtl}
 .about-text h2{font-family:'Oxanium',monospace;font-size:clamp(24px,4vw,38px);font-weight:800;color:#fff;margin-bottom:20px;line-height:1.2}
 .about-text h2 em{color:var(--red2);font-style:normal}
 .about-text p{font-size:15px;color:var(--muted2);line-height:1.9;margin-bottom:16px}
@@ -100,7 +87,7 @@ section{position:relative;z-index:1;padding:100px 5%}
 .rb-blue{background:rgba(29,78,216,.1);color:var(--blue3);border:1px solid rgba(29,78,216,.2)}
 .rb-gold{background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.2)}
 .rules-container{max-width:800px;margin:0 auto}
-.rule-item{display:flex;gap:18px;align-items:flex-start;padding:20px 0;border-bottom:1px solid var(--border);direction:rtl}
+.rule-item{display:flex;gap:18px;align-items:flex-start;padding:20px 0;border-bottom:1px solid var(--border)}
 .rule-item:last-child{border-bottom:none}
 .rule-num{font-family:'Oxanium',monospace;font-size:28px;font-weight:800;color:rgba(220,38,38,.2);flex-shrink:0;line-height:1;min-width:44px}
 .rule-content h4{font-family:'Oxanium',monospace;font-size:16px;font-weight:700;color:#fff;margin-bottom:6px}
@@ -118,17 +105,16 @@ section{position:relative;z-index:1;padding:100px 5%}
 .gallery-item:first-child{grid-column:span 2;aspect-ratio:16/8}
 @media(max-width:480px){.gallery-item:first-child{grid-column:span 1;aspect-ratio:16/10}}
 .gallery-item:hover{transform:scale(1.02);border-color:var(--bord2);box-shadow:0 8px 40px rgba(220,38,38,.15)}
-.gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease;display:block}
+.gallery-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
 .gallery-item:hover img{transform:scale(1.06)}
-.gallery-ph{display:none;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);border:2px dashed var(--border);border-radius:14px}
+.gallery-ph{display:none;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted)}
 .gallery-overlay{position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(4,5,10,.85) 100%);display:flex;align-items:flex-end;padding:16px;opacity:0;transition:opacity .3s}
 .gallery-item:hover .gallery-overlay{opacity:1}
-.gallery-overlay-text{font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.7);letter-spacing:1px}
+.gallery-overlay-text{font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.7)}
 .lightbox{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.92);align-items:center;justify-content:center}
 .lightbox.open{display:flex}
 .lightbox img{max-width:90vw;max-height:85vh;border-radius:12px;object-fit:contain}
-.lightbox-close{position:absolute;top:20px;right:24px;font-size:28px;color:rgba(255,255,255,.5);cursor:pointer;background:none;border:none;transition:color .2s}
-.lightbox-close:hover{color:#fff}
+.lightbox-close{position:absolute;top:20px;right:24px;font-size:28px;color:rgba(255,255,255,.5);cursor:pointer;background:none;border:none}
 .discord-banner{max-width:800px;margin:0 auto;background:linear-gradient(135deg,#13163a 0%,#0d1028 100%);border:1px solid rgba(88,101,242,.3);border-radius:20px;padding:48px 40px;text-align:center;position:relative;overflow:hidden}
 @media(max-width:480px){.discord-banner{padding:32px 20px}}
 .discord-banner::before{content:'';position:absolute;top:-80px;left:-80px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(88,101,242,.15) 0%,transparent 65%);pointer-events:none}
@@ -144,13 +130,13 @@ section{position:relative;z-index:1;padding:100px 5%}
 .discord-stat span{color:rgba(255,255,255,.35)}
 .discord-stat strong{color:rgba(255,255,255,.7)}
 .discord-join-btn{display:inline-flex;align-items:center;gap:10px;font-family:'Oxanium',monospace;font-size:16px;font-weight:700;letter-spacing:1px;background:linear-gradient(135deg,#5865f2,#4752c4);color:#fff;padding:14px 36px;border-radius:12px;text-decoration:none;box-shadow:0 6px 28px rgba(88,101,242,.5);transition:all .25s;position:relative;z-index:1}
-.discord-join-btn:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(88,101,242,.65)}
+.discord-join-btn:hover{transform:translateY(-3px)}
 .discord-join-btn svg{width:22px;height:22px;fill:#fff}
 .cta-box{max-width:700px;margin:0 auto;background:var(--s1);border:1px solid rgba(220,38,38,.2);border-radius:24px;padding:60px 40px;text-align:center;position:relative;overflow:hidden}
 @media(max-width:480px){.cta-box{padding:40px 20px}}
 .cta-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 500px 300px at 50% 0%,rgba(220,38,38,.08) 0%,transparent 60%);pointer-events:none}
 .cta-emoji{font-size:52px;margin-bottom:20px;display:block}
-.cta-title{font-family:'Oxanium',monospace;font-size:clamp(24px,5vw,40px);font-weight:800;color:#fff;margin-bottom:14px;line-height:1.1}
+.cta-title{font-family:'Oxanium',monospace;font-size:clamp(24px,5vw,40px);font-weight:800;color:#fff;margin-bottom:14px}
 .cta-desc{font-size:15px;color:var(--muted2);max-width:420px;margin:0 auto 32px;line-height:1.8}
 .cta-conditions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:32px}
 .cta-cond{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)}
@@ -158,14 +144,10 @@ section{position:relative;z-index:1;padding:100px 5%}
 footer{position:relative;z-index:1;padding:40px 5% 32px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
 .footer-logo{font-family:'Oxanium',monospace;font-size:16px;font-weight:800;color:var(--muted2);letter-spacing:2px}
 .footer-logo span{color:var(--red2)}
-.footer-text{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.5px}
+.footer-text{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
 .lang-switcher{position:fixed;bottom:20px;right:20px;z-index:1000;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);border-radius:40px;padding:8px 12px;display:flex;gap:8px;border:1px solid rgba(255,255,255,.1)}
 .lang-btn{background:none;border:none;color:var(--muted2);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;padding:4px 8px;border-radius:20px;transition:.2s}
 .lang-btn.active{background:var(--red);color:white}
-.video-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;align-items:center;justify-content:center}
-.video-modal.open{display:flex}
-.video-modal iframe{width:80vw;height:45vw;max-width:1000px;max-height:562px;border-radius:16px}
-.video-modal .close-video{position:absolute;top:20px;right:30px;font-size:40px;color:white;cursor:pointer;background:none;border:none}
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
 .reveal.visible{opacity:1;transform:translateY(0)}
 </style>
@@ -174,7 +156,6 @@ footer{position:relative;z-index:1;padding:40px 5% 32px;border-top:1px solid var
 <div class="bg-canvas"></div>
 <div class="bg-grid"></div>
 <div class="scroll-progress" id="scrollProgress"></div>
-
 <div class="lang-switcher">
   <button class="lang-btn active" data-lang="ar">عربي</button>
   <button class="lang-btn" data-lang="en">English</button>
@@ -183,38 +164,33 @@ footer{position:relative;z-index:1;padding:40px 5% 32px;border-top:1px solid var
 <nav>
   <a href="#" class="nav-logo"><div class="nav-logo-icon">🚑</div>ABRAMS</a>
   <div class="nav-links">
-    <a href="#about" data-i18n="about">من نحن</a>
-    <a href="#roles" data-i18n="roles">الأدوار</a>
-    <a href="#rules" data-i18n="rules">القواعد</a>
-    <a href="#interactive" data-i18n="demo">تجربة تفاعلية</a>
-    <a href="#apply-cta" data-i18n="join">الانضمام</a>
+    <a href="#about"       data-t="nav_about"></a>
+    <a href="#roles"       data-t="nav_roles"></a>
+    <a href="#rules"       data-t="nav_rules"></a>
+    <a href="#interactive" data-t="nav_demo"></a>
+    <a href="#apply-cta"   data-t="nav_join"></a>
   </div>
-  <a href="apply.html" class="nav-apply-btn">APPLY NOW</a>
+  <a href="apply.html" class="nav-apply-btn" data-t="nav_apply"></a>
   <button class="nav-mobile-btn" onclick="toggleMobileMenu()">☰</button>
 </nav>
 
 <section class="hero">
-  <div class="hero-badge">🔴 ACCEPTING APPLICATIONS</div>
+  <div class="hero-badge" data-t="hero_badge"></div>
   <h1 class="hero-title">
-    <span class="red" id="heroTitleRed">EMS ABRAMS</span>
-    <span class="blue" id="heroTitleBlue">EMERGENCY MEDICAL SERVICES</span>
+    <span class="red">EMS ABRAMS</span>
+    <span class="blue" data-t="hero_subtitle"></span>
   </h1>
-  <p class="hero-sub" id="heroSub">
-    فريق الخدمات الطبية الطارئة في عالم الـ Roleplay.<br/>
-    <strong>نحن لا نلعب — نحن ننقذ الأرواح.</strong>
-  </p>
+  <p class="hero-sub" data-t="hero_sub"></p>
   <div class="hero-btns">
-    <a href="apply.html" class="btn-primary">🚑 قدم الآن — Apply</a>
-    <a href="#about" class="btn-secondary">اعرف أكثر →</a>
-    <button class="btn-secondary" id="playVideoBtn">▶ شاهد الفيديو</button>
+    <a href="apply.html" class="btn-primary" data-t="hero_apply_btn"></a>
+    <a href="#about" class="btn-secondary" data-t="hero_more_btn"></a>
   </div>
   <div class="hero-stats">
-    <div class="h-stat"><div class="h-stat-val">+<span class="counter" data-target="52">0</span></div><div class="h-stat-label" data-i18n="members">عضو نشيط</div></div>
-    <div class="h-stat"><div class="h-stat-val"><span class="counter" data-target="24">0</span>/7</div><div class="h-stat-label">على أهبة الاستعداد</div></div>
-    <div class="h-stat"><div class="h-stat-val">+<span class="counter" data-target="587">0</span></div><div class="h-stat-label" data-i18n="missions">مهمة منجزة</div></div>
-    <div class="h-stat"><div class="h-stat-val"><span class="counter" data-target="1">0</span></div><div class="h-stat-label">فريق طبي</div></div>
+    <div class="h-stat"><div class="h-stat-val">+<span class="counter" data-target="52">0</span></div><div class="h-stat-label" data-t="stat_members"></div></div>
+    <div class="h-stat"><div class="h-stat-val"><span class="counter" data-target="24">0</span>/7</div><div class="h-stat-label" data-t="stat_ready"></div></div>
+    <div class="h-stat"><div class="h-stat-val">+<span class="counter" data-target="587">0</span></div><div class="h-stat-label" data-t="stat_missions"></div></div>
+    <div class="h-stat"><div class="h-stat-val"><span class="counter" data-target="1">0</span></div><div class="h-stat-label" data-t="stat_team"></div></div>
   </div>
-  <div class="scroll-hint">SCROLL<div class="scroll-line"></div></div>
 </section>
 
 <div class="divider"></div>
@@ -222,22 +198,19 @@ footer{position:relative;z-index:1;padding:40px 5% 32px;border-top:1px solid var
 <section id="about">
   <div class="about-grid">
     <div class="about-text reveal">
-      <h2>من نحن؟<br/><em>EMS Abrams</em></h2>
-      <p id="aboutText1">نحن فريق الخدمات الطبية الطارئة الأكثر احترافية في السيرفر. تأسسنا على مبدأ واحد: <strong>كل حياة تستحق الإنقاذ.</strong></p>
-      <p id="aboutText2">أعضاؤنا مدربون على أعلى مستوى من الـ Medical RP — من الإسعافات الأولية إلى العمليات الجراحية المعقدة.</p>
+      <h2 data-t="about_title"></h2>
+      <p data-t="about_p1"></p>
+      <p data-t="about_p2"></p>
       <div class="about-tags">
-        <span class="atag atag-red">Medical RP</span>
-        <span class="atag atag-blue">Teamwork</span>
-        <span class="atag atag-red">24/7 Active</span>
-        <span class="atag atag-blue">Professional</span>
-        <span class="atag atag-red">Roleplay</span>
+        <span class="atag atag-red">Medical RP</span><span class="atag atag-blue">Teamwork</span>
+        <span class="atag atag-red">24/7 Active</span><span class="atag atag-blue">Professional</span>
       </div>
     </div>
     <div class="about-visual reveal">
-      <div class="about-card"><div class="about-card-icon ac-red">🚑</div><div class="about-card-text"><h4>استجابة فورية</h4><p>نصل إلى موقع الحادث في أقل من دقيقتين</p></div></div>
-      <div class="about-card"><div class="about-card-icon ac-blue">🏥</div><div class="about-card-text"><h4>مستشفى متكامل</h4><p>مرافق طبية متطورة وطاقم متخصص على مدار الساعة</p></div></div>
-      <div class="about-card"><div class="about-card-icon ac-red">🚁</div><div class="about-card-text"><h4>طوارئ جوية</h4><p>هيليكوبتر طبية للحالات الحرجة البعيدة</p></div></div>
-      <div class="about-card"><div class="about-card-icon ac-gold">🎓</div><div class="about-card-text"><h4>تدريب مستمر</h4><p>دورات تدريبية أسبوعية لرفع مستوى الأعضاء</p></div></div>
+      <div class="about-card"><div class="about-card-icon ac-red">🚑</div><div class="about-card-text"><h4 data-t="card1_title"></h4><p data-t="card1_desc"></p></div></div>
+      <div class="about-card"><div class="about-card-icon ac-blue">🏥</div><div class="about-card-text"><h4 data-t="card2_title"></h4><p data-t="card2_desc"></p></div></div>
+      <div class="about-card"><div class="about-card-icon ac-red">🚁</div><div class="about-card-text"><h4 data-t="card3_title"></h4><p data-t="card3_desc"></p></div></div>
+      <div class="about-card"><div class="about-card-icon ac-gold">🎓</div><div class="about-card-text"><h4 data-t="card4_title"></h4><p data-t="card4_desc"></p></div></div>
     </div>
   </div>
 </section>
@@ -247,16 +220,16 @@ footer{position:relative;z-index:1;padding:40px 5% 32px;border-top:1px solid var
 <section id="roles" style="background:linear-gradient(180deg,transparent,rgba(29,78,216,.04),transparent)">
   <div class="section-header reveal">
     <span class="section-eyebrow">// TEAM STRUCTURE</span>
-    <h2 class="section-title">الأدوار والرتب <span class="accent">داخل الفريق</span></h2>
-    <p class="section-desc">كل عضو له دور محدد ومسؤوليات واضحة. اختر مسارك وتطور معنا.</p>
+    <h2 class="section-title" data-t="roles_title"></h2>
+    <p class="section-desc" data-t="roles_desc"></p>
   </div>
   <div class="roles-grid">
-    <div class="role-card red-card reveal"><div class="role-icon">👨‍⚕️</div><div class="role-name">Paramedic</div><div class="role-desc">المسعف الميداني — الخط الأول للاستجابة. يتعامل مع الحوادث اليومية ويقدم الإسعافات الأولية.</div><span class="role-badge rb-red">ENTRY LEVEL</span></div>
-    <div class="role-card blue-card reveal"><div class="role-icon">🩺</div><div class="role-name">Doctor</div><div class="role-desc">الطبيب المتخصص — يدير العمليات المعقدة ويشرف على علاج الحالات الحرجة في المستشفى.</div><span class="role-badge rb-blue">MID RANK</span></div>
-    <div class="role-card red-card reveal"><div class="role-icon">🚁</div><div class="role-name">Air Medic</div><div class="role-desc">طبيب الطوارئ الجوية — يشغّل الهيليكوبتر الطبية ويصل إلى أصعب المناطق.</div><span class="role-badge rb-red">SPECIAL UNIT</span></div>
-    <div class="role-card gold-card reveal"><div class="role-icon">⭐</div><div class="role-name">Chief Medical Officer</div><div class="role-desc">رئيس الفريق الطبي — يتخذ القرارات الكبرى ويقود الفريق في أصعب المواقف.</div><span class="role-badge rb-gold">HIGH COMMAND</span></div>
-    <div class="role-card blue-card reveal"><div class="role-icon">📋</div><div class="role-name">Dispatcher</div><div class="role-desc">مركز التنسيق — يستقبل النداءات ويوجه الفرق الطبية إلى مواقع الحوادث.</div><span class="role-badge rb-blue">SUPPORT</span></div>
-    <div class="role-card red-card reveal"><div class="role-icon">🎓</div><div class="role-name">Trainer</div><div class="role-desc">المدرب المعتمد — يتولى تدريب المنضمين الجدد ورفع كفاءة الأعضاء.</div><span class="role-badge rb-red">TRAINER</span></div>
+    <div class="role-card red-card reveal"><div class="role-icon">👨‍⚕️</div><div class="role-name">Paramedic</div><div class="role-desc" data-t="role1_desc"></div><span class="role-badge rb-red">ENTRY LEVEL</span></div>
+    <div class="role-card blue-card reveal"><div class="role-icon">🩺</div><div class="role-name">Doctor</div><div class="role-desc" data-t="role2_desc"></div><span class="role-badge rb-blue">MID RANK</span></div>
+    <div class="role-card red-card reveal"><div class="role-icon">🚁</div><div class="role-name">Air Medic</div><div class="role-desc" data-t="role3_desc"></div><span class="role-badge rb-red">SPECIAL UNIT</span></div>
+    <div class="role-card gold-card reveal"><div class="role-icon">⭐</div><div class="role-name">Chief Medical Officer</div><div class="role-desc" data-t="role4_desc"></div><span class="role-badge rb-gold">HIGH COMMAND</span></div>
+    <div class="role-card blue-card reveal"><div class="role-icon">📋</div><div class="role-name">Dispatcher</div><div class="role-desc" data-t="role5_desc"></div><span class="role-badge rb-blue">SUPPORT</span></div>
+    <div class="role-card red-card reveal"><div class="role-icon">🎓</div><div class="role-name">Trainer</div><div class="role-desc" data-t="role6_desc"></div><span class="role-badge rb-red">TRAINER</span></div>
   </div>
 </section>
 
@@ -265,15 +238,15 @@ footer{position:relative;z-index:1;padding:40px 5% 32px;border-top:1px solid var
 <section id="rules">
   <div class="section-header reveal">
     <span class="section-eyebrow">// CODE OF CONDUCT</span>
-    <h2 class="section-title">قواعد <span class="accent">الفريق</span></h2>
-    <p class="section-desc">الانضباط والاحترافية هما أساس كل ما نفعله.</p>
+    <h2 class="section-title" data-t="rules_title"></h2>
+    <p class="section-desc" data-t="rules_desc"></p>
   </div>
   <div class="rules-container">
-    <div class="rule-item reveal"><div class="rule-num">01</div><div class="rule-content"><h4>Medical RP إلزامي</h4><p>جميع الأعضاء ملزمون باحترام قواعد الـ Medical RP في كل الأوقات — لا استثناء.</p></div></div>
-    <div class="rule-item reveal"><div class="rule-num">02</div><div class="rule-content"><h4>EMS لا يحمل أسلحة</h4><p>دور EMS طبي بحت. لا يُسمح بحمل الأسلحة أو المشاركة في أي عمل عسكري.</p></div></div>
-    <div class="rule-item reveal"><div class="rule-num">03</div><div class="rule-content"><h4>الاحترافية دائماً</h4><p>تعامل مع جميع اللاعبين باحترام حتى في أصعب المواقف. سمعتنا خط أحمر.</p></div></div>
-    <div class="rule-item reveal"><div class="rule-num">04</div><div class="rule-content"><h4>انتظار تأمين الموقع</h4><p>خلال الاشتباكات النشطة، EMS لا يدخل حتى تؤكد الشرطة تأمين المنطقة.</p></div></div>
-    <div class="rule-item reveal"><div class="rule-num">05</div><div class="rule-content"><h4>الحضور والالتزام</h4><p>نحتاج أعضاء نشطين ومنتظمين. الغياب المتكرر بدون إشعار يؤثر على عضويتك.</p></div></div>
+    <div class="rule-item reveal"><div class="rule-num">01</div><div class="rule-content"><h4 data-t="rule1_title"></h4><p data-t="rule1_desc"></p></div></div>
+    <div class="rule-item reveal"><div class="rule-num">02</div><div class="rule-content"><h4 data-t="rule2_title"></h4><p data-t="rule2_desc"></p></div></div>
+    <div class="rule-item reveal"><div class="rule-num">03</div><div class="rule-content"><h4 data-t="rule3_title"></h4><p data-t="rule3_desc"></p></div></div>
+    <div class="rule-item reveal"><div class="rule-num">04</div><div class="rule-content"><h4 data-t="rule4_title"></h4><p data-t="rule4_desc"></p></div></div>
+    <div class="rule-item reveal"><div class="rule-num">05</div><div class="rule-content"><h4 data-t="rule5_title"></h4><p data-t="rule5_desc"></p></div></div>
   </div>
 </section>
 
@@ -282,11 +255,11 @@ footer{position:relative;z-index:1;padding:40px 5% 32px;border-top:1px solid var
 <section id="interactive">
   <div class="section-header reveal">
     <span class="section-eyebrow">// INTERACTIVE SCENARIO</span>
-    <h2 class="section-title">تجربة <span class="accent">تفاعلية</span></h2>
-    <p class="section-desc">اختبر قراراتك الطبية في حالة طارئة</p>
+    <h2 class="section-title" data-t="demo_title"></h2>
+    <p class="section-desc" data-t="demo_desc"></p>
   </div>
   <div class="interactive-demo reveal">
-    <div class="demo-question" id="demoQ">وصلت إلى موقع حادث سير، هناك شخص واعي وآخر فاقد للوعي. ماذا تفعل أولاً؟</div>
+    <div class="demo-question" id="demoQ"></div>
     <div class="demo-options" id="demoOpts"></div>
     <div class="demo-feedback" id="demoFB"></div>
   </div>
@@ -297,35 +270,15 @@ footer{position:relative;z-index:1;padding:40px 5% 32px;border-top:1px solid var
 <section id="gallery">
   <div class="section-header reveal">
     <span class="section-eyebrow">// OUR MOMENTS</span>
-    <h2 class="section-title">صور <span class="accent">الفريق</span></h2>
-    <p class="section-desc">لحظات من الميدان — حوادث حقيقية، مهام منجزة، فريق واحد.</p>
+    <h2 class="section-title" data-t="gallery_title"></h2>
+    <p class="section-desc" data-t="gallery_desc"></p>
   </div>
   <div class="gallery-grid">
-    <div class="gallery-item" onclick="openLightbox(this)">
-      <img src="images/ems1.jpg" loading="lazy" alt="EMS" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-      <div class="gallery-ph"><span style="font-size:28px;opacity:.4">📷</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.5">ems1.jpg</span></div>
-      <div class="gallery-overlay"><span class="gallery-overlay-text">EMS ABRAMS</span></div>
-    </div>
-    <div class="gallery-item" onclick="openLightbox(this)">
-      <img src="images/ems2.jpg" loading="lazy" alt="EMS" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-      <div class="gallery-ph"><span style="font-size:28px;opacity:.4">📷</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.5">ems2.jpg</span></div>
-      <div class="gallery-overlay"><span class="gallery-overlay-text">EMS ABRAMS</span></div>
-    </div>
-    <div class="gallery-item" onclick="openLightbox(this)">
-      <img src="images/ems3.jpg" loading="lazy" alt="EMS" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-      <div class="gallery-ph"><span style="font-size:28px;opacity:.4">📷</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.5">ems3.jpg</span></div>
-      <div class="gallery-overlay"><span class="gallery-overlay-text">EMS ABRAMS</span></div>
-    </div>
-    <div class="gallery-item" onclick="openLightbox(this)">
-      <img src="images/ems4.jpg" loading="lazy" alt="EMS" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-      <div class="gallery-ph"><span style="font-size:28px;opacity:.4">📷</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.5">ems4.jpg</span></div>
-      <div class="gallery-overlay"><span class="gallery-overlay-text">EMS ABRAMS</span></div>
-    </div>
-    <div class="gallery-item" onclick="openLightbox(this)">
-      <img src="images/ems5.jpg" loading="lazy" alt="EMS" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-      <div class="gallery-ph"><span style="font-size:28px;opacity:.4">📷</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.5">ems5.jpg</span></div>
-      <div class="gallery-overlay"><span class="gallery-overlay-text">EMS ABRAMS</span></div>
-    </div>
+    <div class="gallery-item" onclick="openLightbox(this)"><img src="images/ems1.jpg" loading="lazy" alt="EMS" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="gallery-ph"><span style="font-size:28px;opacity:.4">📷</span></div><div class="gallery-overlay"><span class="gallery-overlay-text">EMS ABRAMS</span></div></div>
+    <div class="gallery-item" onclick="openLightbox(this)"><img src="images/ems2.jpg" loading="lazy" alt="EMS" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="gallery-ph"><span style="font-size:28px;opacity:.4">📷</span></div><div class="gallery-overlay"><span class="gallery-overlay-text">EMS ABRAMS</span></div></div>
+    <div class="gallery-item" onclick="openLightbox(this)"><img src="images/ems3.jpg" loading="lazy" alt="EMS" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="gallery-ph"><span style="font-size:28px;opacity:.4">📷</span></div><div class="gallery-overlay"><span class="gallery-overlay-text">EMS ABRAMS</span></div></div>
+    <div class="gallery-item" onclick="openLightbox(this)"><img src="images/ems4.jpg" loading="lazy" alt="EMS" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="gallery-ph"><span style="font-size:28px;opacity:.4">📷</span></div><div class="gallery-overlay"><span class="gallery-overlay-text">EMS ABRAMS</span></div></div>
+    <div class="gallery-item" onclick="openLightbox(this)"><img src="images/ems5.jpg" loading="lazy" alt="EMS" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="gallery-ph"><span style="font-size:28px;opacity:.4">📷</span></div><div class="gallery-overlay"><span class="gallery-overlay-text">EMS ABRAMS</span></div></div>
   </div>
 </section>
 
@@ -334,25 +287,20 @@ footer{position:relative;z-index:1;padding:40px 5% 32px;border-top:1px solid var
   <img id="lightboxImg" src="" alt=""/>
 </div>
 
-<div class="video-modal" id="videoModal">
-  <button class="close-video" onclick="closeVideo()">✕</button>
-  <iframe id="videoIframe" src="" frameborder="0" allowfullscreen></iframe>
-</div>
-
 <div class="divider"></div>
 
 <section id="discord-join">
   <div class="discord-banner reveal">
     <div class="discord-logo"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.077.077 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg></div>
-    <h2>انضم لسيرفر Discord</h2>
-    <p>كل الأخبار والتحديثات والقرارات تصدر هناك — كن جزء من المجتمع.</p>
+    <h2 data-t="discord_title"></h2>
+    <p data-t="discord_desc"></p>
     <div class="discord-stats-row">
       <div class="discord-stat"><div class="d-dot online"></div><strong>Active</strong><span>&nbsp;— Online Now</span></div>
       <div class="discord-stat"><div class="d-dot members"></div><strong>Community</strong><span>&nbsp;— Growing Fast</span></div>
     </div>
     <a href="https://discord.gg/EYxDheAap4" target="_blank" rel="noopener" class="discord-join-btn">
       <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.077.077 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-      انضم للسيرفر — Join Server
+      <span data-t="discord_btn"></span>
     </a>
   </div>
 </section>
@@ -362,14 +310,14 @@ footer{position:relative;z-index:1;padding:40px 5% 32px;border-top:1px solid var
 <section id="apply-cta">
   <div class="cta-box reveal">
     <span class="cta-emoji">🚑</span>
-    <h2 class="cta-title">مستعد للانضمام؟</h2>
-    <p class="cta-desc">انضم إلى أفضل فريق طبي في السيرفر. قدم طلبك الآن وابدأ رحلتك مع EMS Abrams.</p>
+    <h2 class="cta-title" data-t="cta_title"></h2>
+    <p class="cta-desc" data-t="cta_desc"></p>
     <div class="cta-conditions">
-      <span class="cta-cond">كن في السيرفر</span>
-      <span class="cta-cond">أجب على جميع الأسئلة</span>
-      <span class="cta-cond">انتظر الرد خلال 48 ساعة</span>
+      <span class="cta-cond" data-t="cta_cond1"></span>
+      <span class="cta-cond" data-t="cta_cond2"></span>
+      <span class="cta-cond" data-t="cta_cond3"></span>
     </div>
-    <a href="apply.html" class="btn-primary" style="font-size:17px;padding:16px 40px;">🚑 قدم طلبك الآن — Apply Now</a>
+    <a href="apply.html" class="btn-primary" style="font-size:17px;padding:16px 40px;" data-t="cta_btn"></a>
   </div>
 </section>
 
@@ -380,117 +328,173 @@ footer{position:relative;z-index:1;padding:40px 5% 32px;border-top:1px solid var
 </footer>
 
 <script>
-// ── i18n ──
 const T = {
-  ar:{about:"من نحن",roles:"الأدوار",rules:"القواعد",demo:"تجربة تفاعلية",join:"الانضمام",members:"عضو نشيط",missions:"مهمة منجزة"},
-  en:{about:"About",roles:"Roles",rules:"Rules",demo:"Demo",join:"Join",members:"Active Members",missions:"Completed Missions"}
+  ar:{
+    nav_about:"من نحن",nav_roles:"الأدوار",nav_rules:"القواعد",nav_demo:"تجربة تفاعلية",nav_join:"الانضمام",nav_apply:"قدم الآن",
+    hero_badge:"🔴 التسجيل مفتوح",hero_subtitle:"الخدمات الطبية الطارئة",
+    hero_sub:"فريق الخدمات الطبية الطارئة في عالم الـ Roleplay.<br/><strong>نحن لا نلعب — نحن ننقذ الأرواح.</strong>",
+    hero_apply_btn:"🚑 قدم الآن",hero_more_btn:"اعرف أكثر →",
+    stat_members:"عضو نشيط",stat_ready:"على أهبة الاستعداد",stat_missions:"مهمة منجزة",stat_team:"فريق طبي",
+    about_title:"من نحن؟<br/><em>EMS Abrams</em>",
+    about_p1:"نحن فريق الخدمات الطبية الطارئة الأكثر احترافية في السيرفر. تأسسنا على مبدأ واحد: <strong>كل حياة تستحق الإنقاذ.</strong>",
+    about_p2:"أعضاؤنا مدربون على أعلى مستوى من الـ Medical RP — من الإسعافات الأولية إلى العمليات الجراحية المعقدة.",
+    card1_title:"استجابة فورية",card1_desc:"نصل إلى موقع الحادث في أقل من دقيقتين",
+    card2_title:"مستشفى متكامل",card2_desc:"مرافق طبية متطورة وطاقم متخصص على مدار الساعة",
+    card3_title:"طوارئ جوية",card3_desc:"هيليكوبتر طبية للحالات الحرجة البعيدة",
+    card4_title:"تدريب مستمر",card4_desc:"دورات تدريبية أسبوعية لرفع مستوى الأعضاء",
+    roles_title:'الأدوار والرتب <span class="accent">داخل الفريق</span>',
+    roles_desc:"كل عضو له دور محدد ومسؤوليات واضحة. اختر مسارك وتطور معنا.",
+    role1_desc:"المسعف الميداني — الخط الأول للاستجابة. يتعامل مع الحوادث اليومية ويقدم الإسعافات الأولية.",
+    role2_desc:"الطبيب المتخصص — يدير العمليات المعقدة ويشرف على علاج الحالات الحرجة.",
+    role3_desc:"طبيب الطوارئ الجوية — يشغّل الهيليكوبتر الطبية ويصل إلى أصعب المناطق.",
+    role4_desc:"رئيس الفريق الطبي — يتخذ القرارات الكبرى ويقود الفريق في أصعب المواقف.",
+    role5_desc:"مركز التنسيق — يستقبل النداءات ويوجه الفرق الطبية إلى مواقع الحوادث.",
+    role6_desc:"المدرب المعتمد — يتولى تدريب المنضمين الجدد ورفع كفاءة الأعضاء.",
+    rules_title:'قواعد <span class="accent">الفريق</span>',rules_desc:"الانضباط والاحترافية هما أساس كل ما نفعله.",
+    rule1_title:"Medical RP إلزامي",rule1_desc:"جميع الأعضاء ملزمون باحترام قواعد الـ Medical RP في كل الأوقات — لا استثناء.",
+    rule2_title:"EMS لا يحمل أسلحة",rule2_desc:"دور EMS طبي بحت. لا يُسمح بحمل الأسلحة أو المشاركة في أي عمل عسكري.",
+    rule3_title:"الاحترافية دائماً",rule3_desc:"تعامل مع جميع اللاعبين باحترام حتى في أصعب المواقف. سمعتنا خط أحمر.",
+    rule4_title:"انتظار تأمين الموقع",rule4_desc:"خلال الاشتباكات النشطة، EMS لا يدخل حتى تؤكد الشرطة تأمين المنطقة.",
+    rule5_title:"الحضور والالتزام",rule5_desc:"نحتاج أعضاء نشطين ومنتظمين. الغياب المتكرر بدون إشعار يؤثر على عضويتك.",
+    demo_title:'تجربة <span class="accent">تفاعلية</span>',demo_desc:"اختبر قراراتك الطبية في حالة طارئة",
+    gallery_title:'صور <span class="accent">الفريق</span>',gallery_desc:"لحظات من الميدان — حوادث حقيقية، مهام منجزة، فريق واحد.",
+    discord_title:"انضم لسيرفر Discord",discord_desc:"كل الأخبار والتحديثات والقرارات تصدر هناك — كن جزء من المجتمع.",discord_btn:"انضم للسيرفر",
+    cta_title:"مستعد للانضمام؟",cta_desc:"انضم إلى أفضل فريق طبي في السيرفر. قدم طلبك الآن وابدأ رحلتك مع EMS Abrams.",
+    cta_cond1:"كن في السيرفر",cta_cond2:"أجب على جميع الأسئلة",cta_cond3:"انتظر الرد خلال 48 ساعة",cta_btn:"🚑 قدم طلبك الآن",
+  },
+  en:{
+    nav_about:"About",nav_roles:"Roles",nav_rules:"Rules",nav_demo:"Interactive",nav_join:"Join",nav_apply:"APPLY NOW",
+    hero_badge:"🔴 ACCEPTING APPLICATIONS",hero_subtitle:"EMERGENCY MEDICAL SERVICES",
+    hero_sub:"The most professional Emergency Medical Services team in the Roleplay server.<br/><strong>We don't play — we save lives.</strong>",
+    hero_apply_btn:"🚑 Apply Now",hero_more_btn:"Learn More →",
+    stat_members:"Active Members",stat_ready:"Always Ready",stat_missions:"Completed Missions",stat_team:"Medical Team",
+    about_title:"Who Are We?<br/><em>EMS Abrams</em>",
+    about_p1:"We are the most professional emergency medical services team on the server. Founded on one principle: <strong>Every life deserves saving.</strong>",
+    about_p2:"Our members are trained to the highest level of Medical RP — from first aid to complex surgeries.",
+    card1_title:"Instant Response",card1_desc:"We arrive at the incident scene in under two minutes",
+    card2_title:"Full Hospital",card2_desc:"Advanced medical facilities and specialized staff around the clock",
+    card3_title:"Air Emergency",card3_desc:"Medical helicopter for critical cases in remote areas",
+    card4_title:"Ongoing Training",card4_desc:"Weekly training sessions to continuously improve member skills",
+    roles_title:'Roles & Ranks <span class="accent">Inside the Team</span>',
+    roles_desc:"Every member has a defined role and clear responsibilities. Choose your path and grow with us.",
+    role1_desc:"Field Paramedic — First line of response. Handles daily incidents and provides first aid.",
+    role2_desc:"Specialist Doctor — Manages complex operations and oversees critical case treatment.",
+    role3_desc:"Air Emergency Doctor — Operates the medical helicopter and reaches the hardest locations.",
+    role4_desc:"Head of the medical team — Makes major decisions and leads the team in toughest situations.",
+    role5_desc:"Coordination center — Receives calls and directs medical teams to incident locations.",
+    role6_desc:"Certified Trainer — Handles training of new recruits and improving member skills.",
+    rules_title:'Team <span class="accent">Rules</span>',rules_desc:"Discipline and professionalism are the foundation of everything we do.",
+    rule1_title:"Medical RP is Mandatory",rule1_desc:"All members must respect Medical RP rules at all times — no exceptions.",
+    rule2_title:"EMS Does Not Carry Weapons",rule2_desc:"The EMS role is purely medical. Carrying weapons or participating in military actions is not allowed.",
+    rule3_title:"Always Professional",rule3_desc:"Treat all players with respect even in the toughest situations. Our reputation is sacred.",
+    rule4_title:"Wait for Area Clearance",rule4_desc:"During active combat, EMS does not enter until police confirm the area is secured.",
+    rule5_title:"Attendance & Commitment",rule5_desc:"We need active and consistent members. Repeated absence without notice affects your membership.",
+    demo_title:'Interactive <span class="accent">Scenario</span>',demo_desc:"Test your medical decisions in an emergency situation",
+    gallery_title:'Team <span class="accent">Photos</span>',gallery_desc:"Moments from the field — real incidents, completed missions, one team.",
+    discord_title:"Join the Discord Server",discord_desc:"All news, updates, and decisions are announced there — be part of the community.",discord_btn:"Join Server",
+    cta_title:"Ready to Join?",cta_desc:"Join the best medical team on the server. Apply now and start your journey with EMS Abrams.",
+    cta_cond1:"Be in the server",cta_cond2:"Answer all questions",cta_cond3:"Wait for response within 48h",cta_btn:"🚑 Apply Now",
+  }
 };
-let lang = localStorage.getItem('ems_lang')||'ar';
-function setLang(l){
-  lang=l; localStorage.setItem('ems_lang',l);
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const k=el.getAttribute('data-i18n');
-    if(T[l][k]) el.textContent=T[l][k];
+
+const DEMO = {
+  ar:[
+    {q:"وصلت إلى موقع حادث سير، هناك شخص واعي وآخر فاقد للوعي. ماذا تفعل أولاً؟",opts:["أنقل الشخص الواعي أولاً","أفحص الفاقد للوعي وأبدأ الإنعاش","أنتظر وصول الإسعاف"],correct:1,fb:"✅ صحيح! الأولوية للفاقدين للوعي — حالتهم حرجة وتحتاج تدخل فوري."},
+    {q:"أثناء علاج مريض بدأ يسبك ويخالف قواعد الـ RP. ماذا تفعل؟",opts:["أرد عليه بنفس الأسلوب","أتجاهله وأستمر في العلاج","أغادر وأتركه"],correct:1,fb:"✅ أحسنت! الاحترافية إلزامية حتى في المواقف الصعبة."},
+    {q:"أثناء مداهمة نشطة، طُلب منك دخول المنطقة لإسعاف مصاب. ماذا تفعل؟",opts:["أدخل فوراً","أنتظر تأكيد الشرطة تأمين المنطقة","أسأل وأقرر"],correct:1,fb:"✅ صحيح! EMS لا يدخل أثناء الاشتباكات — سلامتك أولاً."}
+  ],
+  en:[
+    {q:"You arrive at a car accident — one person is conscious, one is unconscious. What do you do first?",opts:["Treat the conscious one first","Check the unconscious and start CPR","Wait for backup"],correct:1,fb:"✅ Correct! Unconscious patients are the priority — critical condition needs immediate intervention."},
+    {q:"While treating a patient, they insult you and break RP. What do you do?",opts:["Respond the same way","Ignore it and continue treating professionally","Leave and abandon them"],correct:1,fb:"✅ Well done! Professionalism is mandatory even in difficult situations."},
+    {q:"During an active raid, you're asked to enter and treat an injured person. What do you do?",opts:["Enter immediately","Wait for police to confirm area is secured","Ask and decide"],correct:1,fb:"✅ Correct! EMS does not enter during active combat — your safety comes first."}
+  ]
+};
+
+let lang = localStorage.getItem('ems_lang') || 'ar';
+let demoStep = 0;
+
+function applyLang(l) {
+  lang = l;
+  localStorage.setItem('ems_lang', l);
+  document.documentElement.lang = l;
+  document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+  const t = T[l];
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const k = el.getAttribute('data-t');
+    if (!t[k]) return;
+    const tag = el.tagName;
+    if (['P','H2','H4','SPAN','DIV','A'].includes(tag)) el.innerHTML = t[k];
+    else el.textContent = t[k];
   });
-  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));
-  document.documentElement.lang=l==='ar'?'ar':'en';
-  document.documentElement.dir=l==='ar'?'rtl':'ltr';
-}
-document.querySelectorAll('.lang-btn').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
-setLang(lang);
-
-// ── Load dynamic content from server ──
-fetch('/api/content').then(r=>r.ok?r.json():null).then(c=>{
-  if(!c) return;
-  if(c.heroTitleRed) document.getElementById('heroTitleRed').textContent=c.heroTitleRed;
-  if(c.heroTitleBlue) document.getElementById('heroTitleBlue').textContent=c.heroTitleBlue;
-  if(c.heroSub) document.getElementById('heroSub').innerHTML=c.heroSub;
-  if(c.aboutText1) document.getElementById('aboutText1').innerHTML=c.aboutText1;
-  if(c.aboutText2) document.getElementById('aboutText2').innerHTML=c.aboutText2;
-}).catch(()=>{});
-
-// ── Scroll progress ──
-window.addEventListener('scroll',()=>{
-  const s=document.documentElement.scrollTop;
-  const h=document.documentElement.scrollHeight-window.innerHeight;
-  document.getElementById('scrollProgress').style.width=(s/h*100)+'%';
-});
-
-// ── Counters ──
-const counterObs=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(!e.isIntersecting) return;
-    const el=e.target,target=+el.dataset.target;
-    let cur=0;const step=target/60;
-    const go=()=>{cur+=step;el.textContent=cur<target?Math.floor(cur):(el.textContent=target,target);if(cur<target)requestAnimationFrame(go)};
-    go(); counterObs.unobserve(el);
-  });
-},{threshold:.5});
-document.querySelectorAll('.counter').forEach(c=>counterObs.observe(c));
-
-// ── Reveal ──
-const revObs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.12});
-document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
-
-// ── Mobile menu ──
-function toggleMobileMenu(){
-  const nl=document.querySelector('.nav-links');
-  const open=nl.style.display==='flex';
-  nl.style.cssText=open?'display:none':'display:flex;flex-direction:column;position:absolute;top:70px;left:0;right:0;background:rgba(4,5,10,.97);padding:20px;gap:16px;border-bottom:1px solid #141928;z-index:99';
-}
-document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',()=>{if(window.innerWidth<=768)document.querySelector('.nav-links').style.display='none'}));
-
-// ── Video modal ──
-const VIDEO_ID = 'YOUR_VIDEO_ID'; // ← ضع رقم الفيديو هنا
-document.getElementById('playVideoBtn').addEventListener('click',()=>{
-  document.getElementById('videoIframe').src=`https://www.youtube.com/embed/${VIDEO_ID}?autoplay=1`;
-  document.getElementById('videoModal').classList.add('open');
-});
-function closeVideo(){
-  document.getElementById('videoModal').classList.remove('open');
-  document.getElementById('videoIframe').src='';
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === l));
+  loadDemo(0);
 }
 
-// ── Interactive demo ──
-const demoData=[
-  {q:"وصلت إلى موقع حادث سير، هناك شخص واعي وآخر فاقد للوعي. ماذا تفعل أولاً؟",opts:["أنقل الشخص الواعي أولاً","أفحص الفاقد للوعي وأبدأ الإنعاش القلبي الرئوي","أنتظر وصول الإسعاف"],correct:1,fb:"✅ صحيح! في الإصابات المتعددة الأولوية للفاقدين للوعي — حالتهم حرجة وتحتاج تدخل فوري."},
-  {q:"أثناء علاج مريض بدأ يسبك ويخالف قواعد الـ RP. ماذا تفعل؟",opts:["أرد عليه بنفس الأسلوب","أتجاهله وأستمر في العلاج باحترافية","أغادر وأتركه"],correct:1,fb:"✅ أحسنت! الاحترافية إلزامية حتى في المواقف الصعبة. يمكنك لاحقاً تقديم بلاغ للمشرفين."},
-  {q:"أثناء مداهمة نشطة، طُلب منك دخول المنطقة لإسعاف مصاب. ماذا تفعل؟",opts:["أدخل فوراً لأن المريض بحاجة للمساعدة","أنتظر حتى تؤكد الشرطة تأمين المنطقة","أسأل الشرطة عن الوضع وأقرر"],correct:1,fb:"✅ صحيح! القاعدة واضحة: EMS لا يدخل أثناء الاشتباكات النشطة — سلامتك أولاً."}
-];
-let step=0;
-function loadStep(s){
-  const d=demoData[s];
-  document.getElementById('demoQ').textContent=d.q;
-  const opts=document.getElementById('demoOpts');
-  opts.innerHTML='';
-  d.opts.forEach((o,i)=>{
-    const b=document.createElement('div');
-    b.className='demo-opt';b.textContent=o;
-    b.addEventListener('click',()=>{
-      const fb=document.getElementById('demoFB');
-      if(i===d.correct){
-        fb.innerHTML=d.fb;fb.style.borderRightColor='#10b981';
-        if(s+1<demoData.length) setTimeout(()=>loadStep(s+1),2000);
-        else setTimeout(()=>{fb.innerHTML+='<br><br>🎉 أكملت جميع السيناريوهات! أنت جاهز للانضمام.'},2000);
+function loadDemo(s) {
+  demoStep = s;
+  const d = DEMO[lang][s];
+  document.getElementById('demoQ').textContent = d.q;
+  const opts = document.getElementById('demoOpts');
+  opts.innerHTML = '';
+  d.opts.forEach((o, i) => {
+    const b = document.createElement('div');
+    b.className = 'demo-opt'; b.textContent = o;
+    b.onclick = () => {
+      const fb = document.getElementById('demoFB');
+      if (i === d.correct) {
+        fb.innerHTML = d.fb; fb.style.borderRightColor = '#10b981';
+        const data = DEMO[lang];
+        if (s + 1 < data.length) setTimeout(() => loadDemo(s + 1), 2000);
+        else setTimeout(() => { fb.innerHTML += lang === 'ar' ? '<br><br>🎉 أكملت جميع السيناريوهات!' : '<br><br>🎉 You completed all scenarios!'; }, 2000);
       } else {
-        fb.innerHTML='❌ إجابة خاطئة. حاول مرة أخرى!';fb.style.borderRightColor='#ef4444';
+        fb.innerHTML = lang === 'ar' ? '❌ إجابة خاطئة. حاول مرة أخرى!' : '❌ Wrong answer. Try again!';
+        fb.style.borderRightColor = '#ef4444';
       }
-    });
+    };
     opts.appendChild(b);
   });
-  document.getElementById('demoFB').innerHTML='';
+  document.getElementById('demoFB').innerHTML = '';
 }
-loadStep(0);
 
-// ── Lightbox ──
-function openLightbox(item){
-  const img=item.querySelector('img');
-  if(!img||img.style.display==='none') return;
-  document.getElementById('lightboxImg').src=img.src;
+document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => applyLang(b.dataset.lang)));
+
+window.addEventListener('scroll', () => {
+  const s = document.documentElement.scrollTop;
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById('scrollProgress').style.width = (s / h * 100) + '%';
+});
+
+const cObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target, target = +el.dataset.target;
+    let cur = 0; const step = target / 60;
+    const go = () => { cur += step; el.textContent = cur < target ? Math.floor(cur) : target; if (cur < target) requestAnimationFrame(go); };
+    go(); cObs.unobserve(el);
+  });
+}, { threshold: .5 });
+document.querySelectorAll('.counter').forEach(c => cObs.observe(c));
+
+const rObs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }), { threshold: .12 });
+document.querySelectorAll('.reveal').forEach(el => rObs.observe(el));
+
+function toggleMobileMenu() {
+  const nl = document.querySelector('.nav-links');
+  const open = nl.style.display === 'flex';
+  nl.style.cssText = open ? 'display:none' : 'display:flex;flex-direction:column;position:absolute;top:70px;left:0;right:0;background:rgba(4,5,10,.97);padding:20px;gap:16px;border-bottom:1px solid #141928;z-index:99';
+}
+document.querySelectorAll('.nav-links a').forEach(a => a.addEventListener('click', () => { if (window.innerWidth <= 768) document.querySelector('.nav-links').style.display = 'none'; }));
+
+function openLightbox(item) {
+  const img = item.querySelector('img');
+  if (!img || img.style.display === 'none') return;
+  document.getElementById('lightboxImg').src = img.src;
   document.getElementById('lightbox').classList.add('open');
 }
-function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLightbox();closeVideo();}});
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+applyLang(lang);
 </script>
 </body>
 </html>

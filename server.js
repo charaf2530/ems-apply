@@ -1,9 +1,8 @@
-require('dotenv').config();
+require("dotenv").config();
 
 const express = require("express");
 const session = require("express-session");
 const fs = require("fs");
-const path = require("path");
 const crypto = require("crypto");
 
 const app = express();
@@ -31,7 +30,8 @@ let fetchPolyfill;
 
 const WEBHOOK = "";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "EMS_CHANGE_ME";
-const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+const SESSION_SECRET =
+  process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 
 app.use(
   session({
@@ -54,14 +54,25 @@ app.use(express.static("public"));
 function loadApps() {
   try {
     if (!fs.existsSync(DATA)) return [];
-    return JSON.parse(fs.readFileSync(DATA, "utf8"));
-  } catch {
+
+    const raw = fs.readFileSync(DATA, "utf8").trim();
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && Array.isArray(parsed.applications)) return parsed.applications;
+
+    return [];
+  } catch (err) {
+    console.error("[loadApps] error:", err.message);
     return [];
   }
 }
 
 function saveApps(apps) {
-  fs.writeFileSync(DATA, JSON.stringify(apps, null, 2), "utf8");
+  const safeApps = Array.isArray(apps) ? apps : [];
+  fs.writeFileSync(DATA, JSON.stringify(safeApps, null, 2), "utf8");
 }
 
 function appendApp(entry) {
@@ -78,13 +89,14 @@ function loadContent() {
       const def = {
         heroTitleRed: "EMS ABRAMS",
         heroTitleBlue: "EMERGENCY MEDICAL SERVICES",
-        heroSub: "فريق الخدمات الطبية الطارئة في عالم الـ Roleplay.<br/><strong>نحن لا نلعب — نحن ننقذ الأرواح.</strong>",
+        heroSub:
+          "فريق الخدمات الطبية الطارئة في عالم الـ Roleplay.<br/><strong>نحن لا نلعب — نحن ننقذ الأرواح.</strong>",
         aboutText1: "نحن فريق الخدمات الطبية الطارئة الأكثر احترافية في السيرفر.",
         aboutText2: "أعضاؤنا مدربون على أعلى مستوى من الـ Medical RP.",
         statMembers: "52",
         statMissions: "587",
       };
-      fs.writeFileSync(CONTENT_FILE, JSON.stringify(def, null, 2));
+      fs.writeFileSync(CONTENT_FILE, JSON.stringify(def, null, 2), "utf8");
       return def;
     }
     return JSON.parse(fs.readFileSync(CONTENT_FILE, "utf8"));
@@ -94,7 +106,7 @@ function loadContent() {
 }
 
 function saveContent(c) {
-  fs.writeFileSync(CONTENT_FILE, JSON.stringify(c, null, 2));
+  fs.writeFileSync(CONTENT_FILE, JSON.stringify(c, null, 2), "utf8");
 }
 
 // ---------- Visits ----------
@@ -112,7 +124,7 @@ function recordVisit() {
   v.total = (v.total || 0) + 1;
   const today = new Date().toISOString().slice(0, 10);
   v.daily[today] = (v.daily[today] || 0) + 1;
-  fs.writeFileSync(VISITS_FILE, JSON.stringify(v, null, 2));
+  fs.writeFileSync(VISITS_FILE, JSON.stringify(v, null, 2), "utf8");
   return v;
 }
 
@@ -127,27 +139,40 @@ const didBuckets = new Map();
 
 function checkRateLimit(ip, discordId) {
   const now = Date.now();
-  const ipHits = (ipBuckets.get(ip) || []).filter((t) => now - t < 10 * 60 * 1000);
+
+  const ipHits = (ipBuckets.get(ip) || []).filter(
+    (t) => now - t < 10 * 60 * 1000
+  );
   if (ipHits.length >= 2) return { blocked: true, reason: "ip" };
   ipHits.push(now);
   ipBuckets.set(ip, ipHits);
-  const didHits = (didBuckets.get(discordId) || []).filter((t) => now - t < 30 * 60 * 1000);
+
+  const didHits = (didBuckets.get(discordId) || []).filter(
+    (t) => now - t < 30 * 60 * 1000
+  );
   if (didHits.length >= 1) return { blocked: true, reason: "discord_id" };
   didHits.push(now);
   didBuckets.set(discordId, didHits);
+
   return { blocked: false };
 }
 
 function hasPendingApp(discordId) {
-  return loadApps().some((a) => a.discordUser === discordId && a.status === "pending");
+  const apps = loadApps();
+  return (
+    Array.isArray(apps) &&
+    apps.some((a) => a.discordUser === discordId && a.status === "pending")
+  );
 }
 
 function safe(s = "", max = 1024) {
-  return String(s)
-    .replace(/`/g, "'")
-    .replace(/@(everyone|here|&)/gi, "@\u200b$1")
-    .trim()
-    .slice(0, max) || "—";
+  return (
+    String(s)
+      .replace(/`/g, "'")
+      .replace(/@(everyone|here|&)/gi, "@\u200b$1")
+      .trim()
+      .slice(0, max) || "—"
+  );
 }
 
 // ---------- Validation ----------
@@ -159,11 +184,19 @@ function validate(body) {
   const errors = [];
   if (!body.fullName?.trim()) errors.push("fullName required");
   if (!body.discordUser?.trim()) errors.push("discordUser required");
-  if (!/^\d{17,19}$/.test(body.discordUser?.trim() || "")) errors.push("discordUser invalid");
-  for (const k of MCQ_KEYS) if (!body.mcq?.[k]) errors.push(`MCQ ${k} missing`);
-  for (const k of OPEN_KEYS) if (!body.open?.[k]?.trim()) errors.push(`Open ${k} empty`);
+  if (!/^\d{17,19}$/.test(body.discordUser?.trim() || "")) {
+    errors.push("discordUser invalid");
+  }
+  for (const k of MCQ_KEYS) {
+    if (!body.mcq?.[k]) errors.push(`MCQ ${k} missing`);
+  }
+  for (const k of OPEN_KEYS) {
+    if (!body.open?.[k]?.trim()) errors.push(`Open ${k} empty`);
+  }
   const score = Number(body.mcqScore ?? -1);
-  if (!Number.isInteger(score) || score < 0 || score > 5) errors.push("mcqScore invalid");
+  if (!Number.isInteger(score) || score < 0 || score > 5) {
+    errors.push("mcqScore invalid");
+  }
   return errors;
 }
 
@@ -184,42 +217,57 @@ async function postToDiscord(payload) {
 
 function buildEmbed(p, score, ref) {
   const color = score === 5 ? 0x10b981 : score >= 3 ? 0xf59e0b : 0xe8304a;
+
   return {
-    embeds: [{
-      title: "🚑 New EMS Application",
-      color,
-      timestamp: new Date().toISOString(),
-      footer: { text: `REF: ${ref}` },
-      fields: [
-        { name: "👤 RP Name", value: safe(p.fullName, 100), inline: true },
-        { name: "💬 Discord ID", value: safe(p.discordUser, 100), inline: true },
-        { name: "🧠 MCQ Score", value: `${score} / 5`, inline: true },
-        { name: "🔖 Ref", value: `\`${ref}\``, inline: true },
-        ...OPEN_KEYS.map((k) => ({
-          name: `Q${k.slice(1)}`,
-          value: safe(p.open?.[k], 800),
-          inline: false,
-        })),
-      ],
-    }],
+    embeds: [
+      {
+        title: "🚑 New EMS Application",
+        color,
+        timestamp: new Date().toISOString(),
+        footer: { text: `REF: ${ref}` },
+        fields: [
+          { name: "👤 RP Name", value: safe(p.fullName, 100), inline: true },
+          { name: "💬 Discord ID", value: safe(p.discordUser, 100), inline: true },
+          { name: "🧠 MCQ Score", value: `${score} / 5`, inline: true },
+          { name: "🔖 Ref", value: `\`${ref}\``, inline: true },
+          ...OPEN_KEYS.map((k) => ({
+            name: `Q${k.slice(1)}`,
+            value: safe(p.open?.[k], 800),
+            inline: false,
+          })),
+        ],
+      },
+    ],
   };
 }
 
 // ---------- Submit ----------
 app.post("/submit", async (req, res) => {
-  const ip = req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.socket.remoteAddress;
+  const ip =
+    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+    req.socket.remoteAddress;
   const discordId = req.body?.discordUser?.trim() || "";
 
   const limit = checkRateLimit(ip, discordId);
-  if (limit.blocked) return res.status(429).json({ error: "Too many requests. Please wait." });
-  if (hasPendingApp(discordId)) return res.status(409).json({ error: "You already have a pending application." });
+  if (limit.blocked) {
+    return res.status(429).json({ error: "Too many requests. Please wait." });
+  }
+
+  if (hasPendingApp(discordId)) {
+    return res
+      .status(409)
+      .json({ error: "You already have a pending application." });
+  }
 
   const errors = validate(req.body);
-  if (errors.length) return res.status(400).json({ error: "Validation failed", details: errors });
+  if (errors.length) {
+    return res.status(400).json({ error: "Validation failed", details: errors });
+  }
 
   const p = req.body;
   const score = MCQ_KEYS.filter((k) => p.mcq[k] === CORRECT[k]).length;
   const refCode = genRef();
+
   const entry = {
     ref: refCode,
     status: "pending",
@@ -236,7 +284,10 @@ app.post("/submit", async (req, res) => {
   try {
     const total = appendApp(entry);
     console.log(`[submit] #${total} ${entry.fullName} score:${score} ref:${refCode}`);
-   // if (WEBHOOK) postToDiscord(buildEmbed(p, score, refCode)).catch((e) => console.error("[discord]", e.message));
+
+    // إذا رجعتي webhook من بعد، حل هاد السطر
+    // if (WEBHOOK) postToDiscord(buildEmbed(p, score, refCode)).catch((e) => console.error("[discord]", e.message));
+
     res.json({ ok: true, ref: refCode });
   } catch (err) {
     console.error("[submit] error:", err.message);
@@ -244,20 +295,22 @@ app.post("/submit", async (req, res) => {
   }
 });
 
-// ---------- Admin Auth — FIXED ----------
+// ---------- Admin Auth ----------
 const loginAttempts = new Map();
 
-// Only CHECKS — does NOT record
 function checkLoginAttempts(ip) {
   const now = Date.now();
-  const attempts = (loginAttempts.get(ip) || []).filter((t) => now - t < 15 * 60 * 1000);
+  const attempts = (loginAttempts.get(ip) || []).filter(
+    (t) => now - t < 15 * 60 * 1000
+  );
   return attempts.length < 5;
 }
 
-// Only records FAILED attempts
 function recordFailedAttempt(ip) {
   const now = Date.now();
-  const attempts = (loginAttempts.get(ip) || []).filter((t) => now - t < 15 * 60 * 1000);
+  const attempts = (loginAttempts.get(ip) || []).filter(
+    (t) => now - t < 15 * 60 * 1000
+  );
   attempts.push(now);
   loginAttempts.set(ip, attempts);
 }
@@ -270,30 +323,31 @@ function requireAdmin(req, res, next) {
 app.post("/admin/login", (req, res) => {
   const ip = req.ip;
 
-  // Check BEFORE doing anything
   if (!checkLoginAttempts(ip)) {
-    return res.status(429).json({ error: "Too many failed attempts. Try again in 15 minutes." });
+    return res
+      .status(429)
+      .json({ error: "Too many failed attempts. Try again in 15 minutes." });
   }
 
   const { password, rememberMe } = req.body;
 
-  // Wrong password → record failure
   if (!password || password !== ADMIN_PASSWORD) {
     recordFailedAttempt(ip);
     return res.status(401).json({ error: "Wrong password" });
   }
 
-  // Success → NO recording, just create session
   req.session.isAdmin = true;
   req.session.cookie.maxAge = rememberMe
     ? 7 * 24 * 60 * 60 * 1000
     : 4 * 60 * 60 * 1000;
+
   res.json({ ok: true });
 });
 
 app.post("/admin/logout", (req, res) => {
-  req.session.destroy();
-  res.json({ ok: true });
+  req.session.destroy(() => {
+    res.json({ ok: true });
+  });
 });
 
 // ---------- Admin API ----------
@@ -303,30 +357,55 @@ app.get("/admin/api/stats", requireAdmin, (req, res) => {
   const pending = apps.filter((a) => a.status === "pending").length;
   const approved = apps.filter((a) => a.status === "approved").length;
   const rejected = apps.filter((a) => a.status === "rejected").length;
-  const avgScore = total ? (apps.reduce((s, a) => s + (a.mcqScore || 0), 0) / total).toFixed(2) : 0;
+  const avgScore = total
+    ? (apps.reduce((s, a) => s + (a.mcqScore || 0), 0) / total).toFixed(2)
+    : 0;
+
   const visits = loadVisits();
   const today = new Date().toISOString().slice(0, 10);
-  res.json({ total, pending, approved, rejected, avgScore, visits: { total: visits.total, today: visits.daily[today] || 0 } });
+
+  res.json({
+    total,
+    pending,
+    approved,
+    rejected,
+    avgScore,
+    visits: {
+      total: visits.total,
+      today: visits.daily[today] || 0,
+    },
+  });
 });
 
 app.get("/admin/api/apps", requireAdmin, (req, res) => {
   let apps = loadApps();
   const { search = "", status = "", page = "1", limit = "20" } = req.query;
+
   if (status) apps = apps.filter((a) => a.status === status);
+
   if (search) {
-    const q = search.toLowerCase();
-    apps = apps.filter((a) =>
-      a.fullName.toLowerCase().includes(q) ||
-      a.discordUser.toLowerCase().includes(q) ||
-      a.ref.toLowerCase().includes(q)
+    const q = String(search).toLowerCase();
+    apps = apps.filter(
+      (a) =>
+        a.fullName.toLowerCase().includes(q) ||
+        a.discordUser.toLowerCase().includes(q) ||
+        a.ref.toLowerCase().includes(q)
     );
   }
-  apps = apps.reverse();
+
+  apps = [...apps].reverse();
+
   const total = apps.length;
-  const pageNum = Math.max(1, parseInt(page));
-  const pageSize = Math.min(100, Math.max(1, parseInt(limit)));
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const pageSize = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
   const start = (pageNum - 1) * pageSize;
-  res.json({ total, page: pageNum, pageSize, items: apps.slice(start, start + pageSize) });
+
+  res.json({
+    total,
+    page: pageNum,
+    pageSize,
+    items: apps.slice(start, start + pageSize),
+  });
 });
 
 app.get("/admin/api/apps/:ref", requireAdmin, (req, res) => {
@@ -338,13 +417,19 @@ app.get("/admin/api/apps/:ref", requireAdmin, (req, res) => {
 app.patch("/admin/api/apps/:ref", requireAdmin, (req, res) => {
   const apps = loadApps();
   const idx = apps.findIndex((a) => a.ref === req.params.ref);
+
   if (idx === -1) return res.status(404).json({ error: "Not found" });
+
   const { status, notes } = req.body;
-  if (status && !["pending", "approved", "rejected"].includes(status))
+
+  if (status && !["pending", "approved", "rejected"].includes(status)) {
     return res.status(400).json({ error: "Invalid status" });
+  }
+
   if (status !== undefined) apps[idx].status = status;
   if (notes !== undefined) apps[idx].notes = safe(notes, 500);
   apps[idx].updatedAt = new Date().toISOString();
+
   saveApps(apps);
   res.json({ ok: true, app: apps[idx] });
 });
@@ -352,18 +437,27 @@ app.patch("/admin/api/apps/:ref", requireAdmin, (req, res) => {
 app.delete("/admin/api/apps/:ref", requireAdmin, (req, res) => {
   const apps = loadApps();
   const filtered = apps.filter((a) => a.ref !== req.params.ref);
-  if (filtered.length === apps.length) return res.status(404).json({ error: "Not found" });
+
+  if (filtered.length === apps.length) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
   saveApps(filtered);
   res.json({ ok: true });
 });
 
 app.get("/admin/api/export", requireAdmin, (req, res) => {
   res.setHeader("Content-Type", "application/json");
-  res.setHeader("Content-Disposition", `attachment; filename="ems-apps-${Date.now()}.json"`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="ems-apps-${Date.now()}.json"`
+  );
   res.send(JSON.stringify(loadApps(), null, 2));
 });
 
-app.get("/api/content", (req, res) => res.json(loadContent()));
+app.get("/api/content", (req, res) => {
+  res.json(loadContent());
+});
 
 app.put("/api/content", requireAdmin, (req, res) => {
   try {
@@ -450,7 +544,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 </head>
 <body>
 
-<!-- LOGIN -->
 <div class="login-wrap" id="loginWrap">
   <div class="login-box">
     <div class="login-icon">🚑</div>
@@ -463,7 +556,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
-<!-- DASHBOARD -->
 <div class="dashboard" id="dashboard">
   <div class="topbar">
     <h2>🚑 EMS Abrams — لوحة التحكم</h2>
@@ -497,7 +589,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <div class="pagination" id="pager"></div>
 </div>
 
-<!-- APP DETAIL MODAL -->
 <div class="modal-bg" id="detailModal">
   <div class="modal">
     <div class="modal-hdr">
@@ -513,7 +604,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
-<!-- CONTENT EDITOR MODAL -->
 <div class="modal-bg" id="contentModal">
   <div class="modal" style="max-width:760px">
     <div class="modal-hdr">
@@ -535,15 +625,25 @@ let debTimer;
 
 function esc(s){
   if(!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
 }
 
 async function doLogin(){
   const pw = document.getElementById('pwInput').value;
   const rem = document.getElementById('rememberMe').checked;
   document.getElementById('loginErr').textContent = '';
-  const r = await fetch('/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw,rememberMe:rem})});
+
+  const r = await fetch('/admin/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({password:pw,rememberMe:rem})
+  });
+
   const d = await r.json();
+
   if(r.ok){
     document.getElementById('loginWrap').style.display='none';
     document.getElementById('dashboard').style.display='flex';
@@ -564,7 +664,7 @@ function handleUnauth(res){
   if(res.status===401){
     document.getElementById('dashboard').style.display='none';
     document.getElementById('loginWrap').style.display='flex';
-    document.getElementById('loginErr').textContent='انتهت جلسة العمل. يرجى تسجيل الدخول مجدداً.';
+    document.getElementById('loginErr').textContent='انتهت الجلسة، سجّل الدخول من جديد.';
     return true;
   }
   return false;
@@ -574,6 +674,7 @@ async function loadStats(){
   const r = await fetch('/admin/api/stats');
   if(handleUnauth(r)) return;
   const s = await r.json();
+
   document.getElementById('statsGrid').innerHTML = \`
     <div class="stat-card"><div class="stat-val">\${s.total}</div><div class="stat-lbl">إجمالي الطلبات</div></div>
     <div class="stat-card"><div class="stat-val" style="color:#f59e0b">\${s.pending}</div><div class="stat-lbl">قيد الانتظار</div></div>
@@ -588,8 +689,10 @@ async function loadStats(){
 async function loadApps(page=1){
   const search = document.getElementById('search').value;
   const status = document.getElementById('statusFilter').value;
+
   const r = await fetch(\`/admin/api/apps?search=\${encodeURIComponent(search)}&status=\${status}&page=\${page}&limit=20\`);
   if(handleUnauth(r)) return;
+
   const data = await r.json();
   renderTable(data.items);
   renderPager(data.total, data.page, data.pageSize);
@@ -597,10 +700,12 @@ async function loadApps(page=1){
 
 function renderTable(apps){
   const tb = document.getElementById('appsBody');
+
   if(!apps.length){
-    tb.innerHTML='<tr class="empty-row"><td colspan="7">لا توجد طلبات</td></tr>';
+    tb.innerHTML = '<tr class="empty-row"><td colspan="7">لا توجد طلبات</td></tr>';
     return;
   }
+
   tb.innerHTML = apps.map(a=>\`
     <tr>
       <td style="font-family:monospace;font-size:12px">\${a.ref}</td>
@@ -611,8 +716,8 @@ function renderTable(apps){
       <td style="font-size:12px;color:#7a8ab0">\${new Date(a.submittedAt).toLocaleString('ar')}</td>
       <td class="acts">
         <button onclick="viewApp('\${a.ref}')">عرض</button>
-        \${a.status!=='approved'?'<button onclick="quickSet(\''+a.ref+'\',\'approved\')">قبول</button>':''}
-        \${a.status!=='rejected'?'<button onclick="quickSet(\''+a.ref+'\',\'rejected\')">رفض</button>':''}
+        \${a.status!=='approved'?'<button onclick="quickSet(\\''+a.ref+'\\',\\'approved\\')">قبول</button>':''}
+        \${a.status!=='rejected'?'<button onclick="quickSet(\\''+a.ref+'\\',\\'rejected\\')">رفض</button>':''}
         <button onclick="delApp('\${a.ref}')" style="color:#f87171">حذف</button>
       </td>
     </tr>
@@ -620,96 +725,161 @@ function renderTable(apps){
 }
 
 function renderPager(total, page, size){
-  const pages = Math.ceil(total/size);
-  if(pages<=1){document.getElementById('pager').innerHTML='';return;}
-  let h='';
-  if(page>1) h+=\`<button onclick="loadApps(\${page-1})">← السابق</button>\`;
-  for(let i=Math.max(1,page-2);i<=Math.min(pages,page+2);i++){
-    h+=\`<button class="\${i===page?'active':''}" onclick="loadApps(\${i})">\${i}</button>\`;
+  const pages = Math.ceil(total / size);
+  if(pages <= 1){
+    document.getElementById('pager').innerHTML = '';
+    return;
   }
-  if(page<pages) h+=\`<button onclick="loadApps(\${page+1})">التالي →</button>\`;
-  document.getElementById('pager').innerHTML=h;
+
+  let h = '';
+  if(page > 1) h += \`<button onclick="loadApps(\${page-1})">← السابق</button>\`;
+
+  for(let i=Math.max(1,page-2); i<=Math.min(pages,page+2); i++){
+    h += \`<button class="\${i===page?'active':''}" onclick="loadApps(\${i})">\${i}</button>\`;
+  }
+
+  if(page < pages) h += \`<button onclick="loadApps(\${page+1})">التالي →</button>\`;
+
+  document.getElementById('pager').innerHTML = h;
 }
 
 async function viewApp(ref){
-  const r = await fetch('/admin/api/apps/'+ref);
+  const r = await fetch('/admin/api/apps/' + ref);
   if(handleUnauth(r)) return;
+
   const a = await r.json();
   activeRef = ref;
-  document.getElementById('modalTitle').textContent = 'الطلب — '+a.ref;
-  const mcqH = MCQ_KEYS.map(k=>\`<div class="field-row"><div class="field-key">س\${k.slice(1)} (MCQ)</div><div class="field-val">\${esc(a.mcq?.[k]||'—')}</div></div>\`).join('');
-  const openH = OPEN_KEYS.map(k=>\`<div class="field-row"><div class="field-key">س\${k.slice(1)}</div><div class="field-val">\${esc(a.open?.[k]||'—')}</div></div>\`).join('');
+
+  document.getElementById('modalTitle').textContent = 'الطلب — ' + a.ref;
+
+  const mcqH = MCQ_KEYS.map(k => \`<div class="field-row"><div class="field-key">س\${k.slice(1)} (MCQ)</div><div class="field-val">\${esc(a.mcq?.[k]||'—')}</div></div>\`).join('');
+  const openH = OPEN_KEYS.map(k => \`<div class="field-row"><div class="field-key">س\${k.slice(1)}</div><div class="field-val">\${esc(a.open?.[k]||'—')}</div></div>\`).join('');
+
   document.getElementById('modalBody').innerHTML = \`
     <div class="field-row"><div class="field-key">الاسم</div><div class="field-val">\${esc(a.fullName)}</div></div>
     <div class="field-row"><div class="field-key">Discord ID</div><div class="field-val" style="font-family:monospace">\${esc(a.discordUser)}</div></div>
     <div class="field-row"><div class="field-key">الحالة</div><div class="field-val"><span class="badge badge-\${a.status}">\${a.status}</span></div></div>
     <div class="field-row"><div class="field-key">الدرجة</div><div class="field-val"><strong>\${a.mcqScore}/5</strong></div></div>
     <div class="field-row"><div class="field-key">تاريخ التقديم</div><div class="field-val">\${new Date(a.submittedAt).toLocaleString('ar')}</div></div>
-    \${mcqH}\${openH}
+    \${mcqH}
+    \${openH}
     <div style="margin-top:14px;font-size:12px;color:#7a8ab0">ملاحظات المشرف:</div>
     <textarea id="adminNotes" class="notes-ta" rows="3">\${esc(a.notes||'')}</textarea>
   \`;
+
   document.getElementById('detailModal').classList.add('open');
 }
 
 async function setStatus(status){
   if(!activeRef) return;
-  const r = await fetch('/admin/api/apps/'+activeRef,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
-  if(r.ok){closeModal('detailModal');loadStats();loadApps();}
-  else alert('فشل تحديث الحالة');
+
+  const r = await fetch('/admin/api/apps/' + activeRef, {
+    method:'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({status})
+  });
+
+  if(r.ok){
+    closeModal('detailModal');
+    loadStats();
+    loadApps();
+  } else {
+    alert('فشل تحديث الحالة');
+  }
 }
 
 async function quickSet(ref,status){
-  const r = await fetch('/admin/api/apps/'+ref,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
-  if(r.ok){loadStats();loadApps();}
-  else alert('فشل التحديث');
+  const r = await fetch('/admin/api/apps/' + ref, {
+    method:'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({status})
+  });
+
+  if(r.ok){
+    loadStats();
+    loadApps();
+  } else {
+    alert('فشل التحديث');
+  }
 }
 
 async function saveNotes(){
   if(!activeRef) return;
+
   const notes = document.getElementById('adminNotes').value;
-  const r = await fetch('/admin/api/apps/'+activeRef,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes})});
+  const r = await fetch('/admin/api/apps/' + activeRef, {
+    method:'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({notes})
+  });
+
   if(r.ok) alert('✓ تم حفظ الملاحظات');
   else alert('فشل الحفظ');
 }
 
 async function delApp(ref){
   if(!confirm('هل أنت متأكد من حذف هذا الطلب نهائياً؟')) return;
-  const r = await fetch('/admin/api/apps/'+ref,{method:'DELETE'});
-  if(r.ok){loadStats();loadApps();}
-  else alert('فشل الحذف');
+
+  const r = await fetch('/admin/api/apps/' + ref, { method:'DELETE' });
+
+  if(r.ok){
+    loadStats();
+    loadApps();
+  } else {
+    alert('فشل الحذف');
+  }
 }
 
-function exportData(){ window.open('/admin/api/export','_blank'); }
+function exportData(){
+  window.open('/admin/api/export','_blank');
+}
 
 async function openContentEditor(){
   const r = await fetch('/api/content');
   if(!r.ok) return alert('فشل تحميل المحتوى');
+
   const c = await r.json();
-  document.getElementById('contentGrid').innerHTML = Object.entries(c).map(([k,v])=>\`
+  document.getElementById('contentGrid').innerHTML = Object.entries(c).map(([k,v]) => \`
     <div class="content-field">
       <label>\${k}</label>
       <textarea id="cf_\${k}" rows="2">\${esc(v)}</textarea>
     </div>
   \`).join('');
+
   document.getElementById('contentModal').classList.add('open');
 }
 
 async function saveContent(){
-  const updated={};
-  document.querySelectorAll('#contentGrid textarea').forEach(ta=>{
+  const updated = {};
+  document.querySelectorAll('#contentGrid textarea').forEach(ta => {
     updated[ta.id.replace('cf_','')] = ta.value;
   });
-  const r = await fetch('/api/content',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});
-  if(r.ok){alert('✓ تم حفظ المحتوى');closeModal('contentModal');}
-  else alert('فشل الحفظ');
+
+  const r = await fetch('/api/content', {
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(updated)
+  });
+
+  if(r.ok){
+    alert('✓ تم حفظ المحتوى');
+    closeModal('contentModal');
+  } else {
+    alert('فشل الحفظ');
+  }
 }
 
-function closeModal(id){ document.getElementById(id).classList.remove('open'); }
-function debounce(){ clearTimeout(debTimer); debTimer=setTimeout(()=>loadApps(1),400); }
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+}
 
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){
+function debounce(){
+  clearTimeout(debTimer);
+  debTimer = setTimeout(() => loadApps(1), 400);
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
     closeModal('detailModal');
     closeModal('contentModal');
   }

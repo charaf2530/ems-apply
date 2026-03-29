@@ -3,28 +3,14 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>EMS Abrams — تقديم طلب</title>
+<title>EMS Abrams — Apply</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#04070d;--bg2:#07101c;--panel:rgba(9,19,33,.9);
-  --line:#16304f;--line2:#10253d;
-  --text:#e8f2ff;--muted:#89a4c4;--muted2:#557394;
-  --gold:#c9982a;--gold2:#f3d37e;
-  --green:#16c784;--red:#ff5d6c;--blue:#4f7cff;
-  --r:18px;--shadow:0 20px 50px rgba(0,0,0,.35);
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{
-  font-family:Inter,system-ui,sans-serif;
-  background:radial-gradient(circle at 0% 0%,rgba(201,152,42,.13),transparent 28%),
-             radial-gradient(circle at 100% 100%,rgba(79,124,255,.10),transparent 28%),
-             linear-gradient(180deg,#03060b 0%,#040a13 100%);
-  color:var(--text);min-height:100vh;overflow-x:hidden;
-}
+:root{--bg:#04070d;--line:#16304f;--line2:#10253d;--text:#e8f2ff;--muted:#89a4c4;--muted2:#557394;--gold:#c9982a;--gold2:#f3d37e;--green:#16c784;--red:#ff5d6c;--blue:#4f7cff;--shadow:0 20px 50px rgba(0,0,0,.35)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,sans-serif;background:radial-gradient(circle at 0% 0%,rgba(201,152,42,.13),transparent 28%),radial-gradient(circle at 100% 100%,rgba(79,124,255,.10),transparent 28%),linear-gradient(180deg,#03060b 0%,#040a13 100%);color:var(--text);min-height:100vh;overflow-x:hidden}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(circle at center,black 40%,transparent 95%);opacity:.18}
 @keyframes scanline{0%{transform:translateX(-20vw)}100%{transform:translateX(130vw)}}
 body::after{content:"";position:fixed;left:-25%;bottom:12%;width:40%;height:2px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);box-shadow:0 0 16px rgba(243,211,126,.65);animation:scanline 7s linear infinite;pointer-events:none;opacity:.55}
@@ -61,7 +47,7 @@ h1{font-family:"Barlow Condensed",sans-serif;font-size:clamp(40px,5vw,64px);line
 .step{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px;border-radius:18px;border:1px solid transparent;background:rgba(255,255,255,.02);transition:.2s ease}
 .step.active{border-color:rgba(201,152,42,.28);background:rgba(201,152,42,.07);transform:translateX(2px)}
 .step.done{border-color:rgba(22,199,132,.18);background:rgba(22,199,132,.06)}
-.step-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#0d1c2f;border:1px solid var(--line);font-size:18px;transition:.25s ease}
+.step-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#0d1c2f;border:1px solid var(--line);font-size:18px}
 .step.active .step-icon{box-shadow:0 0 18px rgba(201,152,42,.18);border-color:rgba(201,152,42,.35)}
 .step.done .step-icon{border-color:rgba(22,199,132,.35)}
 .step-name{font-weight:700;font-size:14px}
@@ -87,12 +73,10 @@ h1{font-family:"Barlow Condensed",sans-serif;font-size:clamp(40px,5vw,64px);line
 input[type=text],textarea{width:100%;border:none;outline:none;color:var(--text);padding:16px;border-radius:16px;background:rgba(3,8,14,.58);border:1px solid var(--line);font:inherit;transition:.18s ease}
 input[type=text]:focus,textarea:focus{border-color:rgba(201,152,42,.5);box-shadow:0 0 0 4px rgba(201,152,42,.10);transform:translateY(-1px)}
 input.valid{border-color:rgba(22,199,132,.45)}
-input.invalid,textarea.invalid{border-color:rgba(255,93,108,.45)}
+input.invalid{border-color:rgba(255,93,108,.45)}
 textarea{min-height:138px;resize:vertical;line-height:1.7}
-.help{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55}
 .status-msg{margin-top:8px;font-family:"JetBrains Mono",monospace;font-size:11px}
-.status-msg.ok{color:var(--green)}
-.status-msg.bad{color:var(--red)}
+.status-msg.ok{color:var(--green)}.status-msg.bad{color:var(--red)}.status-msg.warn{color:var(--gold2)}
 .error{display:none;margin-top:8px;font-size:12px;color:var(--red)}
 .error.show{display:block}
 details.howto{margin-top:12px;border-radius:16px;overflow:hidden;border:1px solid rgba(201,152,42,.16);background:rgba(201,152,42,.04)}
@@ -153,7 +137,6 @@ button{border:none;cursor:pointer;font:inherit}
 </style>
 </head>
 <body>
-
 <div class="lang-switcher">
   <button class="lang-btn active" data-lang="ar">عربي</button>
   <button class="lang-btn" data-lang="en">English</button>
@@ -161,7 +144,7 @@ button{border:none;cursor:pointer;font:inherit}
 
 <div class="shell">
   <div class="topbar">
-    <a class="ghost-btn" href="index.html">← رجوع للرئيسية</a>
+    <a class="ghost-btn" href="index.html" data-t="back_home">← رجوع للرئيسية</a>
     <div class="ghost-btn" style="justify-content:center">EMS RECRUITMENT PANEL</div>
   </div>
 
@@ -173,18 +156,18 @@ button{border:none;cursor:pointer;font:inherit}
           <div>
             <div class="eyebrow">Emergency Medical Services</div>
             <h1>EMS Abrams</h1>
-            <p class="sub">نموذج توظيف احترافي لخوادم الـ Roleplay. نظيف، غامر، وسريع.</p>
+            <p class="sub" data-t="hero_sub"></p>
           </div>
         </div>
       </div>
       <div class="hero-side">
-        <div class="status-pill">Accepting Applications</div>
+        <div class="status-pill" data-t="status_pill"></div>
         <div class="hero-card">
-          <div class="mini-label">معايير التقديم</div>
+          <div class="mini-label" data-t="standards_label"></div>
           <ul>
-            <li><span>•</span><div>أجب بصدق وحافظ على احترافية الـ Medical RP.</div></li>
-            <li><span>•</span><div>جميع الطلبات تُرسل مباشرة لفريق المراجعة.</div></li>
-            <li><span>•</span><div>تأكد من صحة رقم Discord قبل الإرسال.</div></li>
+            <li><span>•</span><div data-t="std1"></div></li>
+            <li><span>•</span><div data-t="std2"></div></li>
+            <li><span>•</span><div data-t="std3"></div></li>
           </ul>
         </div>
       </div>
@@ -194,209 +177,280 @@ button{border:none;cursor:pointer;font:inherit}
   <div class="layout">
     <aside class="sidebar">
       <div class="glass sidebar-box">
-        <div class="sidebar-title">متابعة التقدم</div>
+        <div class="sidebar-title" data-t="progress_title"></div>
         <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="progress-meta">
-          <span id="stepLabel">الخطوة 1 من 5</span>
-          <span id="stepPercent">20%</span>
-        </div>
+        <div class="progress-meta"><span id="stepLabel"></span><span id="stepPercent">20%</span></div>
         <div class="nav-steps" id="stepNav">
-          <div class="step active" id="step0"><div class="step-icon">📋</div><div><div class="step-name">المعلومات</div><div class="step-sub">بيانات المتقدم</div></div><div class="step-num">01</div></div>
-          <div class="step" id="step1"><div class="step-icon">❓</div><div><div class="step-name">اختبار MCQ</div><div class="step-sub">تقييم المعرفة</div></div><div class="step-num">02</div></div>
-          <div class="step" id="step2"><div class="step-icon">✍️</div><div><div class="step-name">أسئلة مفتوحة</div><div class="step-sub">إجابات تحريرية</div></div><div class="step-num">03</div></div>
-          <div class="step" id="step3"><div class="step-icon">🚨</div><div><div class="step-name">سيناريوهات</div><div class="step-sub">الحكم الميداني</div></div><div class="step-num">04</div></div>
-          <div class="step" id="step4"><div class="step-icon">👁️</div><div><div class="step-name">مراجعة</div><div class="step-sub">التحقق النهائي</div></div><div class="step-num">05</div></div>
+          <div class="step active" id="step0"><div class="step-icon">📋</div><div><div class="step-name" data-t="step1_name"></div><div class="step-sub" data-t="step1_sub"></div></div><div class="step-num">01</div></div>
+          <div class="step" id="step1"><div class="step-icon">❓</div><div><div class="step-name" data-t="step2_name"></div><div class="step-sub" data-t="step2_sub"></div></div><div class="step-num">02</div></div>
+          <div class="step" id="step2"><div class="step-icon">✍️</div><div><div class="step-name" data-t="step3_name"></div><div class="step-sub" data-t="step3_sub"></div></div><div class="step-num">03</div></div>
+          <div class="step" id="step3"><div class="step-icon">🚨</div><div><div class="step-name" data-t="step4_name"></div><div class="step-sub" data-t="step4_sub"></div></div><div class="step-num">04</div></div>
+          <div class="step" id="step4"><div class="step-icon">👁️</div><div><div class="step-name" data-t="step5_name"></div><div class="step-sub" data-t="step5_sub"></div></div><div class="step-num">05</div></div>
         </div>
-        <div class="notice"><strong>معايير Medical RP نظيفة.</strong><br>كن محترفاً، متسقاً، وأجب كما يليق بعضو في القسم.</div>
+        <div class="notice"><strong data-t="notice_title"></strong><br><span data-t="notice_body"></span></div>
       </div>
     </aside>
 
     <main class="main">
       <div class="glass main-box">
-
         <div id="draftBanner" class="draft-banner">
-          <div>📝 لديك مسودة محفوظة. استعدها واستمر من حيث توقفت.</div>
+          <div data-t="draft_msg"></div>
           <div class="draft-actions">
-            <button class="btn btn-restore" id="restoreBtn">استعادة</button>
-            <button class="btn btn-discard" id="discardBtn">تجاهل</button>
+            <button class="btn btn-restore" id="restoreBtn" data-t="restore_btn"></button>
+            <button class="btn btn-discard" id="discardBtn" data-t="discard_btn"></button>
           </div>
         </div>
 
         <div id="formWrap">
-
-          <!-- STEP 1: INFO -->
+          <!-- STEP 1 -->
           <section class="panel active" data-step="0">
             <div class="section-head">
-              <div>
-                <div class="section-kicker">Step 01</div>
-                <div class="section-title">معلومات المتقدم</div>
-                <p class="section-desc">ابدأ بالمعلومات الأساسية. استخدم اسمك الكامل في اللعبة ورقم Discord الحقيقي.</p>
-              </div>
-              <div class="badge">Identity Check</div>
+              <div><div class="section-kicker">Step 01</div><div class="section-title" data-t="s1_title"></div><p class="section-desc" data-t="s1_desc"></p></div>
+              <div class="badge" data-t="s1_badge"></div>
             </div>
             <div class="fields-2">
               <div class="field">
-                <div class="label-row"><label for="fullName">الاسم الكامل (RP)</label><span class="hint">على الأقل حرفان</span></div>
-                <input id="fullName" type="text" placeholder="مثال: Ahmed Hassan" autocomplete="off">
-                <div class="error" id="err-fullName">الرجاء إدخال اسمك في اللعبة.</div>
+                <div class="label-row"><label for="fullName" data-t="name_label"></label><span class="hint" data-t="name_hint"></span></div>
+                <input id="fullName" type="text" autocomplete="off" data-t-ph="name_ph">
+                <div class="error" id="err-fullName" data-t="err_name"></div>
               </div>
               <div class="field">
-                <div class="label-row"><label for="discordUser">رقم Discord</label><span class="hint">17–19 رقماً</span></div>
-                <input id="discordUser" type="text" placeholder="مثال: 123456789012345678" autocomplete="off">
+                <div class="label-row"><label for="discordUser" data-t="discord_label"></label><span class="hint">17–19 digits</span></div>
+                <input id="discordUser" type="text" autocomplete="off" placeholder="123456789012345678">
                 <div class="status-msg" id="discordStatus"></div>
-                <div class="error" id="err-discordUser">الرجاء إدخال رقم Discord صحيح مكون من 17–19 رقماً.</div>
+                <div class="error" id="err-discordUser" data-t="err_discord"></div>
                 <details class="howto">
-                  <summary><span>❓ كيفية الحصول على رقم Discord</span><span>فتح</span></summary>
-                  <div class="body">
-                    <ol>
-                      <li>افتح Discord (سطح المكتب أو المتصفح).</li>
-                      <li>اذهب إلى <strong>الإعدادات ← متقدم</strong>.</li>
-                      <li>فعّل <strong>وضع المطور</strong>.</li>
-                      <li>انقر بالزر الأيمن على اسمك.</li>
-                      <li>انقر <strong>نسخ معرف المستخدم</strong>.</li>
-                    </ol>
-                  </div>
+                  <summary><span data-t="howto_title"></span><span data-t="howto_open"></span></summary>
+                  <div class="body"><ol>
+                    <li data-t="howto1"></li><li data-t="howto2"></li>
+                    <li data-t="howto3"></li><li data-t="howto4"></li><li data-t="howto5"></li>
+                  </ol></div>
                 </details>
               </div>
             </div>
-            <div class="btn-row"><div></div><button class="btn btn-primary" type="button" data-next>التالي — MCQ →</button></div>
+            <div class="btn-row"><div></div><button class="btn btn-primary" type="button" data-next data-t="next_mcq"></button></div>
           </section>
 
-          <!-- STEP 2: MCQ -->
+          <!-- STEP 2 -->
           <section class="panel" data-step="1">
             <div class="section-head">
-              <div>
-                <div class="section-kicker">Step 02</div>
-                <div class="section-title">تقييم MCQ</div>
-                <p class="section-desc">اختبار معرفة سريع. اختر الإجابة الصحيحة لكل سؤال.</p>
-              </div>
-              <div class="badge">5 أسئلة</div>
+              <div><div class="section-kicker">Step 02</div><div class="section-title" data-t="s2_title"></div><p class="section-desc" data-t="s2_desc"></p></div>
+              <div class="badge" data-t="s2_badge"></div>
             </div>
             <div class="mcq-grid" id="mcqWrap"></div>
             <div class="btn-row">
-              <button class="btn btn-secondary" type="button" data-back>← رجوع</button>
-              <button class="btn btn-primary" type="button" data-next>التالي — أسئلة مفتوحة →</button>
+              <button class="btn btn-secondary" type="button" data-back data-t="back_btn"></button>
+              <button class="btn btn-primary" type="button" data-next data-t="next_open"></button>
             </div>
           </section>
 
-          <!-- STEP 3: OPEN -->
+          <!-- STEP 3 -->
           <section class="panel" data-step="2">
             <div class="section-head">
-              <div>
-                <div class="section-kicker">Step 03</div>
-                <div class="section-title">أسئلة مفتوحة</div>
-                <p class="section-desc">اكتب بوضوح. الإجابات القصيرة والمهنية أفضل من الطويلة الفارغة.</p>
-              </div>
-              <div class="badge">س6 → س8</div>
+              <div><div class="section-kicker">Step 03</div><div class="section-title" data-t="s3_title"></div><p class="section-desc" data-t="s3_desc"></p></div>
+              <div class="badge">Q6 → Q8</div>
             </div>
-            <div class="field">
-              <div class="label-row"><label for="q6">س6 — اشرح Medical RP ولماذا يجب على EMS احترامه.</label></div>
-              <textarea id="q6" placeholder="اكتب إجابتك هنا..."></textarea>
-              <div class="error" id="err-q6">هذه الإجابة مطلوبة.</div>
-            </div>
-            <div class="field">
-              <div class="label-row"><label for="q7">س7 — إذا تم إعلان وفاة شخص وهناك دليل فيديو واضح، ماذا تفعل؟</label></div>
-              <textarea id="q7" placeholder="اشرح خطواتك..."></textarea>
-              <div class="error" id="err-q7">هذه الإجابة مطلوبة.</div>
-            </div>
-            <div class="field">
-              <div class="label-row"><label for="q8">س8 — كيف تتعامل مع مريض يسبك أو يخالف قواعد الـ RP؟</label></div>
-              <textarea id="q8" placeholder="صف كيف تتعامل مع الموقف باحترافية..."></textarea>
-              <div class="error" id="err-q8">هذه الإجابة مطلوبة.</div>
-            </div>
+            <div class="field"><div class="label-row"><label for="q6" data-t="q6_label"></label></div><textarea id="q6" data-t-ph="open_ph"></textarea><div class="error" id="err-q6" data-t="err_required"></div></div>
+            <div class="field"><div class="label-row"><label for="q7" data-t="q7_label"></label></div><textarea id="q7" data-t-ph="open_ph"></textarea><div class="error" id="err-q7" data-t="err_required"></div></div>
+            <div class="field"><div class="label-row"><label for="q8" data-t="q8_label"></label></div><textarea id="q8" data-t-ph="open_ph"></textarea><div class="error" id="err-q8" data-t="err_required"></div></div>
             <div class="btn-row">
-              <button class="btn btn-secondary" type="button" data-back>← رجوع</button>
-              <button class="btn btn-primary" type="button" data-next>التالي — سيناريوهات →</button>
+              <button class="btn btn-secondary" type="button" data-back data-t="back_btn"></button>
+              <button class="btn btn-primary" type="button" data-next data-t="next_scenarios"></button>
             </div>
           </section>
 
-          <!-- STEP 4: SCENARIOS -->
+          <!-- STEP 4 -->
           <section class="panel" data-step="3">
             <div class="section-head">
-              <div>
-                <div class="section-kicker">Step 04</div>
-                <div class="section-title">سيناريوهات عملية</div>
-                <p class="section-desc">أظهر حكمك وأولوياتك تحت الضغط.</p>
-              </div>
-              <div class="badge">س9 → س10</div>
+              <div><div class="section-kicker">Step 04</div><div class="section-title" data-t="s4_title"></div><p class="section-desc" data-t="s4_desc"></p></div>
+              <div class="badge">Q9 → Q10</div>
             </div>
-            <div class="field">
-              <div class="label-row"><label for="q9">س9 — حادث سيارة: شخص واعٍ يتحدث، وآخر فاقد للوعي. من تعالج أولاً ولماذا؟</label></div>
-              <textarea id="q9" placeholder="اشرح قرارك في الفرز الطبي..."></textarea>
-              <div class="error" id="err-q9">هذه الإجابة مطلوبة.</div>
-            </div>
-            <div class="field">
-              <div class="label-row"><label for="q10">س10 — عالجت مريضاً، لكنه هرب وبدأ يتشاجر فوراً. ماذا تفعل؟</label></div>
-              <textarea id="q10" placeholder="صف ردة فعلك في هذا الموقف..."></textarea>
-              <div class="error" id="err-q10">هذه الإجابة مطلوبة.</div>
-            </div>
+            <div class="field"><div class="label-row"><label for="q9" data-t="q9_label"></label></div><textarea id="q9" data-t-ph="open_ph"></textarea><div class="error" id="err-q9" data-t="err_required"></div></div>
+            <div class="field"><div class="label-row"><label for="q10" data-t="q10_label"></label></div><textarea id="q10" data-t-ph="open_ph"></textarea><div class="error" id="err-q10" data-t="err_required"></div></div>
             <div class="btn-row">
-              <button class="btn btn-secondary" type="button" data-back>← رجوع</button>
-              <button class="btn btn-primary" type="button" data-next>مراجعة الطلب →</button>
+              <button class="btn btn-secondary" type="button" data-back data-t="back_btn"></button>
+              <button class="btn btn-primary" type="button" data-next data-t="next_review"></button>
             </div>
           </section>
 
-          <!-- STEP 5: REVIEW -->
+          <!-- STEP 5 -->
           <section class="panel" data-step="4">
             <div class="section-head">
-              <div>
-                <div class="section-kicker">Step 05</div>
-                <div class="section-title">مراجعة وإرسال</div>
-                <p class="section-desc">تحقق من كل شيء مرة أخيرة قبل إرسال طلبك.</p>
-              </div>
-              <div class="badge">الخطوة الأخيرة</div>
+              <div><div class="section-kicker">Step 05</div><div class="section-title" data-t="s5_title"></div><p class="section-desc" data-t="s5_desc"></p></div>
+              <div class="badge" data-t="s5_badge"></div>
             </div>
             <div class="review-grid" id="reviewBody"></div>
             <div class="btn-row">
-              <button class="btn btn-secondary" type="button" data-back>← تعديل</button>
-              <button class="btn btn-submit" id="submitBtn">إرسال الطلب ↗</button>
+              <button class="btn btn-secondary" type="button" data-back data-t="edit_btn"></button>
+              <button class="btn btn-submit" id="submitBtn" data-t="submit_btn"></button>
             </div>
             <div id="status"></div>
           </section>
-
-        </div><!-- /formWrap -->
+        </div>
 
         <section class="success" id="successScreen">
           <div class="success-mark">✓</div>
-          <h2>تم الإرسال</h2>
-          <p>طلبك الآن في قائمة مراجعة EMS. راقب رسائل Discord الخاصة بك وانتظر رد المراجع.</p>
-          <div class="ref-box">
-            <small>رمز المرجع</small>
-            <div class="ref-code" id="refCode">REF-EMS0000</div>
-          </div>
+          <h2 data-t="success_title"></h2>
+          <p data-t="success_desc"></p>
+          <div class="ref-box"><small data-t="ref_label"></small><div class="ref-code" id="refCode">REF-EMS0000</div></div>
         </section>
-
       </div>
     </main>
   </div>
 </div>
 
 <script>
-// ── MCQ data ──
-const MCQ = [
-  {key:'q1',q:'ما الأولوية الأولى عند وصول EMS لحادث متعدد الإصابات؟',opts:['علاج الأقرب','تقييم جميع المصابين وفرزهم حسب الخطورة','انتظار الشرطة'],correct:'B'},
-  {key:'q2',q:'متى يُسمح لـ EMS بالدخول لمنطقة فيها اشتباك ناري؟',opts:['في أي وقت لأن المريض يحتاج مساعدة','عند طلب الشرطة فقط','بعد تأكيد الشرطة تأمين المنطقة بالكامل'],correct:'C'},
-  {key:'q3',q:'ماذا تفعل إذا رفض المريض العلاج؟',opts:['تعالجه بالقوة','تحترم قراره وتوثق الموقف','تتركه فوراً'],correct:'B'},
-  {key:'q4',q:'ما معنى CPR في الإسعافات الأولية؟',opts:['إجراء جراحي متقدم','الإنعاش القلبي الرئوي','بروتوكول التواصل المشفر'],correct:'B'},
-  {key:'q5',q:'أي من التالي يُعد خرقاً صريحاً لقواعد EMS؟',opts:['التعاون مع الشرطة','حمل سلاح خلال مهمة طبية','طلب دعم إضافي'],correct:'B'},
-];
+// ══════════════════════════════════════════
+// TRANSLATIONS
+// ══════════════════════════════════════════
+const T = {
+  ar:{
+    back_home:"← رجوع للرئيسية",
+    hero_sub:"نموذج توظيف احترافي لخوادم الـ Roleplay. نظيف، غامر، وسريع.",
+    status_pill:"قبول الطلبات",standards_label:"معايير التقديم",
+    std1:"أجب بصدق وحافظ على احترافية الـ Medical RP.",
+    std2:"جميع الطلبات تُرسل مباشرة لفريق المراجعة.",
+    std3:"تأكد من صحة رقم Discord قبل الإرسال.",
+    progress_title:"متابعة التقدم",
+    step1_name:"المعلومات",step1_sub:"بيانات المتقدم",
+    step2_name:"اختبار MCQ",step2_sub:"تقييم المعرفة",
+    step3_name:"أسئلة مفتوحة",step3_sub:"إجابات تحريرية",
+    step4_name:"سيناريوهات",step4_sub:"الحكم الميداني",
+    step5_name:"مراجعة",step5_sub:"التحقق النهائي",
+    notice_title:"معايير Medical RP نظيفة.",notice_body:"كن محترفاً، متسقاً، وأجب كما يليق بعضو في القسم.",
+    draft_msg:"📝 لديك مسودة محفوظة. استعدها واستمر من حيث توقفت.",
+    restore_btn:"استعادة",discard_btn:"تجاهل",
+    s1_title:"معلومات المتقدم",s1_desc:"ابدأ بالمعلومات الأساسية. استخدم اسمك الكامل في اللعبة ورقم Discord الحقيقي.",s1_badge:"التحقق من الهوية",
+    name_label:"الاسم الكامل (RP)",name_hint:"على الأقل حرفان",name_ph:"مثال: Ahmed Hassan",
+    err_name:"الرجاء إدخال اسمك في اللعبة.",
+    discord_label:"رقم Discord",
+    err_discord:"الرجاء إدخال رقم Discord صحيح (17–19 رقماً).",
+    howto_title:"❓ كيفية الحصول على رقم Discord",howto_open:"فتح",
+    howto1:"افتح Discord (سطح المكتب أو المتصفح).",howto2:"اذهب إلى الإعدادات ← متقدم.",
+    howto3:"فعّل وضع المطور.",howto4:"انقر بالزر الأيمن على اسمك.",howto5:"انقر نسخ معرف المستخدم.",
+    next_mcq:"التالي — MCQ →",
+    s2_title:"تقييم MCQ",s2_desc:"اختبار معرفة سريع. اختر الإجابة الصحيحة لكل سؤال.",s2_badge:"5 أسئلة",
+    back_btn:"← رجوع",next_open:"التالي — أسئلة مفتوحة →",
+    s3_title:"أسئلة مفتوحة",s3_desc:"اكتب بوضوح. الإجابات القصيرة والمهنية أفضل.",
+    q6_label:"س6 — اشرح Medical RP ولماذا يجب على EMS احترامه.",
+    q7_label:"س7 — إذا تم إعلان وفاة شخص وهناك دليل فيديو، ماذا تفعل؟",
+    q8_label:"س8 — كيف تتعامل مع مريض يسبك أو يخالف قواعد الـ RP؟",
+    open_ph:"اكتب إجابتك هنا...",err_required:"هذه الإجابة مطلوبة.",
+    next_scenarios:"التالي — سيناريوهات →",
+    s4_title:"سيناريوهات عملية",s4_desc:"أظهر حكمك وأولوياتك تحت الضغط.",
+    q9_label:"س9 — حادث سيارة: واعٍ وفاقد للوعي. من تعالج أولاً ولماذا؟",
+    q10_label:"س10 — عالجت مريضاً، لكنه هرب وبدأ يتشاجر فوراً. ماذا تفعل؟",
+    next_review:"مراجعة الطلب →",
+    s5_title:"مراجعة وإرسال",s5_desc:"تحقق من كل شيء مرة أخيرة قبل إرسال طلبك.",s5_badge:"الخطوة الأخيرة",
+    edit_btn:"← تعديل",submit_btn:"إرسال الطلب ↗",
+    success_title:"تم الإرسال",success_desc:"طلبك الآن في قائمة مراجعة EMS. راقب رسائل Discord الخاصة بك.",ref_label:"رمز المرجع",
+    step_of:"من",sending:"جاري الإرسال...",err_connect:"تعذّر الاتصال بالخادم.",
+    review_info:"المعلومات الشخصية",review_mcq:"اختبار MCQ",review_open:"الأسئلة المفتوحة",
+    mcq_all:"الرجاء الإجابة على جميع أسئلة الاختيار من متعدد",
+  },
+  en:{
+    back_home:"← Back to Home",
+    hero_sub:"Professional recruitment form for Roleplay servers. Clean, immersive, and fast.",
+    status_pill:"Accepting Applications",standards_label:"Application Standards",
+    std1:"Answer honestly and keep your Medical RP professional.",
+    std2:"All submissions go directly to the EMS review team.",
+    std3:"Make sure your Discord ID is correct before submitting.",
+    progress_title:"Progress Tracker",
+    step1_name:"Info",step1_sub:"Applicant details",
+    step2_name:"MCQ Test",step2_sub:"Knowledge check",
+    step3_name:"Open Questions",step3_sub:"Written answers",
+    step4_name:"Scenarios",step4_sub:"Field judgment",
+    step5_name:"Review",step5_sub:"Final check",
+    notice_title:"Clean Medical RP Standards.",notice_body:"Be professional, stay consistent, and answer like someone who belongs in the department.",
+    draft_msg:"📝 You have a saved draft. Restore it and continue where you left off.",
+    restore_btn:"Restore",discard_btn:"Discard",
+    s1_title:"Applicant Info",s1_desc:"Start with the basics. Use your RP full name and your real Discord numeric ID.",s1_badge:"Identity Check",
+    name_label:"RP Full Name",name_hint:"Minimum 2 characters",name_ph:"e.g., John Doe",
+    err_name:"Please enter your RP name.",
+    discord_label:"Discord ID",
+    err_discord:"Please enter a valid Discord ID (17–19 digits).",
+    howto_title:"❓ How to get your Discord ID",howto_open:"Open",
+    howto1:"Open Discord (desktop or browser).",howto2:"Go to Settings → Advanced.",
+    howto3:"Enable Developer Mode.",howto4:"Right-click your username.",howto5:"Click Copy User ID.",
+    next_mcq:"Next — MCQ →",
+    s2_title:"MCQ Assessment",s2_desc:"Quick knowledge check. Choose the best answer for each question.",s2_badge:"5 Questions",
+    back_btn:"← Back",next_open:"Next — Open Questions →",
+    s3_title:"Open Questions",s3_desc:"Write clearly. Short, professional answers are better than long empty ones.",
+    q6_label:"Q6 — Explain Medical RP and why EMS must respect it.",
+    q7_label:"Q7 — If someone is declared dead with video evidence, what do you do?",
+    q8_label:"Q8 — How do you deal with a patient who insults you or breaks RP?",
+    open_ph:"Write your answer here...",err_required:"This answer is required.",
+    next_scenarios:"Next — Scenarios →",
+    s4_title:"Practical Scenarios",s4_desc:"Show your judgment and priorities under pressure.",
+    q9_label:"Q9 — Car crash: one conscious, one unconscious. Who do you treat first and why?",
+    q10_label:"Q10 — You treated a patient but they ran off and started fighting. What do you do?",
+    next_review:"Review Application →",
+    s5_title:"Review & Submit",s5_desc:"Check everything one last time before sending your application.",s5_badge:"Final Step",
+    edit_btn:"← Edit",submit_btn:"Submit Application ↗",
+    success_title:"Application Sent",success_desc:"Your application is now in the EMS review queue. Keep your Discord DMs open.",ref_label:"Reference Code",
+    step_of:"of",sending:"Sending...",err_connect:"Could not connect to server.",
+    review_info:"Personal Information",review_mcq:"MCQ Test",review_open:"Open Questions",
+    mcq_all:"Please answer all multiple choice questions",
+  }
+};
+
+const MCQ_DATA = {
+  ar:[
+    {key:'q1',q:'ما الأولوية الأولى عند وصول EMS لحادث متعدد الإصابات؟',opts:['علاج الأقرب','تقييم جميع المصابين وفرزهم حسب الخطورة','انتظار الشرطة'],correct:'B'},
+    {key:'q2',q:'متى يُسمح لـ EMS بالدخول لمنطقة فيها اشتباك ناري؟',opts:['في أي وقت لأن المريض يحتاج مساعدة','عند طلب الشرطة فقط','بعد تأكيد الشرطة تأمين المنطقة بالكامل'],correct:'C'},
+    {key:'q3',q:'ماذا تفعل إذا رفض المريض العلاج؟',opts:['تعالجه بالقوة','تحترم قراره وتوثق الموقف','تتركه فوراً'],correct:'B'},
+    {key:'q4',q:'ما معنى CPR في الإسعافات الأولية؟',opts:['إجراء جراحي متقدم','الإنعاش القلبي الرئوي','بروتوكول التواصل المشفر'],correct:'B'},
+    {key:'q5',q:'أي من التالي يُعد خرقاً صريحاً لقواعد EMS؟',opts:['التعاون مع الشرطة','حمل سلاح خلال مهمة طبية','طلب دعم إضافي'],correct:'B'},
+  ],
+  en:[
+    {key:'q1',q:'What is the top priority when EMS arrives at a multi-casualty incident?',opts:['Treat the closest person','Assess all casualties and triage by severity','Wait for police'],correct:'B'},
+    {key:'q2',q:'When is EMS allowed to enter an area with active gunfire?',opts:['Anytime because the patient needs help','Only when police request it','After police confirm the area is fully secured'],correct:'C'},
+    {key:'q3',q:'What do you do if a patient refuses treatment?',opts:['Treat them by force','Respect their decision and document the situation','Leave immediately'],correct:'B'},
+    {key:'q4',q:'What does CPR stand for in first aid?',opts:['Complex Procedural Response','Cardiopulmonary Resuscitation','Communication Protocol Response'],correct:'B'},
+    {key:'q5',q:'Which of the following is a clear violation of EMS rules?',opts:['Cooperating with police','Carrying a weapon during a medical mission','Requesting additional support'],correct:'B'},
+  ]
+};
 
 const OPEN_KEYS = ['q6','q7','q8','q9','q10'];
 let currentStep = 0;
-const TOTAL_STEPS = 5;
+const TOTAL = 5;
+let lang = localStorage.getItem('ems_apply_lang') || 'ar';
 
-// ── Init MCQ ──
-function initMCQ(){
+// ── Apply translations ──
+function applyLang(l) {
+  lang = l;
+  localStorage.setItem('ems_apply_lang', l);
+  document.documentElement.lang = l;
+  document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+  const t = T[l];
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const k = el.getAttribute('data-t');
+    if (!t[k]) return;
+    el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-t-ph]').forEach(el => {
+    const k = el.getAttribute('data-t-ph');
+    if (t[k]) el.placeholder = t[k];
+  });
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === l));
+  updateStepUI(currentStep);
+  initMCQ();
+}
+
+document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => applyLang(b.dataset.lang)));
+
+// ── MCQ ──
+function initMCQ() {
+  const mcq = MCQ_DATA[lang];
   const wrap = document.getElementById('mcqWrap');
-  wrap.innerHTML = MCQ.map((q,i)=>`
+  wrap.innerHTML = mcq.map((q, i) => `
     <div class="q-card">
       <div class="q-head">
-        <div class="q-num">س${i+1}</div>
+        <div class="q-num">${lang === 'ar' ? 'س' : 'Q'}${i+1}</div>
         <div class="q-title">${q.q}</div>
-
       </div>
       <div class="options">
-        ${q.opts.map((o,j)=>{
+        ${q.opts.map((o, j) => {
           const l = String.fromCharCode(65+j);
           return `<label class="opt">
             <input type="radio" name="${q.key}" value="${l}">
@@ -408,203 +462,175 @@ function initMCQ(){
       </div>
     </div>
   `).join('');
-  wrap.querySelectorAll('input[type=radio]').forEach(r=>{
-    r.addEventListener('change', saveDraft);
-  });
+  wrap.querySelectorAll('input[type=radio]').forEach(r => r.addEventListener('change', saveDraft));
 }
 
 // ── Navigation ──
-function gotoStep(n){
-  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i===n));
-  for(let i=0;i<TOTAL_STEPS;i++){
-    const s=document.getElementById('step'+i);
+function gotoStep(n) {
+  document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === n));
+  currentStep = n;
+  updateStepUI(n);
+  if (n === TOTAL - 1) buildReview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateStepUI(n) {
+  const t = T[lang];
+  for (let i = 0; i < TOTAL; i++) {
+    const s = document.getElementById('step'+i);
     s.classList.remove('active','done');
-    if(i===n) s.classList.add('active');
-    else if(i<n) s.classList.add('done');
+    if (i === n) s.classList.add('active');
+    else if (i < n) s.classList.add('done');
   }
-  const pct = Math.round(((n+1)/TOTAL_STEPS)*100);
-  document.getElementById('progressFill').style.width=pct+'%';
-  document.getElementById('stepPercent').textContent=pct+'%';
-  document.getElementById('stepLabel').textContent=`الخطوة ${n+1} من ${TOTAL_STEPS}`;
-  if(n===TOTAL_STEPS-1) buildReview();
-  currentStep=n;
-  window.scrollTo({top:0,behavior:'smooth'});
+  const pct = Math.round(((n+1)/TOTAL)*100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('stepPercent').textContent = pct + '%';
+  document.getElementById('stepLabel').textContent = `${lang === 'ar' ? 'الخطوة' : 'Step'} ${n+1} ${t.step_of} ${TOTAL}`;
 }
 
 // ── Validation ──
-function validateStep(step){
-  let ok=true;
-  if(step===0){
-    const name=document.getElementById('fullName').value.trim();
-    const did=document.getElementById('discordUser').value.trim();
-    showErr('err-fullName',!name||name.length<2);
-    showErr('err-discordUser',!/^\d{17,19}$/.test(did));
-    ok=name.length>=2 && /^\d{17,19}$/.test(did);
-  } else if(step===1){
-    MCQ.forEach(q=>{
-      const picked=document.querySelector(`input[name="${q.key}"]:checked`);
-      const card=document.querySelector(`input[name="${q.key}"]`)?.closest('.q-card');
-      if(card) card.style.borderColor=picked?'':'rgba(255,93,108,.4)';
-      if(!picked) ok=false;
+function validateStep(step) {
+  const t = T[lang];
+  let ok = true;
+  if (step === 0) {
+    const name = document.getElementById('fullName').value.trim();
+    const did  = document.getElementById('discordUser').value.trim();
+    showErr('err-fullName', !name || name.length < 2);
+    showErr('err-discordUser', !/^\d{17,19}$/.test(did));
+    ok = name.length >= 2 && /^\d{17,19}$/.test(did);
+  } else if (step === 1) {
+    MCQ_DATA[lang].forEach(q => {
+      const picked = document.querySelector(`input[name="${q.key}"]:checked`);
+      const card = document.querySelector(`input[name="${q.key}"]`)?.closest('.q-card');
+      if (card) card.style.borderColor = picked ? '' : 'rgba(255,93,108,.4)';
+      if (!picked) ok = false;
     });
-    if(!ok) alert('الرجاء الإجابة على جميع أسئلة الاختيار من متعدد');
-  } else if(step>=2&&step<=3){
-    const keys=step===2?['q6','q7','q8']:['q9','q10'];
-    keys.forEach(k=>{
-      const v=document.getElementById(k)?.value.trim();
-      showErr('err-'+k,!v);
-      if(!v) ok=false;
+    if (!ok) alert(t.mcq_all);
+  } else if (step >= 2 && step <= 3) {
+    const keys = step === 2 ? ['q6','q7','q8'] : ['q9','q10'];
+    keys.forEach(k => {
+      const v = document.getElementById(k)?.value.trim();
+      showErr('err-'+k, !v);
+      if (!v) ok = false;
     });
   }
   return ok;
 }
 
-function showErr(id,show){
-  document.getElementById(id)?.classList.toggle('show',show);
-}
+function showErr(id, show) { document.getElementById(id)?.classList.toggle('show', show); }
 
-document.addEventListener('click',e=>{
-  const nextBtn = e.target.closest('[data-next]');
-  const backBtn = e.target.closest('[data-back]');
-  if(nextBtn){ if(validateStep(currentStep)) gotoStep(currentStep+1); }
-  if(backBtn){ gotoStep(currentStep-1); }
+document.addEventListener('click', e => {
+  const nb = e.target.closest('[data-next]');
+  const bb = e.target.closest('[data-back]');
+  if (nb) { if (validateStep(currentStep)) gotoStep(currentStep + 1); }
+  if (bb) { gotoStep(currentStep - 1); }
 });
 
-// ── Discord ID live validation ──
-document.getElementById('discordUser').addEventListener('input',function(){
-  const v=this.value.trim();
-  const msg=document.getElementById('discordStatus');
-  if(!v){msg.textContent='';this.className='';return;}
-  if(/^\d{17,19}$/.test(v)){
-    msg.textContent='✓ رقم صحيح';msg.className='status-msg ok';this.className='valid';
-  } else if(/^\D/.test(v)){
-    msg.textContent='✗ يجب أن يحتوي أرقاماً فقط';msg.className='status-msg bad';this.className='invalid';
-  } else {
-    msg.textContent=`${v.length}/19 رقماً`;msg.className='status-msg warn';this.className='';
-  }
+// ── Discord live validation ──
+document.getElementById('discordUser').addEventListener('input', function() {
+  const v = this.value.trim();
+  const msg = document.getElementById('discordStatus');
+  if (!v) { msg.textContent = ''; this.className = ''; return; }
+  if (/^\d{17,19}$/.test(v)) { msg.textContent = '✓ Valid ID'; msg.className = 'status-msg ok'; this.className = 'valid'; }
+  else if (/\D/.test(v)) { msg.textContent = '✗ Digits only'; msg.className = 'status-msg bad'; this.className = 'invalid'; }
+  else { msg.textContent = `${v.length}/19`; msg.className = 'status-msg warn'; this.className = ''; }
 });
 
 // ── Review ──
-function buildReview(){
-  const name=document.getElementById('fullName').value.trim();
-  const did=document.getElementById('discordUser').value.trim();
-  const score=MCQ.filter(q=>{
-    const p=document.querySelector(`input[name="${q.key}"]:checked`);
-    return p&&p.value===q.correct;
-  }).length;
-  const mcqRows=MCQ.map((q,i)=>{
-    const p=document.querySelector(`input[name="${q.key}"]:checked`);
-    const correct=p&&p.value===q.correct;
-    return `<div class="review-row"><div class="review-key">س${i+1}</div><div class="review-value" style="color:${correct?'#10b981':'#f87171'}">${p?p.value:'—'} ${correct?'✓':'✗'}</div></div>`;
+function buildReview() {
+  const t = T[lang];
+  const mcq = MCQ_DATA[lang];
+  const name = document.getElementById('fullName').value.trim();
+  const did  = document.getElementById('discordUser').value.trim();
+  const mcqRows = mcq.map((q, i) => {
+    const p = document.querySelector(`input[name="${q.key}"]:checked`);
+    return `<div class="review-row"><div class="review-key">${lang==='ar'?'س':'Q'}${i+1}</div><div class="review-value">${p ? p.value : '—'}</div></div>`;
   }).join('');
-  const openRows=OPEN_KEYS.map(k=>`<div class="review-row"><div class="review-key">${k}</div><div class="review-value">${document.getElementById(k)?.value.trim()||'—'}</div></div>`).join('');
-  document.getElementById('reviewBody').innerHTML=`
-    <div class="review-card"><h3>المعلومات الشخصية</h3>
-      <div class="review-row"><div class="review-key">الاسم</div><div class="review-value">${name}</div></div>
+  const openRows = OPEN_KEYS.map(k => `<div class="review-row"><div class="review-key">${k}</div><div class="review-value">${document.getElementById(k)?.value.trim()||'—'}</div></div>`).join('');
+  document.getElementById('reviewBody').innerHTML = `
+    <div class="review-card"><h3>${t.review_info}</h3>
+      <div class="review-row"><div class="review-key">${t.name_label}</div><div class="review-value">${name}</div></div>
       <div class="review-row"><div class="review-key">Discord ID</div><div class="review-value" style="font-family:monospace">${did}</div></div>
     </div>
-    <div class="review-card"><h3>اختبار MCQ — ${score}/5</h3>${mcqRows}</div>
-    <div class="review-card"><h3>الأسئلة المفتوحة</h3>${openRows}</div>
+    <div class="review-card"><h3>${t.review_mcq}</h3>${mcqRows}</div>
+    <div class="review-card"><h3>${t.review_open}</h3>${openRows}</div>
   `;
 }
 
 // ── Submit ──
-document.getElementById('submitBtn').addEventListener('click',async()=>{
-  const btn=document.getElementById('submitBtn');
-  const statusEl=document.getElementById('status');
-  btn.disabled=true;btn.textContent='جاري الإرسال...';statusEl.textContent='';
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  const t = T[lang];
+  const btn = document.getElementById('submitBtn');
+  const statusEl = document.getElementById('status');
+  btn.disabled = true; btn.textContent = t.sending; statusEl.textContent = '';
 
-  const mcqAns={};
-  MCQ.forEach(q=>{
-    const p=document.querySelector(`input[name="${q.key}"]:checked`);
-    mcqAns[q.key]=p?p.value:'';
-  });
-  const openAns={};
-  OPEN_KEYS.forEach(k=>{openAns[k]=document.getElementById(k)?.value.trim()||'';});
-  const score=MCQ.filter(q=>mcqAns[q.key]===q.correct).length;
+  const mcq = MCQ_DATA[lang];
+  const mcqAns = {};
+  mcq.forEach(q => { const p = document.querySelector(`input[name="${q.key}"]:checked`); mcqAns[q.key] = p ? p.value : ''; });
+  const openAns = {};
+  OPEN_KEYS.forEach(k => { openAns[k] = document.getElementById(k)?.value.trim() || ''; });
+  const score = mcq.filter(q => mcqAns[q.key] === q.correct).length;
 
-  const payload={
-    fullName:document.getElementById('fullName').value.trim(),
-    discordUser:document.getElementById('discordUser').value.trim(),
-    mcq:mcqAns,open:openAns,mcqScore:score
+  const payload = {
+    fullName: document.getElementById('fullName').value.trim(),
+    discordUser: document.getElementById('discordUser').value.trim(),
+    mcq: mcqAns, open: openAns, mcqScore: score
   };
 
-  try{
-    const r=await fetch('/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    const d=await r.json();
-    if(r.ok&&d.ok){
+  try {
+    const r = await fetch('/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const d = await r.json();
+    if (r.ok && d.ok) {
       localStorage.removeItem('ems_draft');
-      document.getElementById('formWrap').style.display='none';
-      document.getElementById('refCode').textContent=d.ref;
+      document.getElementById('formWrap').style.display = 'none';
+      document.getElementById('refCode').textContent = d.ref;
       document.getElementById('successScreen').classList.add('show');
     } else {
-      statusEl.textContent=d.error||'حدث خطأ. حاول مرة أخرى.';
-      btn.disabled=false;btn.textContent='إرسال الطلب ↗';
+      statusEl.textContent = d.error || 'Error. Try again.';
+      btn.disabled = false; btn.textContent = t.submit_btn;
     }
-  }catch{
-    statusEl.textContent='تعذّر الاتصال بالخادم. تحقق من اتصالك.';
-    btn.disabled=false;btn.textContent='إرسال الطلب ↗';
+  } catch {
+    statusEl.textContent = t.err_connect;
+    btn.disabled = false; btn.textContent = t.submit_btn;
   }
 });
 
 // ── Draft ──
-function saveDraft(){
-  const draft={
-    step:currentStep,
-    fullName:document.getElementById('fullName').value,
-    discordUser:document.getElementById('discordUser').value,
-    mcq:{},open:{}
-  };
-  MCQ.forEach(q=>{const p=document.querySelector(`input[name="${q.key}"]:checked`);if(p)draft.mcq[q.key]=p.value;});
-  OPEN_KEYS.forEach(k=>{draft.open[k]=document.getElementById(k)?.value||'';});
-  localStorage.setItem('ems_draft',JSON.stringify(draft));
+function saveDraft() {
+  const mcq = MCQ_DATA[lang];
+  const draft = { step: currentStep, lang, fullName: document.getElementById('fullName').value, discordUser: document.getElementById('discordUser').value, mcq: {}, open: {} };
+  mcq.forEach(q => { const p = document.querySelector(`input[name="${q.key}"]:checked`); if (p) draft.mcq[q.key] = p.value; });
+  OPEN_KEYS.forEach(k => { draft.open[k] = document.getElementById(k)?.value || ''; });
+  localStorage.setItem('ems_draft', JSON.stringify(draft));
 }
 
-function restoreDraft(d){
-  document.getElementById('fullName').value=d.fullName||'';
-  document.getElementById('discordUser').value=d.discordUser||'';
-  Object.entries(d.mcq||{}).forEach(([k,v])=>{
-    const r=document.querySelector(`input[name="${k}"][value="${v}"]`);
-    if(r){r.checked=true;r.dispatchEvent(new Event('change'));}
+function restoreDraft(d) {
+  if (d.lang) applyLang(d.lang);
+  document.getElementById('fullName').value = d.fullName || '';
+  document.getElementById('discordUser').value = d.discordUser || '';
+  Object.entries(d.mcq || {}).forEach(([k, v]) => {
+    const r = document.querySelector(`input[name="${k}"][value="${v}"]`);
+    if (r) { r.checked = true; r.dispatchEvent(new Event('change')); }
   });
-  Object.entries(d.open||{}).forEach(([k,v])=>{
-    const el=document.getElementById(k);if(el)el.value=v;
-  });
-  gotoStep(d.step||0);
+  Object.entries(d.open || {}).forEach(([k, v]) => { const el = document.getElementById(k); if (el) el.value = v; });
+  gotoStep(d.step || 0);
 }
 
-const savedDraft=localStorage.getItem('ems_draft');
-if(savedDraft){
-  try{
-    const d=JSON.parse(savedDraft);
-    const banner=document.getElementById('draftBanner');
+const saved = localStorage.getItem('ems_draft');
+if (saved) {
+  try {
+    const d = JSON.parse(saved);
+    const banner = document.getElementById('draftBanner');
     banner.classList.add('show');
-    document.getElementById('restoreBtn').addEventListener('click',()=>{restoreDraft(d);banner.classList.remove('show');});
-    document.getElementById('discardBtn').addEventListener('click',()=>{localStorage.removeItem('ems_draft');banner.classList.remove('show');});
-  }catch{localStorage.removeItem('ems_draft');}
+    document.getElementById('restoreBtn').addEventListener('click', () => { restoreDraft(d); banner.classList.remove('show'); });
+    document.getElementById('discardBtn').addEventListener('click', () => { localStorage.removeItem('ems_draft'); banner.classList.remove('show'); });
+  } catch { localStorage.removeItem('ems_draft'); }
 }
 
-// Auto-save on input
-document.querySelectorAll('input[type=text],textarea').forEach(el=>el.addEventListener('input',saveDraft));
-
-// ── i18n ──
-const T={
-  ar:{lang:'ar',dir:'rtl'},
-  en:{lang:'en',dir:'ltr'}
-};
-let lang=localStorage.getItem('ems_apply_lang')||'ar';
-function setLang(l){
-  lang=l;localStorage.setItem('ems_apply_lang',l);
-  document.documentElement.lang=T[l].lang;
-  document.documentElement.dir=T[l].dir;
-  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));
-}
-document.querySelectorAll('.lang-btn').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
-setLang(lang);
+document.querySelectorAll('input[type=text],textarea').forEach(el => el.addEventListener('input', saveDraft));
 
 // ── Init ──
-initMCQ();
-gotoStep(0);
+applyLang(lang);
 </script>
 </body>
 </html>
