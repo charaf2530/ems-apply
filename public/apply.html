@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EMS Abrams — تقديم طلب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04070d;--bg2:#07101c;--panel:rgba(9,19,33,.9);
+  --line:#16304f;--line2:#10253d;
+  --text:#e8f2ff;--muted:#89a4c4;--muted2:#557394;
+  --gold:#c9982a;--gold2:#f3d37e;
+  --green:#16c784;--red:#ff5d6c;--blue:#4f7cff;
+  --r:18px;--shadow:0 20px 50px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:Inter,system-ui,sans-serif;
+  background:radial-gradient(circle at 0% 0%,rgba(201,152,42,.13),transparent 28%),
+             radial-gradient(circle at 100% 100%,rgba(79,124,255,.10),transparent 28%),
+             linear-gradient(180deg,#03060b 0%,#040a13 100%);
+  color:var(--text);min-height:100vh;overflow-x:hidden;
+}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(circle at center,black 40%,transparent 95%);opacity:.18}
+@keyframes scanline{0%{transform:translateX(-20vw)}100%{transform:translateX(130vw)}}
+body::after{content:"";position:fixed;left:-25%;bottom:12%;width:40%;height:2px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);box-shadow:0 0 16px rgba(243,211,126,.65);animation:scanline 7s linear infinite;pointer-events:none;opacity:.55}
+.shell{position:relative;z-index:1;width:min(1120px,calc(100% - 24px));margin:24px auto 72px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.ghost-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:14px;text-decoration:none;color:var(--muted);border:1px solid rgba(201,152,42,.18);background:rgba(5,11,20,.72);backdrop-filter:blur(14px);font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:1.4px;transition:.22s ease}
+.ghost-btn:hover{transform:translateY(-1px);color:white;border-color:rgba(243,211,126,.38)}
+.hero{position:relative;overflow:hidden;border:1px solid rgba(201,152,42,.16);border-radius:28px;background:linear-gradient(135deg,rgba(201,152,42,.08),transparent 28%),linear-gradient(180deg,rgba(9,19,33,.96),rgba(7,16,28,.88));box-shadow:var(--shadow);padding:24px;margin-bottom:18px}
+.hero::before{content:"";position:absolute;inset:auto -12% -30% auto;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(79,124,255,.18),transparent 70%);filter:blur(14px)}
+.hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:1.2fr .8fr;gap:20px;align-items:center}
+.brand-row{display:flex;align-items:center;gap:18px}
+.logo{width:78px;height:78px;border-radius:22px;display:grid;place-items:center;font-size:34px;background:linear-gradient(145deg,rgba(201,152,42,.18),rgba(79,124,255,.08));border:1px solid rgba(243,211,126,.28);box-shadow:0 0 30px rgba(201,152,42,.18);animation:floaty 3.6s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.eyebrow{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:2.6px;color:var(--gold2);text-transform:uppercase;margin-bottom:8px}
+h1{font-family:"Barlow Condensed",sans-serif;font-size:clamp(40px,5vw,64px);line-height:.92;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.sub{color:var(--muted);max-width:680px;line-height:1.65;font-size:15px}
+.hero-side{display:grid;gap:12px;justify-items:end}
+.status-pill{display:inline-flex;align-items:center;gap:10px;background:rgba(201,152,42,.10);border:1px solid rgba(201,152,42,.28);border-radius:999px;padding:12px 16px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:1.8px;color:var(--gold2);text-transform:uppercase}
+.status-pill::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--gold2);box-shadow:0 0 14px rgba(243,211,126,.85);animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.78)}}
+.hero-card{width:100%;max-width:340px;padding:16px;border-radius:20px;background:rgba(3,8,14,.52);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.06)}
+.hero-card .mini-label{font-family:"JetBrains Mono",monospace;color:var(--muted2);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.hero-card ul{display:grid;gap:10px;list-style:none}
+.hero-card li{display:flex;gap:10px;color:var(--muted);font-size:14px;line-height:1.45}
+.hero-card li span{color:var(--gold2)}
+.layout{display:grid;grid-template-columns:290px 1fr;gap:18px;align-items:start}
+.glass{background:linear-gradient(180deg,rgba(9,19,33,.88),rgba(7,16,28,.76));border:1px solid rgba(255,255,255,.06);border-radius:24px;backdrop-filter:blur(14px);box-shadow:var(--shadow)}
+.sidebar-box,.main-box{padding:20px}
+.sidebar-title{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:14px}
+.progress-wrap{height:12px;background:#071220;border:1px solid var(--line2);border-radius:999px;overflow:hidden;margin-bottom:16px}
+.progress-fill{height:100%;width:20%;background:linear-gradient(90deg,#9f7720,var(--gold),var(--gold2));box-shadow:0 0 22px rgba(201,152,42,.44);transition:width .35s ease}
+.progress-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-bottom:18px}
+.nav-steps{display:grid;gap:10px}
+.step{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px;border-radius:18px;border:1px solid transparent;background:rgba(255,255,255,.02);transition:.2s ease}
+.step.active{border-color:rgba(201,152,42,.28);background:rgba(201,152,42,.07);transform:translateX(2px)}
+.step.done{border-color:rgba(22,199,132,.18);background:rgba(22,199,132,.06)}
+.step-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#0d1c2f;border:1px solid var(--line);font-size:18px;transition:.25s ease}
+.step.active .step-icon{box-shadow:0 0 18px rgba(201,152,42,.18);border-color:rgba(201,152,42,.35)}
+.step.done .step-icon{border-color:rgba(22,199,132,.35)}
+.step-name{font-weight:700;font-size:14px}
+.step-sub{color:var(--muted2);font-size:12px;margin-top:3px}
+.step-num{font-family:"JetBrains Mono",monospace;color:var(--muted2);font-size:11px}
+.notice{margin-top:18px;padding:14px;border-radius:18px;border:1px solid rgba(79,124,255,.18);background:linear-gradient(180deg,rgba(79,124,255,.08),rgba(79,124,255,.03));color:var(--muted);line-height:1.6;font-size:14px}
+.notice strong{color:white}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.section-kicker{display:inline-flex;align-items:center;gap:8px;margin-bottom:8px;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:2px;color:var(--gold2);text-transform:uppercase}
+.section-kicker::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px rgba(201,152,42,.6)}
+.section-title{font-family:"Barlow Condensed",sans-serif;font-size:34px;line-height:1;letter-spacing:.5px;text-transform:uppercase}
+.section-desc{color:var(--muted);font-size:14px;line-height:1.65;max-width:720px}
+.badge{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1.5px;color:var(--muted2);white-space:nowrap}
+.panel{display:none}
+.panel.active{display:block;animation:fadeUp .28s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.fields-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.label-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+.label-row label{font-size:12px;font-weight:700;letter-spacing:.8px;color:#b5c8e1;text-transform:uppercase;display:block}
+.hint{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted2)}
+input[type=text],textarea{width:100%;border:none;outline:none;color:var(--text);padding:16px;border-radius:16px;background:rgba(3,8,14,.58);border:1px solid var(--line);font:inherit;transition:.18s ease}
+input[type=text]:focus,textarea:focus{border-color:rgba(201,152,42,.5);box-shadow:0 0 0 4px rgba(201,152,42,.10);transform:translateY(-1px)}
+input.valid{border-color:rgba(22,199,132,.45)}
+input.invalid,textarea.invalid{border-color:rgba(255,93,108,.45)}
+textarea{min-height:138px;resize:vertical;line-height:1.7}
+.help{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55}
+.status-msg{margin-top:8px;font-family:"JetBrains Mono",monospace;font-size:11px}
+.status-msg.ok{color:var(--green)}
+.status-msg.bad{color:var(--red)}
+.error{display:none;margin-top:8px;font-size:12px;color:var(--red)}
+.error.show{display:block}
+details.howto{margin-top:12px;border-radius:16px;overflow:hidden;border:1px solid rgba(201,152,42,.16);background:rgba(201,152,42,.04)}
+details.howto summary{cursor:pointer;list-style:none;padding:14px 16px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--gold2);display:flex;justify-content:space-between;align-items:center}
+details.howto[open] summary{border-bottom:1px solid rgba(201,152,42,.12)}
+details.howto .body{padding:14px 18px;color:var(--muted);line-height:1.7;font-size:14px}
+details.howto ol{padding-left:18px}
+.mcq-grid{display:grid;gap:14px}
+.q-card{padding:16px;border-radius:20px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01))}
+.q-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.q-num{padding:7px 10px;border-radius:12px;background:rgba(201,152,42,.10);border:1px solid rgba(201,152,42,.18);font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--gold2);white-space:nowrap}
+.q-title{font-size:15px;line-height:1.55;color:#d6e6f7;flex:1}
+.options{display:grid;gap:10px}
+.opt{display:grid;grid-template-columns:auto auto 1fr;gap:12px;align-items:center;padding:14px;border-radius:16px;border:1px solid var(--line);background:rgba(3,8,14,.4);cursor:pointer;transition:.2s ease;text-transform:none;letter-spacing:normal;font-size:14px;font-weight:400;color:var(--text)}
+.opt:hover{border-color:rgba(201,152,42,.28);transform:translateY(-1px)}
+.opt input{display:none}
+.radio{width:20px;height:20px;border-radius:50%;border:2px solid #36506e;display:grid;place-items:center}
+.radio::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--gold2);transform:scale(0);transition:.16s ease}
+.letter{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--muted2)}
+.opt-text{font-size:14px;color:#dbe9f6;line-height:1.45}
+.opt:has(input:checked){border-color:rgba(201,152,42,.42);background:rgba(201,152,42,.07)}
+.opt:has(input:checked) .radio{border-color:var(--gold2);background:rgba(201,152,42,.14)}
+.opt:has(input:checked) .radio::after{transform:scale(1)}
+.draft-banner{display:none;margin-bottom:16px;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:18px;border:1px solid rgba(201,152,42,.18);background:rgba(201,152,42,.06);color:var(--gold2);font-size:14px}
+.draft-banner.show{display:flex}
+.draft-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn-row{display:flex;justify-content:space-between;gap:12px;margin-top:18px;flex-wrap:wrap}
+button{border:none;cursor:pointer;font:inherit}
+.btn{min-height:52px;padding:0 22px;border-radius:16px;font-weight:800;letter-spacing:.4px;transition:.2s ease;position:relative;overflow:hidden}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-secondary{color:#d0e0f1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)}
+.btn-primary,.btn-submit,.btn-restore{color:#1c1402;background:linear-gradient(135deg,var(--gold),var(--gold2));box-shadow:0 10px 28px rgba(201,152,42,.24)}
+.btn-primary::after,.btn-submit::after,.btn-restore::after{content:"";position:absolute;top:0;left:-120%;width:70%;height:100%;background:linear-gradient(115deg,transparent,rgba(255,255,255,.55),transparent);transition:.55s ease}
+.btn-primary:hover::after,.btn-submit:hover::after,.btn-restore:hover::after{left:150%}
+.btn-discard{color:#c8d7e8;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.review-grid{display:grid;gap:16px}
+.review-card{padding:16px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)}
+.review-card h3{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--gold2);margin-bottom:12px}
+.review-row{display:grid;grid-template-columns:140px 1fr;gap:12px;padding:10px 0;border-top:1px solid rgba(255,255,255,.05)}
+.review-row:first-of-type{border-top:none;padding-top:0}
+.review-key{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--muted2)}
+.review-value{font-size:14px;color:#dce9f6;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+#status{margin-top:14px;min-height:22px;font-size:14px;color:var(--red)}
+.success{display:none;text-align:center;padding:48px 24px 40px}
+.success.show{display:block;animation:fadeUp .35s ease}
+.success-mark{width:110px;height:110px;margin:0 auto 20px;border-radius:50%;display:grid;place-items:center;font-size:42px;color:#102010;background:radial-gradient(circle at 30% 30%,#d8f8e8,#16c784);box-shadow:0 0 0 14px rgba(22,199,132,.08),0 0 40px rgba(22,199,132,.18)}
+.success h2{font-family:"Barlow Condensed",sans-serif;font-size:54px;line-height:.95;text-transform:uppercase;margin-bottom:10px}
+.success p{max-width:560px;margin:0 auto;color:var(--muted);line-height:1.7}
+.ref-box{margin:22px auto 0;max-width:360px;padding:18px;border-radius:20px;border:1px solid rgba(201,152,42,.18);background:rgba(201,152,42,.05)}
+.ref-box small{display:block;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:10px}
+.ref-code{font-family:"JetBrains Mono",monospace;font-size:20px;color:var(--gold2);letter-spacing:3px}
+.lang-switcher{position:fixed;bottom:20px;left:20px;z-index:1000;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);border-radius:40px;padding:8px 12px;display:flex;gap:8px;border:1px solid rgba(255,255,255,.1)}
+.lang-btn{background:none;border:none;color:var(--muted2);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;padding:4px 8px;border-radius:20px;transition:.2s}
+.lang-btn.active{background:var(--gold);color:#1c1402}
+@media(max-width:980px){.hero-grid,.layout{grid-template-columns:1fr}.hero-side{justify-items:start}.hero-card{max-width:none}}
+@media(max-width:640px){.shell{width:calc(100% - 14px)}.hero,.main-box,.sidebar-box{padding:16px}.fields-2{grid-template-columns:1fr}.section-title{font-size:28px}h1{font-size:42px}.review-row{grid-template-columns:1fr}.btn{width:100%}.btn-row>*{flex:1 1 100%}.topbar{flex-direction:column;align-items:stretch}}
+</style>
+</head>
+<body>
+
+<div class="lang-switcher">
+  <button class="lang-btn active" data-lang="ar">عربي</button>
+  <button class="lang-btn" data-lang="en">English</button>
+</div>
+
+<div class="shell">
+  <div class="topbar">
+    <a class="ghost-btn" href="index.html">← رجوع للرئيسية</a>
+    <div class="ghost-btn" style="justify-content:center">EMS RECRUITMENT PANEL</div>
+  </div>
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="brand-row">
+          <div class="logo">🚑</div>
+          <div>
+            <div class="eyebrow">Emergency Medical Services</div>
+            <h1>EMS Abrams</h1>
+            <p class="sub">نموذج توظيف احترافي لخوادم الـ Roleplay. نظيف، غامر، وسريع.</p>
+          </div>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div class="status-pill">Accepting Applications</div>
+        <div class="hero-card">
+          <div class="mini-label">معايير التقديم</div>
+          <ul>
+            <li><span>•</span><div>أجب بصدق وحافظ على احترافية الـ Medical RP.</div></li>
+            <li><span>•</span><div>جميع الطلبات تُرسل مباشرة لفريق المراجعة.</div></li>
+            <li><span>•</span><div>تأكد من صحة رقم Discord قبل الإرسال.</div></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="glass sidebar-box">
+        <div class="sidebar-title">متابعة التقدم</div>
+        <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-meta">
+          <span id="stepLabel">الخطوة 1 من 5</span>
+          <span id="stepPercent">20%</span>
+        </div>
+        <div class="nav-steps" id="stepNav">
+          <div class="step active" id="step0"><div class="step-icon">📋</div><div><div class="step-name">المعلومات</div><div class="step-sub">بيانات المتقدم</div></div><div class="step-num">01</div></div>
+          <div class="step" id="step1"><div class="step-icon">❓</div><div><div class="step-name">اختبار MCQ</div><div class="step-sub">تقييم المعرفة</div></div><div class="step-num">02</div></div>
+          <div class="step" id="step2"><div class="step-icon">✍️</div><div><div class="step-name">أسئلة مفتوحة</div><div class="step-sub">إجابات تحريرية</div></div><div class="step-num">03</div></div>
+          <div class="step" id="step3"><div class="step-icon">🚨</div><div><div class="step-name">سيناريوهات</div><div class="step-sub">الحكم الميداني</div></div><div class="step-num">04</div></div>
+          <div class="step" id="step4"><div class="step-icon">👁️</div><div><div class="step-name">مراجعة</div><div class="step-sub">التحقق النهائي</div></div><div class="step-num">05</div></div>
+        </div>
+        <div class="notice"><strong>معايير Medical RP نظيفة.</strong><br>كن محترفاً، متسقاً، وأجب كما يليق بعضو في القسم.</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="glass main-box">
+
+        <div id="draftBanner" class="draft-banner">
+          <div>📝 لديك مسودة محفوظة. استعدها واستمر من حيث توقفت.</div>
+          <div class="draft-actions">
+            <button class="btn btn-restore" id="restoreBtn">استعادة</button>
+            <button class="btn btn-discard" id="discardBtn">تجاهل</button>
+          </div>
+        </div>
+
+        <div id="formWrap">
+
+          <!-- STEP 1: INFO -->
+          <section class="panel active" data-step="0">
+            <div class="section-head">
+              <div>
+                <div class="section-kicker">Step 01</div>
+                <div class="section-title">معلومات المتقدم</div>
+                <p class="section-desc">ابدأ بالمعلومات الأساسية. استخدم اسمك الكامل في اللعبة ورقم Discord الحقيقي.</p>
+              </div>
+              <div class="badge">Identity Check</div>
+            </div>
+            <div class="fields-2">
+              <div class="field">
+                <div class="label-row"><label for="fullName">الاسم الكامل (RP)</label><span class="hint">على الأقل حرفان</span></div>
+                <input id="fullName" type="text" placeholder="مثال: Ahmed Hassan" autocomplete="off">
+                <div class="error" id="err-fullName">الرجاء إدخال اسمك في اللعبة.</div>
+              </div>
+              <div class="field">
+                <div class="label-row"><label for="discordUser">رقم Discord</label><span class="hint">17–19 رقماً</span></div>
+                <input id="discordUser" type="text" placeholder="مثال: 123456789012345678" autocomplete="off">
+                <div class="status-msg" id="discordStatus"></div>
+                <div class="error" id="err-discordUser">الرجاء إدخال رقم Discord صحيح مكون من 17–19 رقماً.</div>
+                <details class="howto">
+                  <summary><span>❓ كيفية الحصول على رقم Discord</span><span>فتح</span></summary>
+                  <div class="body">
+                    <ol>
+                      <li>افتح Discord (سطح المكتب أو المتصفح).</li>
+                      <li>اذهب إلى <strong>الإعدادات ← متقدم</strong>.</li>
+                      <li>فعّل <strong>وضع المطور</strong>.</li>
+                      <li>انقر بالزر الأيمن على اسمك.</li>
+                      <li>انقر <strong>نسخ معرف المستخدم</strong>.</li>
+                    </ol>
+                  </div>
+                </details>
+              </div>
+            </div>
+            <div class="btn-row"><div></div><button class="btn btn-primary" type="button" data-next>التالي — MCQ →</button></div>
+          </section>
+
+          <!-- STEP 2: MCQ -->
+          <section class="panel" data-step="1">
+            <div class="section-head">
+              <div>
+                <div class="section-kicker">Step 02</div>
+                <div class="section-title">تقييم MCQ</div>
+                <p class="section-desc">اختبار معرفة سريع. اختر الإجابة الصحيحة لكل سؤال.</p>
+              </div>
+              <div class="badge">5 أسئلة</div>
+            </div>
+            <div class="mcq-grid" id="mcqWrap"></div>
+            <div class="btn-row">
+              <button class="btn btn-secondary" type="button" data-back>← رجوع</button>
+              <button class="btn btn-primary" type="button" data-next>التالي — أسئلة مفتوحة →</button>
+            </div>
+          </section>
+
+          <!-- STEP 3: OPEN -->
+          <section class="panel" data-step="2">
+            <div class="section-head">
+              <div>
+                <div class="section-kicker">Step 03</div>
+                <div class="section-title">أسئلة مفتوحة</div>
+                <p class="section-desc">اكتب بوضوح. الإجابات القصيرة والمهنية أفضل من الطويلة الفارغة.</p>
+              </div>
+              <div class="badge">س6 → س8</div>
+            </div>
+            <div class="field">
+              <div class="label-row"><label for="q6">س6 — اشرح Medical RP ولماذا يجب على EMS احترامه.</label></div>
+              <textarea id="q6" placeholder="اكتب إجابتك هنا..."></textarea>
+              <div class="error" id="err-q6">هذه الإجابة مطلوبة.</div>
+            </div>
+            <div class="field">
+              <div class="label-row"><label for="q7">س7 — إذا تم إعلان وفاة شخص وهناك دليل فيديو واضح، ماذا تفعل؟</label></div>
+              <textarea id="q7" placeholder="اشرح خطواتك..."></textarea>
+              <div class="error" id="err-q7">هذه الإجابة مطلوبة.</div>
+            </div>
+            <div class="field">
+              <div class="label-row"><label for="q8">س8 — كيف تتعامل مع مريض يسبك أو يخالف قواعد الـ RP؟</label></div>
+              <textarea id="q8" placeholder="صف كيف تتعامل مع الموقف باحترافية..."></textarea>
+              <div class="error" id="err-q8">هذه الإجابة مطلوبة.</div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-secondary" type="button" data-back>← رجوع</button>
+              <button class="btn btn-primary" type="button" data-next>التالي — سيناريوهات →</button>
+            </div>
+          </section>
+
+          <!-- STEP 4: SCENARIOS -->
+          <section class="panel" data-step="3">
+            <div class="section-head">
+              <div>
+                <div class="section-kicker">Step 04</div>
+                <div class="section-title">سيناريوهات عملية</div>
+                <p class="section-desc">أظهر حكمك وأولوياتك تحت الضغط.</p>
+              </div>
+              <div class="badge">س9 → س10</div>
+            </div>
+            <div class="field">
+              <div class="label-row"><label for="q9">س9 — حادث سيارة: شخص واعٍ يتحدث، وآخر فاقد للوعي. من تعالج أولاً ولماذا؟</label></div>
+              <textarea id="q9" placeholder="اشرح قرارك في الفرز الطبي..."></textarea>
+              <div class="error" id="err-q9">هذه الإجابة مطلوبة.</div>
+            </div>
+            <div class="field">
+              <div class="label-row"><label for="q10">س10 — عالجت مريضاً، لكنه هرب وبدأ يتشاجر فوراً. ماذا تفعل؟</label></div>
+              <textarea id="q10" placeholder="صف ردة فعلك في هذا الموقف..."></textarea>
+              <div class="error" id="err-q10">هذه الإجابة مطلوبة.</div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-secondary" type="button" data-back>← رجوع</button>
+              <button class="btn btn-primary" type="button" data-next>مراجعة الطلب →</button>
+            </div>
+          </section>
+
+          <!-- STEP 5: REVIEW -->
+          <section class="panel" data-step="4">
+            <div class="section-head">
+              <div>
+                <div class="section-kicker">Step 05</div>
+                <div class="section-title">مراجعة وإرسال</div>
+                <p class="section-desc">تحقق من كل شيء مرة أخيرة قبل إرسال طلبك.</p>
+              </div>
+              <div class="badge">الخطوة الأخيرة</div>
+            </div>
+            <div class="review-grid" id="reviewBody"></div>
+            <div class="btn-row">
+              <button class="btn btn-secondary" type="button" data-back>← تعديل</button>
+              <button class="btn btn-submit" id="submitBtn">إرسال الطلب ↗</button>
+            </div>
+            <div id="status"></div>
+          </section>
+
+        </div><!-- /formWrap -->
+
+        <section class="success" id="successScreen">
+          <div class="success-mark">✓</div>
+          <h2>تم الإرسال</h2>
+          <p>طلبك الآن في قائمة مراجعة EMS. راقب رسائل Discord الخاصة بك وانتظر رد المراجع.</p>
+          <div class="ref-box">
+            <small>رمز المرجع</small>
+            <div class="ref-code" id="refCode">REF-EMS0000</div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+// ── MCQ data ──
+const MCQ = [
+  {key:'q1',q:'ما الأولوية الأولى عند وصول EMS لحادث متعدد الإصابات؟',opts:['علاج الأقرب','تقييم جميع المصابين وفرزهم حسب الخطورة','انتظار الشرطة'],correct:'B'},
+  {key:'q2',q:'متى يُسمح لـ EMS بالدخول لمنطقة فيها اشتباك ناري؟',opts:['في أي وقت لأن المريض يحتاج مساعدة','عند طلب الشرطة فقط','بعد تأكيد الشرطة تأمين المنطقة بالكامل'],correct:'C'},
+  {key:'q3',q:'ماذا تفعل إذا رفض المريض العلاج؟',opts:['تعالجه بالقوة','تحترم قراره وتوثق الموقف','تتركه فوراً'],correct:'B'},
+  {key:'q4',q:'ما معنى CPR في الإسعافات الأولية؟',opts:['إجراء جراحي متقدم','الإنعاش القلبي الرئوي','بروتوكول التواصل المشفر'],correct:'B'},
+  {key:'q5',q:'أي من التالي يُعد خرقاً صريحاً لقواعد EMS؟',opts:['التعاون مع الشرطة','حمل سلاح خلال مهمة طبية','طلب دعم إضافي'],correct:'B'},
+];
+
+const OPEN_KEYS = ['q6','q7','q8','q9','q10'];
+let currentStep = 0;
+const TOTAL_STEPS = 5;
+
+// ── Init MCQ ──
+function initMCQ(){
+  const wrap = document.getElementById('mcqWrap');
+  wrap.innerHTML = MCQ.map((q,i)=>`
+    <div class="q-card">
+      <div class="q-head">
+        <div class="q-num">س${i+1}</div>
+        <div class="q-title">${q.q}</div>
+
+      </div>
+      <div class="options">
+        ${q.opts.map((o,j)=>{
+          const l = String.fromCharCode(65+j);
+          return `<label class="opt">
+            <input type="radio" name="${q.key}" value="${l}">
+            <div class="radio"></div>
+            <div class="letter">${l}</div>
+            <div class="opt-text">${o}</div>
+          </label>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('input[type=radio]').forEach(r=>{
+    r.addEventListener('change', saveDraft);
+  });
+}
+
+// ── Navigation ──
+function gotoStep(n){
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i===n));
+  for(let i=0;i<TOTAL_STEPS;i++){
+    const s=document.getElementById('step'+i);
+    s.classList.remove('active','done');
+    if(i===n) s.classList.add('active');
+    else if(i<n) s.classList.add('done');
+  }
+  const pct = Math.round(((n+1)/TOTAL_STEPS)*100);
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('stepPercent').textContent=pct+'%';
+  document.getElementById('stepLabel').textContent=`الخطوة ${n+1} من ${TOTAL_STEPS}`;
+  if(n===TOTAL_STEPS-1) buildReview();
+  currentStep=n;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── Validation ──
+function validateStep(step){
+  let ok=true;
+  if(step===0){
+    const name=document.getElementById('fullName').value.trim();
+    const did=document.getElementById('discordUser').value.trim();
+    showErr('err-fullName',!name||name.length<2);
+    showErr('err-discordUser',!/^\d{17,19}$/.test(did));
+    ok=name.length>=2 && /^\d{17,19}$/.test(did);
+  } else if(step===1){
+    MCQ.forEach(q=>{
+      const picked=document.querySelector(`input[name="${q.key}"]:checked`);
+      const card=document.querySelector(`input[name="${q.key}"]`)?.closest('.q-card');
+      if(card) card.style.borderColor=picked?'':'rgba(255,93,108,.4)';
+      if(!picked) ok=false;
+    });
+    if(!ok) alert('الرجاء الإجابة على جميع أسئلة الاختيار من متعدد');
+  } else if(step>=2&&step<=3){
+    const keys=step===2?['q6','q7','q8']:['q9','q10'];
+    keys.forEach(k=>{
+      const v=document.getElementById(k)?.value.trim();
+      showErr('err-'+k,!v);
+      if(!v) ok=false;
+    });
+  }
+  return ok;
+}
+
+function showErr(id,show){
+  document.getElementById(id)?.classList.toggle('show',show);
+}
+
+document.addEventListener('click',e=>{
+  const nextBtn = e.target.closest('[data-next]');
+  const backBtn = e.target.closest('[data-back]');
+  if(nextBtn){ if(validateStep(currentStep)) gotoStep(currentStep+1); }
+  if(backBtn){ gotoStep(currentStep-1); }
+});
+
+// ── Discord ID live validation ──
+document.getElementById('discordUser').addEventListener('input',function(){
+  const v=this.value.trim();
+  const msg=document.getElementById('discordStatus');
+  if(!v){msg.textContent='';this.className='';return;}
+  if(/^\d{17,19}$/.test(v)){
+    msg.textContent='✓ رقم صحيح';msg.className='status-msg ok';this.className='valid';
+  } else if(/^\D/.test(v)){
+    msg.textContent='✗ يجب أن يحتوي أرقاماً فقط';msg.className='status-msg bad';this.className='invalid';
+  } else {
+    msg.textContent=`${v.length}/19 رقماً`;msg.className='status-msg warn';this.className='';
+  }
+});
+
+// ── Review ──
+function buildReview(){
+  const name=document.getElementById('fullName').value.trim();
+  const did=document.getElementById('discordUser').value.trim();
+  const score=MCQ.filter(q=>{
+    const p=document.querySelector(`input[name="${q.key}"]:checked`);
+    return p&&p.value===q.correct;
+  }).length;
+  const mcqRows=MCQ.map((q,i)=>{
+    const p=document.querySelector(`input[name="${q.key}"]:checked`);
+    const correct=p&&p.value===q.correct;
+    return `<div class="review-row"><div class="review-key">س${i+1}</div><div class="review-value" style="color:${correct?'#10b981':'#f87171'}">${p?p.value:'—'} ${correct?'✓':'✗'}</div></div>`;
+  }).join('');
+  const openRows=OPEN_KEYS.map(k=>`<div class="review-row"><div class="review-key">${k}</div><div class="review-value">${document.getElementById(k)?.value.trim()||'—'}</div></div>`).join('');
+  document.getElementById('reviewBody').innerHTML=`
+    <div class="review-card"><h3>المعلومات الشخصية</h3>
+      <div class="review-row"><div class="review-key">الاسم</div><div class="review-value">${name}</div></div>
+      <div class="review-row"><div class="review-key">Discord ID</div><div class="review-value" style="font-family:monospace">${did}</div></div>
+    </div>
+    <div class="review-card"><h3>اختبار MCQ — ${score}/5</h3>${mcqRows}</div>
+    <div class="review-card"><h3>الأسئلة المفتوحة</h3>${openRows}</div>
+  `;
+}
+
+// ── Submit ──
+document.getElementById('submitBtn').addEventListener('click',async()=>{
+  const btn=document.getElementById('submitBtn');
+  const statusEl=document.getElementById('status');
+  btn.disabled=true;btn.textContent='جاري الإرسال...';statusEl.textContent='';
+
+  const mcqAns={};
+  MCQ.forEach(q=>{
+    const p=document.querySelector(`input[name="${q.key}"]:checked`);
+    mcqAns[q.key]=p?p.value:'';
+  });
+  const openAns={};
+  OPEN_KEYS.forEach(k=>{openAns[k]=document.getElementById(k)?.value.trim()||'';});
+  const score=MCQ.filter(q=>mcqAns[q.key]===q.correct).length;
+
+  const payload={
+    fullName:document.getElementById('fullName').value.trim(),
+    discordUser:document.getElementById('discordUser').value.trim(),
+    mcq:mcqAns,open:openAns,mcqScore:score
+  };
+
+  try{
+    const r=await fetch('http://localhost:3000/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d=await r.json();
+    if(r.ok&&d.ok){
+      localStorage.removeItem('ems_draft');
+      document.getElementById('formWrap').style.display='none';
+      document.getElementById('refCode').textContent=d.ref;
+      document.getElementById('successScreen').classList.add('show');
+    } else {
+      statusEl.textContent=d.error||'حدث خطأ. حاول مرة أخرى.';
+      btn.disabled=false;btn.textContent='إرسال الطلب ↗';
+    }
+  }catch{
+    statusEl.textContent='تعذّر الاتصال بالخادم. تحقق من اتصالك.';
+    btn.disabled=false;btn.textContent='إرسال الطلب ↗';
+  }
+});
+
+// ── Draft ──
+function saveDraft(){
+  const draft={
+    step:currentStep,
+    fullName:document.getElementById('fullName').value,
+    discordUser:document.getElementById('discordUser').value,
+    mcq:{},open:{}
+  };
+  MCQ.forEach(q=>{const p=document.querySelector(`input[name="${q.key}"]:checked`);if(p)draft.mcq[q.key]=p.value;});
+  OPEN_KEYS.forEach(k=>{draft.open[k]=document.getElementById(k)?.value||'';});
+  localStorage.setItem('ems_draft',JSON.stringify(draft));
+}
+
+function restoreDraft(d){
+  document.getElementById('fullName').value=d.fullName||'';
+  document.getElementById('discordUser').value=d.discordUser||'';
+  Object.entries(d.mcq||{}).forEach(([k,v])=>{
+    const r=document.querySelector(`input[name="${k}"][value="${v}"]`);
+    if(r){r.checked=true;r.dispatchEvent(new Event('change'));}
+  });
+  Object.entries(d.open||{}).forEach(([k,v])=>{
+    const el=document.getElementById(k);if(el)el.value=v;
+  });
+  gotoStep(d.step||0);
+}
+
+const savedDraft=localStorage.getItem('ems_draft');
+if(savedDraft){
+  try{
+    const d=JSON.parse(savedDraft);
+    const banner=document.getElementById('draftBanner');
+    banner.classList.add('show');
+    document.getElementById('restoreBtn').addEventListener('click',()=>{restoreDraft(d);banner.classList.remove('show');});
+    document.getElementById('discardBtn').addEventListener('click',()=>{localStorage.removeItem('ems_draft');banner.classList.remove('show');});
+  }catch{localStorage.removeItem('ems_draft');}
+}
+
+// Auto-save on input
+document.querySelectorAll('input[type=text],textarea').forEach(el=>el.addEventListener('input',saveDraft));
+
+// ── i18n ──
+const T={
+  ar:{lang:'ar',dir:'rtl'},
+  en:{lang:'en',dir:'ltr'}
+};
+let lang=localStorage.getItem('ems_apply_lang')||'ar';
+function setLang(l){
+  lang=l;localStorage.setItem('ems_apply_lang',l);
+  document.documentElement.lang=T[l].lang;
+  document.documentElement.dir=T[l].dir;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));
+}
+document.querySelectorAll('.lang-btn').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
+setLang(lang);
+
+// ── Init ──
+initMCQ();
+gotoStep(0);
+</script>
+</body>
+</html>
