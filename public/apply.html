@@ -530,7 +530,7 @@ document.getElementById('submitBtn').addEventListener('click',async()=>{
   };
 
   try{
-    const r=await fetch('http://localhost:3000/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const r=await fetch('/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const d=await r.json();
     if(r.ok&&d.ok){
       localStorage.removeItem('ems_draft');
