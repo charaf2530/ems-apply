@@ -99,80 +99,93 @@ function makeButtons(ref, disabled = false) {
   ];
 }
 
-function buildReviewEmbed(data, title, color) {
+function buildReviewEmbeds(data, title, color) {
   const mcq = data.mcq || {};
   const open = data.open || {};
 
-  const mcqText = `
-Q1: ${safe(mcq.q1)}
-Q2: ${safe(mcq.q2)}
-Q3: ${safe(mcq.q3)}
-Q4: ${safe(mcq.q4)}
-Q5: ${safe(mcq.q5)}
-`;
-
-  return new EmbedBuilder()
+  const embed1 = new EmbedBuilder()
     .setColor(color)
     .setTitle(title)
     .addFields(
       {
         name: "👤 Applicant",
-        value: `**${safe(data.fullName)}**`,
+        value: `**${safe(data.fullName, 100)}**`,
         inline: true,
       },
       {
         name: "💬 Discord",
-        value: `<@${safe(data.discordUser)}>`,
+        value: safe(data.discordUser, 100),
         inline: true,
       },
       {
         name: "🧠 Score",
-        value: `**${safe(data.mcqScore)}/5**`,
+        value: `**${safe(data.mcqScore, 10)}/5**`,
         inline: true,
       },
-
       {
         name: "📌 Status",
-        value: `**${safe(data.status)}**`,
+        value: `**${safe(data.status, 30)}**`,
         inline: true,
       },
       {
         name: "📛 Reference",
-        value: `\`${safe(data.ref)}\``,
+        value: `\`${safe(data.ref, 50)}\``,
         inline: true,
       },
-
       {
         name: "📝 MCQ Answers",
-        value: mcqText,
+        value:
+          `Q1: ${safe(mcq.q1, 50)}\n` +
+          `Q2: ${safe(mcq.q2, 50)}\n` +
+          `Q3: ${safe(mcq.q3, 50)}\n` +
+          `Q4: ${safe(mcq.q4, 50)}\n` +
+          `Q5: ${safe(mcq.q5, 50)}`,
         inline: false,
-      },
-
-      {
-        name: "💬 Q6: Explain Medical RP",
-        value: safe(open.q6),
-      },
-      {
-        name: "💬 Q7: Death scenario",
-        value: safe(open.q7),
-      },
-      {
-        name: "💬 Q8: Toxic patient",
-        value: safe(open.q8),
-      },
-      {
-        name: "💬 Q9: Car crash priority",
-        value: safe(open.q9),
-      },
-      {
-        name: "💬 Q10: Patient ran away",
-        value: safe(open.q10),
       }
     )
     .setFooter({
       text: "Underwater Medical Center • Application System",
     })
     .setTimestamp();
+
+  const embed2 = new EmbedBuilder()
+    .setColor(color)
+    .setTitle("Open Answers — Part 1")
+    .addFields(
+      {
+        name: "Q6 — Explain Medical RP and why EMS must respect it",
+        value: safe(open.q6, 1024),
+        inline: false,
+      },
+      {
+        name: "Q7 — If a death is declared and there is video evidence, what do you do?",
+        value: safe(open.q7, 1024),
+        inline: false,
+      },
+      {
+        name: "Q8 — How do you deal with a patient who insults you or breaks RP rules?",
+        value: safe(open.q8, 1024),
+        inline: false,
+      }
+    );
+
+  const embed3 = new EmbedBuilder()
+    .setColor(color)
+    .setTitle("Open Answers — Part 2")
+    .addFields(
+      {
+        name: "Q9 — Car crash: one conscious and one unconscious — who do you treat first and why?",
+        value: safe(open.q9, 1024),
+        inline: false,
+      },
+      {
+        name: "Q10 — You treated a patient but they ran away and started fighting immediately — what do you do?",
+        value: safe(open.q10, 1024),
+        inline: false,
+      }
+    );
+
+  return [embed1, embed2, embed3];
 }
 
 function buildResultEmbed(data, action, ref) {
@@ -274,13 +287,11 @@ app.post("/submit", async (req, res) => {
     }
 
     await channel.send({
-      embeds: [
-        buildReviewEmbed(
-          appData,
-          "📨 Underwater Medical Center — New Application",
-          0x3b82f6
-        ),
-      ],
+      embeds: buildReviewEmbeds(
+        appData,
+        "📨 Underwater Medical Center — New Application",
+        0x3b82f6
+      ),
       components: makeButtons(ref),
     });
 
@@ -331,7 +342,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   const color = isAccepted ? 0x22c55e : 0xef4444;
 
   await interaction.editReply({
-    embeds: [buildReviewEmbed(data, title, color)],
+    embeds: buildReviewEmbeds(data, title, color),
     components: makeButtons(ref, true),
   });
 
