@@ -100,34 +100,73 @@ function makeButtons(ref, disabled = false) {
 }
 
 function buildReviewEmbed(data, title, color) {
+  const mcq = data.mcq || {};
+  const open = data.open || {};
+
+  const mcqText = `
+Q1: ${safe(mcq.q1)}
+Q2: ${safe(mcq.q2)}
+Q3: ${safe(mcq.q3)}
+Q4: ${safe(mcq.q4)}
+Q5: ${safe(mcq.q5)}
+`;
+
   return new EmbedBuilder()
     .setColor(color)
     .setTitle(title)
     .addFields(
       {
         name: "👤 Applicant",
-        value: `**${safe(data.fullName, 100)}**`,
+        value: `**${safe(data.fullName)}**`,
         inline: true,
       },
       {
         name: "💬 Discord",
-        value: `<@${safe(data.discordUser, 100)}>`,
+        value: `<@${safe(data.discordUser)}>`,
         inline: true,
       },
       {
         name: "🧠 Score",
-        value: `**${safe(data.mcqScore, 10)}/5**`,
+        value: `**${safe(data.mcqScore)}/5**`,
         inline: true,
       },
+
       {
         name: "📌 Status",
-        value: `**${safe(data.status, 30)}**`,
+        value: `**${safe(data.status)}**`,
         inline: true,
       },
       {
         name: "📛 Reference",
-        value: `\`${safe(data.ref, 50)}\``,
+        value: `\`${safe(data.ref)}\``,
         inline: true,
+      },
+
+      {
+        name: "📝 MCQ Answers",
+        value: mcqText,
+        inline: false,
+      },
+
+      {
+        name: "💬 Q6: Explain Medical RP",
+        value: safe(open.q6),
+      },
+      {
+        name: "💬 Q7: Death scenario",
+        value: safe(open.q7),
+      },
+      {
+        name: "💬 Q8: Toxic patient",
+        value: safe(open.q8),
+      },
+      {
+        name: "💬 Q9: Car crash priority",
+        value: safe(open.q9),
+      },
+      {
+        name: "💬 Q10: Patient ran away",
+        value: safe(open.q10),
       }
     )
     .setFooter({
