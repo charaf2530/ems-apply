@@ -18,27 +18,40 @@ const {
 const PORT = process.env.PORT || 10000;
 const TOKEN = process.env.TOKEN;
 const REVIEW_CHANNEL_ID = process.env.REVIEW_CHANNEL_ID;
-const APPLY_URL = process.env.APPLY_URL;
+const APPLY_URL =
+  process.env.APPLY_URL || `http://localhost:${PORT}/apply`;
 
 if (!TOKEN || !REVIEW_CHANNEL_ID) {
-  console.error("❌ Missing ENV variables");
+  console.error("❌ Missing TOKEN or REVIEW_CHANNEL_ID in .env");
   process.exit(1);
 }
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
+
+app.get("/", (_, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html"))
+);
+
+app.get("/apply", (_, res) =>
+  res.sendFile(path.join(__dirname, "public", "apply.html"))
+);
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
 });
 
-const DATA_FILE = "./applications.json";
-const LOGO_FILE = path.join(__dirname, "assets", "underwater-medical-center.png");
+const DATA_FILE = path.join(__dirname, "applications.json");
+const LOGO_FILE = path.join(
+  __dirname,
+  "assets",
+  "underwater-medical-center.png"
+);
 
 function safe(v, max = 1000) {
-  return String(v ?? "—").slice(0, max);
+  return String(v ?? "—").trim().slice(0, max) || "—";
 }
 
 function genRef() {
@@ -46,12 +59,27 @@ function genRef() {
 }
 
 function loadApps() {
-  if (!fs.existsSync(DATA_FILE)) return new Map();
-  return new Map(Object.entries(JSON.parse(fs.readFileSync(DATA_FILE))));
+  try {
+    if (!fs.existsSync(DATA_FILE)) return new Map();
+    const raw = fs.readFileSync(DATA_FILE, "utf8").trim();
+    if (!raw) return new Map();
+    return new Map(Object.entries(JSON.parse(raw)));
+  } catch (err) {
+    console.error("❌ loadApps error:", err.message);
+    return new Map();
+  }
 }
 
 function saveApps(map) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(Object.fromEntries(map), null, 2));
+  try {
+    fs.writeFileSync(
+      DATA_FILE,
+      JSON.stringify(Object.fromEntries(map), null, 2),
+      "utf8"
+    );
+  } catch (err) {
+    console.error("❌ saveApps error:", err.message);
+  }
 }
 
 function makeButtons(ref, disabled = false) {
@@ -62,7 +90,6 @@ function makeButtons(ref, disabled = false) {
         .setLabel("Accept")
         .setStyle(ButtonStyle.Success)
         .setDisabled(disabled),
-
       new ButtonBuilder()
         .setCustomId(`reject_${ref}`)
         .setLabel("Reject")
@@ -72,18 +99,40 @@ function makeButtons(ref, disabled = false) {
   ];
 }
 
-function buildEmbed(data, title, color) {
+function buildReviewEmbed(data, title, color) {
   return new EmbedBuilder()
     .setColor(color)
     .setTitle(title)
     .addFields(
-      { name: "👤 Name", value: safe(data.fullName), inline: true },
-      { name: "💬 Discord", value: safe(data.discordUser), inline: true },
-      { name: "🧠 Score", value: `${data.mcqScore}/5`, inline: true },
-      { name: "📛 Ref", value: data.ref, inline: true },
-      { name: "📌 Status", value: data.status, inline: true }
+      {
+        name: "👤 Applicant",
+        value: `**${safe(data.fullName, 100)}**`,
+        inline: true,
+      },
+      {
+        name: "💬 Discord",
+        value: `<@${safe(data.discordUser, 100)}>`,
+        inline: true,
+      },
+      {
+        name: "🧠 Score",
+        value: `**${safe(data.mcqScore, 10)}/5**`,
+        inline: true,
+      },
+      {
+        name: "📌 Status",
+        value: `**${safe(data.status, 30)}**`,
+        inline: true,
+      },
+      {
+        name: "📛 Reference",
+        value: `\`${safe(data.ref, 50)}\``,
+        inline: true,
+      }
     )
-    .setFooter({ text: `REF: ${data.ref}` })
+    .setFooter({
+      text: "Underwater Medical Center • Application System",
+    })
     .setTimestamp();
 }
 
@@ -91,61 +140,118 @@ function buildResultEmbed(data, action, ref) {
   const accepted = action === "accept";
 
   return new EmbedBuilder()
-    .setColor(accepted ? 0x2ecc71 : 0xe74c3c)
+    .setColor(accepted ? 0x22c55e : 0xef4444)
     .setAuthor({
       name: "Underwater Medical Center",
-      iconURL: "attachment://logo.png",
+      iconURL: "attachment://underwater-medical-center.png",
     })
     .setTitle(accepted ? "Application Approved" : "Application Update")
     .setDescription(
       accepted
-        ? `Dear **${data.fullName}**,
-
-Your application has been **approved successfully**.
-
-Reference ID: \`${ref}\`
-
-Welcome to Underwater Medical Center.`
-        : `Dear **${data.fullName}**,
-
-Your application was **not approved**.
-
-Reference ID: \`${ref}\`
-
-You can apply again in the future.`
+        ? [
+            `Dear **${safe(data.fullName, 80)}**,`,
+            "",
+            "We are pleased to inform you that your application has been **approved successfully**.",
+            "",
+            "Your submission demonstrated the level of understanding and professionalism required to join our medical team.",
+            "",
+            `**Reference ID:** \`${ref}\``,
+            "",
+            "Please contact the management team for the next steps of your recruitment process.",
+            "",
+            "Welcome to **Underwater Medical Center**.",
+          ].join("\n")
+        : [
+            `Dear **${safe(data.fullName, 80)}**,`,
+            "",
+            "Thank you for your interest in joining **Underwater Medical Center**.",
+            "",
+            "After carefully reviewing your application, we regret to inform you that your application was **not approved** at this time.",
+            "",
+            `**Reference ID:** \`${ref}\``,
+            "",
+            "You are welcome to improve your preparation and apply again in the future.",
+            "",
+            "We appreciate your time and interest.",
+          ].join("\n")
     )
-    .setThumbnail("attachment://logo.png")
+    .addFields(
+      {
+        name: "Applicant",
+        value: safe(data.fullName, 100),
+        inline: true,
+      },
+      {
+        name: "Discord ID",
+        value: safe(data.discordUser, 100),
+        inline: true,
+      },
+      {
+        name: "Score",
+        value: `${safe(data.mcqScore, 10)}/5`,
+        inline: true,
+      }
+    )
+    .setThumbnail("attachment://underwater-medical-center.png")
+    .setFooter({
+      text: accepted
+        ? "Underwater Medical Center • Recruitment Department"
+        : "Underwater Medical Center • Application Review",
+    })
     .setTimestamp();
 }
 
 app.post("/submit", async (req, res) => {
   try {
-    const body = req.body;
+    const body = req.body || {};
+
+    if (!body.fullName || !body.discordUser) {
+      return res.status(400).json({
+        error: "Missing fullName or discordUser",
+      });
+    }
+
     const ref = genRef();
 
-    const data = {
+    const appData = {
       ref,
-      fullName: body.fullName,
-      discordUser: body.discordUser,
-      mcqScore: body.mcqScore || 0,
+      fullName: safe(body.fullName, 100),
+      discordUser: safe(body.discordUser, 100),
+      mcqScore: Number(body.mcqScore || 0),
+      mcq: body.mcq || {},
+      open: body.open || {},
       status: "Pending",
+      createdAt: new Date().toISOString(),
     };
 
     const apps = loadApps();
-    apps.set(ref, data);
+    apps.set(ref, appData);
     saveApps(apps);
 
     const channel = await client.channels.fetch(REVIEW_CHANNEL_ID);
 
+    if (!channel || !channel.isTextBased()) {
+      throw new Error("Review channel not found or not text based");
+    }
+
     await channel.send({
-      embeds: [buildEmbed(data, "🚑 New EMS Application", 0x3b82f6)],
+      embeds: [
+        buildReviewEmbed(
+          appData,
+          "📨 Underwater Medical Center — New Application",
+          0x3b82f6
+        ),
+      ],
       components: makeButtons(ref),
     });
 
-    res.json({ ok: true });
+    console.log(`✅ New application sent: ${ref}`);
+    return res.json({ ok: true, ref });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
+    console.error("❌ Submit error:", err);
+    return res.status(500).json({
+      error: "Failed to send application to Discord",
+    });
   }
 });
 
@@ -158,41 +264,71 @@ client.on(Events.InteractionCreate, async (interaction) => {
   const apps = loadApps();
   const data = apps.get(ref);
 
-  if (!data) return;
+  if (!data) {
+    return interaction.followUp({
+      content: "❌ Application not found.",
+      ephemeral: true,
+    });
+  }
 
-  if (data.status !== "Pending") return;
+  if (data.status !== "Pending") {
+    return interaction.followUp({
+      content: `⚠️ Already ${data.status}`,
+      ephemeral: true,
+    });
+  }
 
-  data.status = action === "accept" ? "Approved" : "Rejected";
+  const isAccepted = action === "accept";
+  data.status = isAccepted ? "Approved" : "Rejected";
+  data.reviewedAt = new Date().toISOString();
+
   apps.set(ref, data);
   saveApps(apps);
 
-  const color = action === "accept" ? 0x22c55e : 0xef4444;
+  const title = isAccepted
+    ? "✅ Underwater Medical Center — APPROVED"
+    : "❌ Underwater Medical Center — REJECTED";
+
+  const color = isAccepted ? 0x22c55e : 0xef4444;
 
   await interaction.editReply({
-    embeds: [buildEmbed(data, "Application Updated", color)],
+    embeds: [buildReviewEmbed(data, title, color)],
     components: makeButtons(ref, true),
   });
 
   try {
     const user = await client.users.fetch(data.discordUser);
 
-    const files = [
-      new AttachmentBuilder(LOGO_FILE, { name: "logo.png" }),
-    ];
+    const files = [];
+    if (fs.existsSync(LOGO_FILE)) {
+      files.push(
+        new AttachmentBuilder(LOGO_FILE, {
+          name: "underwater-medical-center.png",
+        })
+      );
+    }
 
     await user.send({
       embeds: [buildResultEmbed(data, action, ref)],
       files,
     });
-  } catch {}
+  } catch (err) {
+    console.log("DM failed:", err.message);
+  }
 });
 
 client.once(Events.ClientReady, () => {
-  console.log("✅ BOT READY");
+  console.log(`✅ BOT READY: ${client.user.tag}`);
 });
 
-client.login(TOKEN);
-
-app.listen(PORT, () => {
-  console.log(`🚀 LIVE: ${APPLY_URL}`);
-});
+client
+  .login(TOKEN)
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 SERVER RUNNING ON ${APPLY_URL}`);
+      console.log(`📨 Review Channel: ${REVIEW_CHANNEL_ID}`);
+    });
+  })
+  .catch((err) => {
+    console.error("❌ LOGIN ERROR:", err.message);
+  });
