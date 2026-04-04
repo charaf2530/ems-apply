@@ -403,11 +403,11 @@ const MCQ_DATA = {
     {key:'q5',q:'أي من التالي يُعد خرقاً صريحاً لقواعد EMS؟',opts:['التعاون مع الشرطة','حمل سلاح خلال مهمة طبية','طلب دعم إضافي'],correct:'B'},
   ],
   en:[
-    {key:'q1',q:'What is the top priority when EMS arrives at a multi-casualty incident?',opts:['Treat the closest person','Assess all casualties and triage by severity','Wait for police'],correct:'B'},
-    {key:'q2',q:'When is EMS allowed to enter an area with active gunfire?',opts:['Anytime because the patient needs help','Only when police request it','After police confirm the area is fully secured'],correct:'C'},
-    {key:'q3',q:'What do you do if a patient refuses treatment?',opts:['Treat them by force','Respect their decision and document the situation','Leave immediately'],correct:'B'},
-    {key:'q4',q:'What does CPR stand for in first aid?',opts:['Complex Procedural Response','Cardiopulmonary Resuscitation','Communication Protocol Response'],correct:'B'},
-    {key:'q5',q:'Which of the following is a clear violation of EMS rules?',opts:['Cooperating with police','Carrying a weapon during a medical mission','Requesting additional support'],correct:'B'},
+    {key:'q1',q:'Main role of EMS in RP?',opts:['Patrol the streets','Save lives & treat injured','Assist police combat'],correct:'B'},
+    {key:'q2',q:'Found unconscious on the ground?',opts:['Leave them — wait for backup','Call police first','Secure scene & check breathing'],correct:'C'},
+    {key:'q3',q:'EMS allowed to use weapons?',opts:['Yes, for self-defense','No — strictly medical','Only in emergencies'],correct:'B'},
+    {key:'q4',q:'Medical helicopter can be used by?',opts:['Any EMS member','Flight exam + admin approval','Only the Chief'],correct:'B'},
+    {key:'q5',q:'During an active shootout, EMS should?',opts:['Rush in to save lives','Wait for police clearance','Call for air support'],correct:'B'},
   ]
 };
 
@@ -585,6 +585,10 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
       document.getElementById('formWrap').style.display = 'none';
       document.getElementById('refCode').textContent = d.ref;
       document.getElementById('successScreen').classList.add('show');
+    } else if (r.status === 429 && d.remainSec) {
+      // Rate limited — show countdown
+      btn.disabled = true;
+      startCountdown(d.remainSec, statusEl, btn, t.submit_btn);
     } else {
       statusEl.textContent = d.error || 'Error. Try again.';
       btn.disabled = false; btn.textContent = t.submit_btn;
@@ -594,6 +598,32 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     btn.disabled = false; btn.textContent = t.submit_btn;
   }
 });
+
+// ── Countdown ──
+function startCountdown(sec, statusEl, btn, originalText) {
+  let remaining = sec;
+  function tick() {
+    if (remaining <= 0) {
+      statusEl.textContent = '';
+      btn.disabled = false;
+      btn.textContent = originalText;
+      return;
+    }
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    const timeStr = m > 0
+      ? `${m}:${String(s).padStart(2,'0')}`
+      : `${s}s`;
+    const label = lang === 'ar'
+      ? `⏳ انتظر ${timeStr} قبل المحاولة مجدداً`
+      : `⏳ Try again in ${timeStr}`;
+    statusEl.textContent = label;
+    btn.textContent = lang === 'ar' ? `⏳ ${timeStr}` : `⏳ ${timeStr}`;
+    remaining--;
+    setTimeout(tick, 1000);
+  }
+  tick();
+}
 
 // ── Draft ──
 function saveDraft() {

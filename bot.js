@@ -12,174 +12,123 @@ const {
   ButtonStyle,
   EmbedBuilder,
   Events,
+  AttachmentBuilder,
 } = require("discord.js");
 
-// ─────────────────────────────────────────
-// ENV
-// ─────────────────────────────────────────
 const PORT = process.env.PORT || 10000;
 const TOKEN = process.env.TOKEN;
 const REVIEW_CHANNEL_ID = process.env.REVIEW_CHANNEL_ID;
+const APPLY_URL = process.env.APPLY_URL;
 
 if (!TOKEN || !REVIEW_CHANNEL_ID) {
-  console.error("❌ Missing TOKEN or REVIEW_CHANNEL_ID");
+  console.error("❌ Missing ENV variables");
   process.exit(1);
 }
 
-// ─────────────────────────────────────────
-// EXPRESS
-// ─────────────────────────────────────────
 const app = express();
-
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds],
 });
 
-app.get("/apply", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "apply.html"));
-});
+const DATA_FILE = "./applications.json";
+const LOGO_FILE = path.join(__dirname, "assets", "underwater-medical-center.png");
 
-// ─────────────────────────────────────────
-// FILE STORAGE
-// ─────────────────────────────────────────
-const DATA_FILE = path.join(__dirname, "applications.json");
-
-function loadApps() {
-  try {
-    if (!fs.existsSync(DATA_FILE)) return new Map();
-    const raw = fs.readFileSync(DATA_FILE, "utf8");
-    if (!raw) return new Map();
-    return new Map(Object.entries(JSON.parse(raw)));
-  } catch {
-    return new Map();
-  }
-}
-
-function saveApps(map) {
-  fs.writeFileSync(
-    DATA_FILE,
-    JSON.stringify(Object.fromEntries(map), null, 2)
-  );
-}
-
-// ─────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────
-function safe(v, max = 1024) {
-  return String(v ?? "").slice(0, max) || "—";
+function safe(v, max = 1000) {
+  return String(v ?? "—").slice(0, max);
 }
 
 function genRef() {
   return "EMS-" + crypto.randomBytes(4).toString("hex").toUpperCase();
 }
 
-const MCQ_CORRECT = {
-  q1: "B",
-  q2: "C",
-  q3: "B",
-  q4: "B",
-  q5: "B",
-};
-
-// ─────────────────────────────────────────
-// DISCORD
-// ─────────────────────────────────────────
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
-});
-
-client.once(Events.ClientReady, () => {
-  console.log(`✅ Bot ready: ${client.user.tag}`);
-});
-
-// buttons
-function makeButtons(ref) {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`accept_${ref}`)
-      .setLabel("Accept")
-      .setStyle(ButtonStyle.Success),
-
-    new ButtonBuilder()
-      .setCustomId(`reject_${ref}`)
-      .setLabel("Reject")
-      .setStyle(ButtonStyle.Danger)
-  );
+function loadApps() {
+  if (!fs.existsSync(DATA_FILE)) return new Map();
+  return new Map(Object.entries(JSON.parse(fs.readFileSync(DATA_FILE))));
 }
 
-// embed
-function buildEmbed(app) {
+function saveApps(map) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(Object.fromEntries(map), null, 2));
+}
+
+function makeButtons(ref, disabled = false) {
+  return [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`accept_${ref}`)
+        .setLabel("Accept")
+        .setStyle(ButtonStyle.Success)
+        .setDisabled(disabled),
+
+      new ButtonBuilder()
+        .setCustomId(`reject_${ref}`)
+        .setLabel("Reject")
+        .setStyle(ButtonStyle.Danger)
+        .setDisabled(disabled)
+    ),
+  ];
+}
+
+function buildEmbed(data, title, color) {
   return new EmbedBuilder()
-    .setTitle("🚑 EMS Application")
-    .setColor(0x3b82f6)
+    .setColor(color)
+    .setTitle(title)
     .addFields(
-      { name: "RP Name", value: safe(app.fullName), inline: true },
-      { name: "Discord ID", value: safe(app.discordUser), inline: true },
-      { name: "Score", value: `${app.mcqScore}/5`, inline: true },
-      { name: "Ref", value: app.ref }
+      { name: "👤 Name", value: safe(data.fullName), inline: true },
+      { name: "💬 Discord", value: safe(data.discordUser), inline: true },
+      { name: "🧠 Score", value: `${data.mcqScore}/5`, inline: true },
+      { name: "📛 Ref", value: data.ref, inline: true },
+      { name: "📌 Status", value: data.status, inline: true }
     )
+    .setFooter({ text: `REF: ${data.ref}` })
     .setTimestamp();
 }
 
-// accept / reject
-client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isButton()) return;
+function buildResultEmbed(data, action, ref) {
+  const accepted = action === "accept";
 
-  const [action, ref] = interaction.customId.split("_");
-  const apps = loadApps();
-  const data = apps.get(ref);
-  if (!data) return;
+  return new EmbedBuilder()
+    .setColor(accepted ? 0x2ecc71 : 0xe74c3c)
+    .setAuthor({
+      name: "Underwater Medical Center",
+      iconURL: "attachment://logo.png",
+    })
+    .setTitle(accepted ? "Application Approved" : "Application Update")
+    .setDescription(
+      accepted
+        ? `Dear **${data.fullName}**,
 
-  data.status = action;
-  apps.set(ref, data);
-  saveApps(apps);
+Your application has been **approved successfully**.
 
-  await interaction.update({
-    content: `Application ${action}`,
-    embeds: [],
-    components: [],
-  });
+Reference ID: \`${ref}\`
 
-  try {
-    const user = await client.users.fetch(data.discordUser);
+Welcome to Underwater Medical Center.`
+        : `Dear **${data.fullName}**,
 
-    if (action === "accept") {
-      await user.send("✅ تم قبول طلبك في EMS");
-    } else {
-      await user.send("❌ تم رفض طلبك في EMS");
-    }
-  } catch {}
-});
+Your application was **not approved**.
 
-// ─────────────────────────────────────────
-// SUBMIT
-// ─────────────────────────────────────────
+Reference ID: \`${ref}\`
+
+You can apply again in the future.`
+    )
+    .setThumbnail("attachment://logo.png")
+    .setTimestamp();
+}
+
 app.post("/submit", async (req, res) => {
   try {
-    const fullName = req.body.fullName;
-    const discordUser = req.body.discordUser;
-    const mcq = req.body.mcq || {};
-
-    if (!fullName || !discordUser) {
-      return res.json({ error: "Missing data" });
-    }
-
-    const score = Object.entries(MCQ_CORRECT).filter(
-      ([k, v]) => mcq[k] === v
-    ).length;
-
+    const body = req.body;
     const ref = genRef();
 
     const data = {
       ref,
-      fullName,
-      discordUser,
-      mcqScore: score,
-      status: "pending",
+      fullName: body.fullName,
+      discordUser: body.discordUser,
+      mcqScore: body.mcqScore || 0,
+      status: "Pending",
     };
 
     const apps = loadApps();
@@ -189,26 +138,61 @@ app.post("/submit", async (req, res) => {
     const channel = await client.channels.fetch(REVIEW_CHANNEL_ID);
 
     await channel.send({
-      embeds: [buildEmbed(data)],
-      components: [makeButtons(ref)],
+      embeds: [buildEmbed(data, "🚑 New EMS Application", 0x3b82f6)],
+      components: makeButtons(ref),
     });
 
-    res.json({ success: true, ref });
+    res.json({ ok: true });
   } catch (err) {
-    console.log(err);
-    res.json({ error: "Server error" });
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-// ─────────────────────────────────────────
-// START SERVER
-// ─────────────────────────────────────────
-app.listen(PORT, "0.0.0.0", () => {
-  console.log("╔══════════════════════════════════════╗");
-  console.log("║         EMS ABRAMS BOT RUNNING      ║");
-  console.log(`║  Port    → ${PORT}`);
-  console.log(`║  Channel → ${REVIEW_CHANNEL_ID}`);
-  console.log("╚══════════════════════════════════════╝");
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  await interaction.deferUpdate();
+
+  const [action, ref] = interaction.customId.split("_");
+  const apps = loadApps();
+  const data = apps.get(ref);
+
+  if (!data) return;
+
+  if (data.status !== "Pending") return;
+
+  data.status = action === "accept" ? "Approved" : "Rejected";
+  apps.set(ref, data);
+  saveApps(apps);
+
+  const color = action === "accept" ? 0x22c55e : 0xef4444;
+
+  await interaction.editReply({
+    embeds: [buildEmbed(data, "Application Updated", color)],
+    components: makeButtons(ref, true),
+  });
+
+  try {
+    const user = await client.users.fetch(data.discordUser);
+
+    const files = [
+      new AttachmentBuilder(LOGO_FILE, { name: "logo.png" }),
+    ];
+
+    await user.send({
+      embeds: [buildResultEmbed(data, action, ref)],
+      files,
+    });
+  } catch {}
+});
+
+client.once(Events.ClientReady, () => {
+  console.log("✅ BOT READY");
 });
 
 client.login(TOKEN);
+
+app.listen(PORT, () => {
+  console.log(`🚀 LIVE: ${APPLY_URL}`);
+});
