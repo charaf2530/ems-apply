@@ -3,903 +3,738 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const fs = require("fs");
+const path = require("path");
 const crypto = require("crypto");
+const {
+  Client, GatewayIntentBits, Events,
+  ActionRowBuilder, ButtonBuilder, ButtonStyle,
+  EmbedBuilder, AttachmentBuilder,
+} = require("discord.js");
 
+// ══════════════════════════════════════════════════════
+// ENV
+// ══════════════════════════════════════════════════════
+const PORT              = process.env.PORT || 3000;
+const TOKEN              = process.env.TOKEN;
+const REVIEW_CHANNEL_ID  = process.env.REVIEW_CHANNEL_ID;
+const CLIENT_ID          = process.env.CLIENT_ID;
+const CLIENT_SECRET      = process.env.CLIENT_SECRET;
+const REDIRECT_URI       = process.env.REDIRECT_URI || `http://localhost:${PORT}/auth/callback`;
+const APPLY_URL          = process.env.APPLY_URL || `http://localhost:${PORT}/apply`;
+const SESSION_SECRET     = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+// Comma-separated Discord IDs that get the "owner" role the first time they log in.
+const OWNER_IDS          = (process.env.OWNER_IDS || process.env.ADMIN_IDS || "").split(",").map(s => s.trim()).filter(Boolean);
+
+const DATA_DIR   = path.join(__dirname, "data");
+const APPS_FILE  = path.join(DATA_DIR, "applications.json");
+const USERS_FILE = path.join(DATA_DIR, "users.json");
+const HANDBOOK_FILE = path.join(DATA_DIR, "handbook.json");
+const SOP_FILE      = path.join(DATA_DIR, "sop.json");
+const SCHEDULE_FILE = path.join(DATA_DIR, "schedule.json");
+const LOA_FILE       = path.join(DATA_DIR, "loa.json");
+const ACTIVITY_FILE = path.join(DATA_DIR, "activity.json");
+const AUDIT_FILE     = path.join(DATA_DIR, "audit.json");
+const LOGO_FILE  = path.join(__dirname, "assets", "underwater-medical-center.png");
+
+if (!TOKEN || !REVIEW_CHANNEL_ID) {
+  console.error("❌  Missing TOKEN or REVIEW_CHANNEL_ID in .env — copy .env.example to .env and fill it in.");
+  process.exit(1);
+}
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+
+// ══════════════════════════════════════════════════════
+// EXPRESS
+// ══════════════════════════════════════════════════════
 const app = express();
-const PORT = process.env.PORT || 3000;
-const DATA = process.env.DATA_FILE || "./applications.json";
-const CONTENT_FILE = "./content.json";
-const VISITS_FILE = "./visits.json";
-
-let fetchPolyfill;
-(async () => {
-  if (typeof globalThis.fetch === "function") {
-    fetchPolyfill = globalThis.fetch.bind(globalThis);
-    console.log(`✅ Built-in fetch (Node ${process.version})`);
-  } else {
-    try {
-      const nf = await import("node-fetch");
-      fetchPolyfill = nf.default;
-      console.log("ℹ️ Using node-fetch polyfill");
-    } catch {
-      console.error("❌ No fetch. Install node-fetch or use Node 18+");
-      process.exit(1);
-    }
-  }
-})();
-
-const WEBHOOK = "";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "EMS_CHANGE_ME";
-const SESSION_SECRET =
-  process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
-
-app.use(
-  session({
-    secret: SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: false,
-      httpOnly: true,
-      maxAge: 4 * 60 * 60 * 1000,
-    },
-  })
-);
-
-app.use(express.json({ limit: "512kb" }));
+app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: "lax" },
+}));
 
-// ---------- JSON Storage ----------
-function loadApps() {
+// ══════════════════════════════════════════════════════
+// DISCORD BOT
+// ══════════════════════════════════════════════════════
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+// ══════════════════════════════════════════════════════
+// DATA HELPERS
+// ══════════════════════════════════════════════════════
+function loadJSON(file, fallback) {
   try {
-    if (!fs.existsSync(DATA)) return [];
+    if (!fs.existsSync(file)) return fallback;
+    const raw = fs.readFileSync(file, "utf8").trim();
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) { console.error(`loadJSON(${file}):`, e.message); return fallback; }
+}
+function saveJSON(file, data) {
+  const tmp = file + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), "utf8");
+  fs.renameSync(tmp, file);
+}
+function loadApps()    { return new Map(Object.entries(loadJSON(APPS_FILE, {}))); }
+function saveApps(map) { saveJSON(APPS_FILE, Object.fromEntries(map)); }
+function loadUsers()   { return loadJSON(USERS_FILE, {}); }
+function saveUsers(u)  { saveJSON(USERS_FILE, u); }
 
-    const raw = fs.readFileSync(DATA, "utf8").trim();
-    if (!raw) return [];
+function loadHandbook() { return loadJSON(HANDBOOK_FILE, []); }
+function loadSop()       { return loadJSON(SOP_FILE, []); }
+function loadSchedule()  { return loadJSON(SCHEDULE_FILE, {}); }
+function saveSchedule(s) { saveJSON(SCHEDULE_FILE, s); }
+function loadLoa()       { return loadJSON(LOA_FILE, {}); }
+function saveLoa(l)      { saveJSON(LOA_FILE, l); }
+function loadActivity()  { return loadJSON(ACTIVITY_FILE, {}); }
+function saveActivity(a) { saveJSON(ACTIVITY_FILE, a); }
+function loadAudit()     { return loadJSON(AUDIT_FILE, []); }
+function logAudit(actor, action, target, details) {
+  const audit = loadAudit();
+  audit.push({ ts: new Date().toISOString(), actor: safe(actor, 100), action: safe(action, 60), target: safe(target, 100), details: safe(details, 500) });
+  if (audit.length > 5000) audit.splice(0, audit.length - 5000); // keep it bounded
+  saveJSON(AUDIT_FILE, audit);
+}
 
-    const parsed = JSON.parse(raw);
+// Fixed weekly duty shift structure. schedule.json only stores who claimed what: { shiftId: [discordId, ...] }
+const DUTY_DAYS   = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DUTY_SLOTS  = [
+  { key: "morning", label: "Morning · 08:00–14:00", capacity: 4 },
+  { key: "evening", label: "Evening · 14:00–20:00", capacity: 4 },
+  { key: "night",   label: "Night · 20:00–02:00",   capacity: 3 },
+];
+function dutyShiftId(day, slotKey) { return `${day}-${slotKey}`; }
 
-    if (Array.isArray(parsed)) return parsed;
-    if (parsed && Array.isArray(parsed.applications)) return parsed.applications;
+function safe(v, max = 1000) { return String(v ?? "—").trim().slice(0, max) || "—"; }
+function genRef() { return "EMS-" + crypto.randomBytes(4).toString("hex").toUpperCase(); }
 
-    return [];
-  } catch (err) {
-    console.error("[loadApps] error:", err.message);
-    return [];
+// ══════════════════════════════════════════════════════
+// ROLES  (owner > admin > reviewer > viewer > none)
+// ══════════════════════════════════════════════════════
+const ROLE_WEIGHT = { owner: 4, admin: 3, reviewer: 2, viewer: 1, none: 0 };
+
+function getUserRole(discordId) {
+  const users = loadUsers();
+  const u = users[discordId];
+  if (u?.role) return u.role;
+  if (OWNER_IDS.includes(discordId)) return "owner";
+  return "none";
+}
+function ensureUserRecord(discordId, rpName) {
+  const users = loadUsers();
+  if (!users[discordId]) {
+    users[discordId] = {
+      discordId, rpName, points: 0, badges: [],
+      role: OWNER_IDS.includes(discordId) ? "owner" : "none",
+    };
+    saveUsers(users);
   }
+  return users[discordId];
+}
+function hasRole(discordId, minRole) {
+  return ROLE_WEIGHT[getUserRole(discordId)] >= ROLE_WEIGHT[minRole];
 }
 
-function saveApps(apps) {
-  const safeApps = Array.isArray(apps) ? apps : [];
-  fs.writeFileSync(DATA, JSON.stringify(safeApps, null, 2), "utf8");
+// ══════════════════════════════════════════════════════
+// RATE LIMITER — 1 submission / 24h / discord id
+// ══════════════════════════════════════════════════════
+const RATE_WINDOW = 24 * 60 * 60 * 1000;
+const rateMap = new Map();
+function checkRate(id) {
+  const last = rateMap.get(id);
+  if (!last) return { ok: true };
+  const elapsed = Date.now() - last;
+  if (elapsed >= RATE_WINDOW) return { ok: true };
+  return { ok: false, remainSec: Math.ceil((RATE_WINDOW - elapsed) / 1000) };
+}
+function recordRate(id) { rateMap.set(id, Date.now()); }
+
+// ══════════════════════════════════════════════════════
+// POINTS & BADGES
+// ══════════════════════════════════════════════════════
+const BADGES = [
+  { pts: 10,  label: "🥉 Bronze"  },
+  { pts: 30,  label: "🥈 Silver"  },
+  { pts: 60,  label: "🥇 Gold"    },
+  { pts: 100, label: "💎 Diamond" },
+];
+function awardPoints(discordId, rpName, amount, reason) {
+  const users = loadUsers();
+  if (!users[discordId]) users[discordId] = { discordId, rpName, points: 0, badges: [], role: "none" };
+  users[discordId].points += amount;
+  users[discordId].rpName = rpName;
+  for (const b of BADGES) {
+    if (users[discordId].points >= b.pts && !users[discordId].badges.includes(b.label))
+      users[discordId].badges.push(b.label);
+  }
+  saveUsers(users);
+
+  const activity = loadActivity();
+  if (!activity[discordId]) activity[discordId] = [];
+  activity[discordId].push({ ts: new Date().toISOString(), delta: amount, reason: safe(reason || "Points adjustment", 200) });
+  saveActivity(activity);
+
+  return users[discordId];
 }
 
-function appendApp(entry) {
-  const apps = loadApps();
-  apps.push(entry);
-  saveApps(apps);
-  return apps.length;
-}
+// ══════════════════════════════════════════════════════
+// DISCORD OAUTH
+// ══════════════════════════════════════════════════════
+app.get("/auth/discord", (req, res) => {
+  if (!CLIENT_ID) return res.status(500).send("CLIENT_ID not configured");
+  const url = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=identify`;
+  res.redirect(url);
+});
 
-// ---------- Content ----------
-function loadContent() {
+app.get("/auth/callback", async (req, res) => {
+  const { code } = req.query;
+  if (!code) return res.redirect("/?auth=failed");
   try {
-    if (!fs.existsSync(CONTENT_FILE)) {
-      const def = {
-        heroTitleRed: "EMS ABRAMS",
-        heroTitleBlue: "EMERGENCY MEDICAL SERVICES",
-        heroSub:
-          "فريق الخدمات الطبية الطارئة في عالم الـ Roleplay.<br/><strong>نحن لا نلعب — نحن ننقذ الأرواح.</strong>",
-        aboutText1: "نحن فريق الخدمات الطبية الطارئة الأكثر احترافية في السيرفر.",
-        aboutText2: "أعضاؤنا مدربون على أعلى مستوى من الـ Medical RP.",
-        statMembers: "52",
-        statMissions: "587",
-      };
-      fs.writeFileSync(CONTENT_FILE, JSON.stringify(def, null, 2), "utf8");
-      return def;
-    }
-    return JSON.parse(fs.readFileSync(CONTENT_FILE, "utf8"));
-  } catch {
-    return {};
+    const tok = await fetch("https://discord.com/api/oauth2/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: CLIENT_ID, client_secret: CLIENT_SECRET,
+        grant_type: "authorization_code", code, redirect_uri: REDIRECT_URI,
+      }),
+    }).then(r => r.json());
+
+    if (!tok.access_token) throw new Error("No access token from Discord");
+
+    const me = await fetch("https://discord.com/api/users/@me", {
+      headers: { Authorization: `Bearer ${tok.access_token}` },
+    }).then(r => r.json());
+
+    ensureUserRecord(me.id, me.username);
+    req.session.user = { id: me.id, username: me.username, avatar: me.avatar };
+
+    res.redirect(hasRole(me.id, "viewer") ? "/dashboard" : "/");
+  } catch (e) {
+    console.error("OAuth error:", e.message);
+    res.redirect("/?auth=failed");
   }
-}
+});
 
-function saveContent(c) {
-  fs.writeFileSync(CONTENT_FILE, JSON.stringify(c, null, 2), "utf8");
-}
+app.get("/auth/logout", (req, res) => req.session.destroy(() => res.redirect("/")));
 
-// ---------- Visits ----------
-function loadVisits() {
-  try {
-    if (!fs.existsSync(VISITS_FILE)) return { total: 0, daily: {} };
-    return JSON.parse(fs.readFileSync(VISITS_FILE, "utf8"));
-  } catch {
-    return { total: 0, daily: {} };
-  }
-}
-
-function recordVisit() {
-  const v = loadVisits();
-  v.total = (v.total || 0) + 1;
-  const today = new Date().toISOString().slice(0, 10);
-  v.daily[today] = (v.daily[today] || 0) + 1;
-  fs.writeFileSync(VISITS_FILE, JSON.stringify(v, null, 2), "utf8");
-  return v;
-}
-
-app.use((req, res, next) => {
-  if (req.path === "/" && req.method === "GET") recordVisit();
+// ══════════════════════════════════════════════════════
+// MIDDLEWARE
+// ══════════════════════════════════════════════════════
+function requireAuth(req, res, next) {
+  if (!req.session.user) return res.status(401).json({ error: "Login required" });
   next();
-});
-
-// ---------- Rate limiting for submissions ----------
-const ipBuckets = new Map();
-const didBuckets = new Map();
-
-function checkRateLimit(ip, discordId) {
-  const now = Date.now();
-
-  const ipHits = (ipBuckets.get(ip) || []).filter(
-    (t) => now - t < 10 * 60 * 1000
-  );
-  if (ipHits.length >= 2) return { blocked: true, reason: "ip" };
-  ipHits.push(now);
-  ipBuckets.set(ip, ipHits);
-
-  const didHits = (didBuckets.get(discordId) || []).filter(
-    (t) => now - t < 30 * 60 * 1000
-  );
-  if (didHits.length >= 1) return { blocked: true, reason: "discord_id" };
-  didHits.push(now);
-  didBuckets.set(discordId, didHits);
-
-  return { blocked: false };
 }
-
-function hasPendingApp(discordId) {
-  const apps = loadApps();
-  return (
-    Array.isArray(apps) &&
-    apps.some((a) => a.discordUser === discordId && a.status === "pending")
-  );
-}
-
-function safe(s = "", max = 1024) {
-  return (
-    String(s)
-      .replace(/`/g, "'")
-      .replace(/@(everyone|here|&)/gi, "@\u200b$1")
-      .trim()
-      .slice(0, max) || "—"
-  );
-}
-
-// ---------- Validation ----------
-const MCQ_KEYS = ["q1", "q2", "q3", "q4", "q5"];
-const OPEN_KEYS = ["q6", "q7", "q8", "q9", "q10"];
-const CORRECT = { q1: "B", q2: "C", q3: "B", q4: "B", q5: "B" };
-
-function validate(body) {
-  const errors = [];
-  if (!body.fullName?.trim()) errors.push("fullName required");
-  if (!body.discordUser?.trim()) errors.push("discordUser required");
-  if (!/^\d{17,19}$/.test(body.discordUser?.trim() || "")) {
-    errors.push("discordUser invalid");
-  }
-  for (const k of MCQ_KEYS) {
-    if (!body.mcq?.[k]) errors.push(`MCQ ${k} missing`);
-  }
-  for (const k of OPEN_KEYS) {
-    if (!body.open?.[k]?.trim()) errors.push(`Open ${k} empty`);
-  }
-  const score = Number(body.mcqScore ?? -1);
-  if (!Number.isInteger(score) || score < 0 || score > 5) {
-    errors.push("mcqScore invalid");
-  }
-  return errors;
-}
-
-function genRef() {
-  return "EMS-" + crypto.randomBytes(4).toString("hex").toUpperCase();
-}
-
-// ---------- Discord webhook ----------
-async function postToDiscord(payload) {
-  if (!WEBHOOK || !fetchPolyfill) return;
-  const res = await fetchPolyfill(WEBHOOK, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`Discord HTTP ${res.status}`);
-}
-
-function buildEmbed(p, score, ref) {
-  const color = score === 5 ? 0x10b981 : score >= 3 ? 0xf59e0b : 0xe8304a;
-
-  return {
-    embeds: [
-      {
-        title: "🚑 New EMS Application",
-        color,
-        timestamp: new Date().toISOString(),
-        footer: { text: `REF: ${ref}` },
-        fields: [
-          { name: "👤 RP Name", value: safe(p.fullName, 100), inline: true },
-          { name: "💬 Discord ID", value: safe(p.discordUser, 100), inline: true },
-          { name: "🧠 MCQ Score", value: `${score} / 5`, inline: true },
-          { name: "🔖 Ref", value: `\`${ref}\``, inline: true },
-          ...OPEN_KEYS.map((k) => ({
-            name: `Q${k.slice(1)}`,
-            value: safe(p.open?.[k], 800),
-            inline: false,
-          })),
-        ],
-      },
-    ],
+function requireRole(minRole) {
+  return (req, res, next) => {
+    if (!req.session.user) return res.status(401).json({ error: "Login required" });
+    if (!hasRole(req.session.user.id, minRole)) return res.status(403).json({ error: "Forbidden — insufficient role" });
+    next();
   };
 }
 
-// ---------- Submit ----------
+// ══════════════════════════════════════════════════════
+// PUBLIC API
+// ══════════════════════════════════════════════════════
+app.get("/api/content", (_, res) => res.json(loadJSON(path.join(__dirname, "content.json"), {})));
+
+app.get("/api/me", (req, res) => {
+  if (!req.session.user) return res.json({ loggedIn: false });
+  const u = loadUsers()[req.session.user.id] || {};
+  res.json({
+    loggedIn: true,
+    user: {
+      ...req.session.user,
+      points: u.points || 0,
+      badges: u.badges || [],
+      role: getUserRole(req.session.user.id),
+    },
+  });
+});
+
+app.get("/api/leaderboard", (req, res) => {
+  const board = Object.values(loadUsers())
+    .filter(u => u.points > 0)
+    .sort((a, b) => b.points - a.points)
+    .slice(0, 10)
+    .map((u, i) => ({ rank: i + 1, rpName: u.rpName, points: u.points, badges: u.badges || [] }));
+  res.json(board);
+});
+
+app.get("/api/my-apps", requireAuth, (req, res) => {
+  const mine = [];
+  for (const a of loadApps().values())
+    if (a.discordUser === req.session.user.id)
+      mine.push({ ref: a.ref, status: a.status, createdAt: a.createdAt, mcqScore: a.mcqScore, fullName: a.fullName });
+  res.json(mine.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+});
+
+// Server-side answer key — never trust a client-computed score.
+const MCQ_ANSWER_KEY = { q1: "A", q2: "B", q3: "C", q4: "C", q5: "B" };
+function scoreMcq(mcq) {
+  return Object.entries(MCQ_ANSWER_KEY).reduce((s, [k, correct]) => s + (mcq?.[k] === correct ? 1 : 0), 0);
+}
+
+// ── Submit ──
 app.post("/submit", async (req, res) => {
-  const ip =
-    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
-    req.socket.remoteAddress;
-  const discordId = req.body?.discordUser?.trim() || "";
-
-  const limit = checkRateLimit(ip, discordId);
-  if (limit.blocked) {
-    return res.status(429).json({ error: "Too many requests. Please wait." });
-  }
-
-  if (hasPendingApp(discordId)) {
-    return res
-      .status(409)
-      .json({ error: "You already have a pending application." });
-  }
-
-  const errors = validate(req.body);
-  if (errors.length) {
-    return res.status(400).json({ error: "Validation failed", details: errors });
-  }
-
-  const p = req.body;
-  const score = MCQ_KEYS.filter((k) => p.mcq[k] === CORRECT[k]).length;
-  const refCode = genRef();
-
-  const entry = {
-    ref: refCode,
-    status: "pending",
-    submittedAt: new Date().toISOString(),
-    ip,
-    fullName: safe(p.fullName, 100),
-    discordUser: safe(p.discordUser, 100),
-    mcqScore: score,
-    mcq: Object.fromEntries(MCQ_KEYS.map((k) => [k, p.mcq[k]])),
-    open: Object.fromEntries(OPEN_KEYS.map((k) => [k, safe(p.open[k], 2000)])),
-    notes: "",
-  };
-
   try {
-    const total = appendApp(entry);
-    console.log(`[submit] #${total} ${entry.fullName} score:${score} ref:${refCode}`);
+    if (!req.session.user) return res.status(401).json({ error: "login_required" });
 
-    // إذا رجعتي webhook من بعد، حل هاد السطر
-    // if (WEBHOOK) postToDiscord(buildEmbed(p, score, refCode)).catch((e) => console.error("[discord]", e.message));
+    const body = req.body || {};
+    if (!body.fullName)
+      return res.status(400).json({ error: "Missing fullName" });
 
-    res.json({ ok: true, ref: refCode });
+    // The Discord identity always comes from the authenticated session, never from client input —
+    // otherwise anyone could submit under someone else's Discord ID.
+    const discordUser = req.session.user.id;
+
+    const rl = checkRate(discordUser);
+    if (!rl.ok) return res.status(429).json({ error: "Too many submissions", remainSec: rl.remainSec });
+
+    const ref = genRef();
+    const appData = {
+      ref,
+      fullName:    safe(body.fullName, 100),
+      discordUser: safe(discordUser, 100),
+      mcqScore:    scoreMcq(body.mcq),
+      mcq:         body.mcq || {},
+      open:        body.open || {},
+      status:      "pending",
+      notes:       "",
+      createdAt:   new Date().toISOString(),
+    };
+
+    const apps = loadApps();
+    apps.set(ref, appData);
+    saveApps(apps);
+    recordRate(discordUser);
+
+    const channel = await client.channels.fetch(REVIEW_CHANNEL_ID);
+    if (channel?.isTextBased())
+      await channel.send({
+        embeds: [buildEmbed(appData, "🚑 Underwater Medical Center — New Application", 0x3b82f6)],
+        components: [makeButtons(ref)],
+      });
+
+    console.log(`✅ Application: ${ref}`);
+    return res.json({ ok: true, ref });
   } catch (err) {
-    console.error("[submit] error:", err.message);
-    res.status(500).json({ error: "Failed to save application." });
+    console.error("Submit error:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
-// ---------- Admin Auth ----------
-const loginAttempts = new Map();
-
-function checkLoginAttempts(ip) {
-  const now = Date.now();
-  const attempts = (loginAttempts.get(ip) || []).filter(
-    (t) => now - t < 15 * 60 * 1000
-  );
-  return attempts.length < 5;
-}
-
-function recordFailedAttempt(ip) {
-  const now = Date.now();
-  const attempts = (loginAttempts.get(ip) || []).filter(
-    (t) => now - t < 15 * 60 * 1000
-  );
-  attempts.push(now);
-  loginAttempts.set(ip, attempts);
-}
-
-function requireAdmin(req, res, next) {
-  if (req.session?.isAdmin) return next();
-  res.status(401).json({ error: "Unauthorized" });
-}
-
-app.post("/admin/login", (req, res) => {
-  const ip = req.ip;
-
-  if (!checkLoginAttempts(ip)) {
-    return res
-      .status(429)
-      .json({ error: "Too many failed attempts. Try again in 15 minutes." });
-  }
-
-  const { password, rememberMe } = req.body;
-
-  if (!password || password !== ADMIN_PASSWORD) {
-    recordFailedAttempt(ip);
-    return res.status(401).json({ error: "Wrong password" });
-  }
-
-  req.session.isAdmin = true;
-  req.session.cookie.maxAge = rememberMe
-    ? 7 * 24 * 60 * 60 * 1000
-    : 4 * 60 * 60 * 1000;
-
-  res.json({ ok: true });
-});
-
-app.post("/admin/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.json({ ok: true });
+// ══════════════════════════════════════════════════════
+// ADMIN API
+// ══════════════════════════════════════════════════════
+app.get("/api/admin/stats", requireRole("viewer"), (req, res) => {
+  const list  = Array.from(loadApps().values());
+  const users = loadUsers();
+  res.json({
+    total:    list.length,
+    pending:  list.filter(a => a.status === "pending").length,
+    approved: list.filter(a => a.status === "approved").length,
+    rejected: list.filter(a => a.status === "rejected").length,
+    members:  Object.keys(users).length,
+    avgScore: list.length ? (list.reduce((s, a) => s + (a.mcqScore || 0), 0) / list.length).toFixed(1) : 0,
   });
 });
 
-// ---------- Admin API ----------
-app.get("/admin/api/stats", requireAdmin, (req, res) => {
-  const apps = loadApps();
-  const total = apps.length;
-  const pending = apps.filter((a) => a.status === "pending").length;
-  const approved = apps.filter((a) => a.status === "approved").length;
-  const rejected = apps.filter((a) => a.status === "rejected").length;
-  const avgScore = total
-    ? (apps.reduce((s, a) => s + (a.mcqScore || 0), 0) / total).toFixed(2)
-    : 0;
+app.get("/api/admin/analytics", requireRole("viewer"), (req, res) => {
+  const list = Array.from(loadApps().values());
 
-  const visits = loadVisits();
-  const today = new Date().toISOString().slice(0, 10);
+  // submissions per day, last 30 days
+  const days = [];
+  const now = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  const perDay = Object.fromEntries(days.map(d => [d, 0]));
+  for (const a of list) {
+    const d = (a.createdAt || "").slice(0, 10);
+    if (d in perDay) perDay[d]++;
+  }
+
+  // score distribution 0-5
+  const scoreDist = [0, 0, 0, 0, 0, 0];
+  for (const a of list) {
+    const s = Math.max(0, Math.min(5, Number(a.mcqScore) || 0));
+    scoreDist[s]++;
+  }
+
+  // reviewer leaderboard
+  const byReviewer = {};
+  for (const a of list) {
+    if (!a.reviewedBy) continue;
+    byReviewer[a.reviewedBy] = (byReviewer[a.reviewedBy] || 0) + 1;
+  }
+
+  // avg review turnaround (hours)
+  const turnarounds = list
+    .filter(a => a.createdAt && a.reviewedAt)
+    .map(a => (new Date(a.reviewedAt) - new Date(a.createdAt)) / 3.6e6);
+  const avgTurnaroundH = turnarounds.length
+    ? (turnarounds.reduce((s, v) => s + v, 0) / turnarounds.length).toFixed(1)
+    : null;
+
+  const approvalRate = list.length
+    ? ((list.filter(a => a.status === "approved").length / list.length) * 100).toFixed(1)
+    : "0.0";
 
   res.json({
-    total,
-    pending,
-    approved,
-    rejected,
-    avgScore,
-    visits: {
-      total: visits.total,
-      today: visits.daily[today] || 0,
-    },
+    submissionsPerDay: days.map(d => ({ date: d, count: perDay[d] })),
+    scoreDist,
+    reviewerLeaderboard: Object.entries(byReviewer).sort((a, b) => b[1] - a[1]).slice(0, 8)
+      .map(([name, count]) => ({ name, count })),
+    avgTurnaroundH,
+    approvalRate,
   });
 });
 
-app.get("/admin/api/apps", requireAdmin, (req, res) => {
-  let apps = loadApps();
-  const { search = "", status = "", page = "1", limit = "20" } = req.query;
-
-  if (status) apps = apps.filter((a) => a.status === status);
-
+app.get("/api/admin/apps", requireRole("viewer"), (req, res) => {
+  const { status = "all", search = "", page = 1, limit = 20, sort = "new" } = req.query;
+  let list = Array.from(loadApps().values());
+  if (status !== "all") list = list.filter(a => a.status === status.toLowerCase());
   if (search) {
-    const q = String(search).toLowerCase();
-    apps = apps.filter(
-      (a) =>
-        a.fullName.toLowerCase().includes(q) ||
-        a.discordUser.toLowerCase().includes(q) ||
-        a.ref.toLowerCase().includes(q)
+    const s = search.toLowerCase();
+    list = list.filter(a =>
+      (a.fullName || "").toLowerCase().includes(s) ||
+      (a.discordUser || "").includes(s) ||
+      (a.ref || "").toLowerCase().includes(s)
     );
   }
+  if (sort === "new") list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  else if (sort === "old") list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  else if (sort === "score") list.sort((a, b) => (b.mcqScore || 0) - (a.mcqScore || 0));
 
-  apps = [...apps].reverse();
-
-  const total = apps.length;
-  const pageNum = Math.max(1, parseInt(page, 10) || 1);
-  const pageSize = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
-  const start = (pageNum - 1) * pageSize;
-
-  res.json({
-    total,
-    page: pageNum,
-    pageSize,
-    items: apps.slice(start, start + pageSize),
-  });
+  const p = Math.max(1, +page), lim = Math.min(100, Math.max(1, +limit));
+  res.json({ total: list.length, page: p, data: list.slice((p - 1) * lim, p * lim) });
 });
 
-app.get("/admin/api/apps/:ref", requireAdmin, (req, res) => {
-  const a = loadApps().find((x) => x.ref === req.params.ref);
-  if (!a) return res.status(404).json({ error: "Not found" });
-  res.json(a);
+app.post("/api/admin/review", requireRole("reviewer"), async (req, res) => {
+  const { ref, action, notes } = req.body;
+  if (!ref || !["accept", "reject"].includes(action)) return res.status(400).json({ error: "Invalid" });
+  try {
+    await processReview(ref, action, req.session.user.username, notes);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-app.patch("/admin/api/apps/:ref", requireAdmin, (req, res) => {
-  const apps = loadApps();
-  const idx = apps.findIndex((a) => a.ref === req.params.ref);
+app.post("/api/admin/bulk-review", requireRole("reviewer"), async (req, res) => {
+  const { refs, action } = req.body;
+  if (!Array.isArray(refs) || !refs.length || !["accept", "reject"].includes(action))
+    return res.status(400).json({ error: "Invalid" });
 
-  if (idx === -1) return res.status(404).json({ error: "Not found" });
-
-  const { status, notes } = req.body;
-
-  if (status && !["pending", "approved", "rejected"].includes(status)) {
-    return res.status(400).json({ error: "Invalid status" });
+  const results = { ok: [], failed: [] };
+  for (const ref of refs) {
+    try { await processReview(ref, action, req.session.user.username); results.ok.push(ref); }
+    catch (e) { results.failed.push({ ref, error: e.message }); }
   }
+  res.json(results);
+});
 
-  if (status !== undefined) apps[idx].status = status;
-  if (notes !== undefined) apps[idx].notes = safe(notes, 500);
-  apps[idx].updatedAt = new Date().toISOString();
-
+app.patch("/api/admin/apps/:ref/notes", requireRole("reviewer"), (req, res) => {
+  const apps = loadApps();
+  const data = apps.get(req.params.ref);
+  if (!data) return res.status(404).json({ error: "Not found" });
+  data.notes = safe(req.body.notes, 2000);
+  apps.set(req.params.ref, data);
   saveApps(apps);
-  res.json({ ok: true, app: apps[idx] });
-});
-
-app.delete("/admin/api/apps/:ref", requireAdmin, (req, res) => {
-  const apps = loadApps();
-  const filtered = apps.filter((a) => a.ref !== req.params.ref);
-
-  if (filtered.length === apps.length) {
-    return res.status(404).json({ error: "Not found" });
-  }
-
-  saveApps(filtered);
+  logAudit(req.session.user.username, "notes_updated", req.params.ref, data.notes.slice(0, 120));
   res.json({ ok: true });
 });
 
-app.get("/admin/api/export", requireAdmin, (req, res) => {
-  res.setHeader("Content-Type", "application/json");
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename="ems-apps-${Date.now()}.json"`
-  );
-  res.send(JSON.stringify(loadApps(), null, 2));
+// ── Members & role management (admin+) ──
+app.get("/api/admin/users", requireRole("admin"), (req, res) => {
+  const users = Object.values(loadUsers()).sort((a, b) => (b.points || 0) - (a.points || 0));
+  res.json(users);
 });
 
-app.get("/api/content", (req, res) => {
-  res.json(loadContent());
+app.patch("/api/admin/users/:id/role", requireRole("owner"), (req, res) => {
+  const { role } = req.body;
+  if (!["owner", "admin", "reviewer", "viewer", "none"].includes(role))
+    return res.status(400).json({ error: "Invalid role" });
+  const users = loadUsers();
+  if (!users[req.params.id]) return res.status(404).json({ error: "User not found" });
+  const prevRole = users[req.params.id].role || "none";
 });
 
-app.put("/api/content", requireAdmin, (req, res) => {
+// ══════════════════════════════════════════════════════
+// PERSONNEL API (Phase 3 — EMS Personnel Panel)
+// Available to any logged-in user holding an EMS rank (role >= viewer).
+// ══════════════════════════════════════════════════════
+app.get("/api/personnel/handbook", requireRole("viewer"), (req, res) => res.json(loadHandbook()));
+app.get("/api/personnel/sop",       requireRole("viewer"), (req, res) => res.json(loadSop()));
+
+// ── Duty schedule ──
+app.get("/api/personnel/schedule", requireRole("viewer"), (req, res) => {
+  const claims = loadSchedule();
+  const users  = loadUsers();
+  const grid = DUTY_DAYS.map(day => ({
+    day,
+    slots: DUTY_SLOTS.map(s => {
+      const id = dutyShiftId(day, s.key);
+      const ids = claims[id] || [];
+      return {
+        id, key: s.key, label: s.label, capacity: s.capacity,
+        claimedBy: ids.map(uid => ({ discordId: uid, rpName: users[uid]?.rpName || uid })),
+        mineClaimed: ids.includes(req.session.user.id),
+      };
+    }),
+  }));
+  res.json(grid);
+});
+
+app.post("/api/personnel/schedule/claim", requireRole("viewer"), (req, res) => {
+  const { day, slot } = req.body;
+  const slotDef = DUTY_SLOTS.find(s => s.key === slot);
+  if (!DUTY_DAYS.includes(day) || !slotDef) return res.status(400).json({ error: "Invalid shift" });
+  const id = dutyShiftId(day, slot);
+  const claims = loadSchedule();
+  const list = claims[id] || [];
+  if (list.includes(req.session.user.id)) return res.status(400).json({ error: "Already claimed" });
+  if (list.length >= slotDef.capacity) return res.status(400).json({ error: "Shift is full" });
+  list.push(req.session.user.id);
+  claims[id] = list;
+  saveSchedule(claims);
+  res.json({ ok: true });
+});
+
+app.post("/api/personnel/schedule/unclaim", requireRole("viewer"), (req, res) => {
+  const { day, slot } = req.body;
+  const id = dutyShiftId(day, slot);
+  const claims = loadSchedule();
+  claims[id] = (claims[id] || []).filter(uid => uid !== req.session.user.id);
+  saveSchedule(claims);
+  res.json({ ok: true });
+});
+
+// ── LOA (Leave of Absence) ──
+app.get("/api/personnel/loa", requireAuth, (req, res) => {
+  const mine = Object.values(loadLoa())
+    .filter(l => l.discordId === req.session.user.id)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json(mine);
+});
+
+app.post("/api/personnel/loa", requireRole("viewer"), (req, res) => {
+  const { reason, startDate, endDate } = req.body;
+  if (!reason || !startDate || !endDate) return res.status(400).json({ error: "Missing fields" });
+  const users = loadUsers();
+  const id = "LOA-" + crypto.randomBytes(3).toString("hex").toUpperCase();
+  const loa = loadLoa();
+  loa[id] = {
+    id,
+    discordId: req.session.user.id,
+    rpName: users[req.session.user.id]?.rpName || req.session.user.username,
+    reason: safe(reason, 500), startDate: safe(startDate, 20), endDate: safe(endDate, 20),
+    status: "pending", createdAt: new Date().toISOString(),
+  };
+  saveLoa(loa);
+  logAudit(req.session.user.username, "loa_submitted", id, safe(reason, 120));
+  res.json({ ok: true, id });
+});
+
+app.get("/api/admin/loa", requireRole("reviewer"), (req, res) => {
+  res.json(Object.values(loadLoa()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+});
+
+app.post("/api/admin/loa/review", requireRole("reviewer"), (req, res) => {
+  const { id, action } = req.body;
+  if (!["approve", "deny"].includes(action)) return res.status(400).json({ error: "Invalid action" });
+  const loa = loadLoa();
+  const rec = loa[id];
+  if (!rec) return res.status(404).json({ error: "Not found" });
+  if (rec.status !== "pending") return res.status(400).json({ error: `Already ${rec.status}` });
+  rec.status = action === "approve" ? "approved" : "denied";
+  rec.reviewedAt = new Date().toISOString();
+  rec.reviewedBy = req.session.user.username;
+  loa[id] = rec;
+  saveLoa(loa);
+  logAudit(req.session.user.username, action === "approve" ? "loa_approved" : "loa_denied", id, rec.rpName);
+  res.json({ ok: true });
+});
+
+// ── Activity points ──
+app.get("/api/personnel/activity", requireAuth, (req, res) => {
+  const users = loadUsers();
+  const u = users[req.session.user.id] || { points: 0, badges: [] };
+  const history = (loadActivity()[req.session.user.id] || []).slice().reverse();
+  res.json({ points: u.points || 0, badges: u.badges || [], history });
+});
+
+app.post("/api/admin/activity/adjust", requireRole("admin"), (req, res) => {
+  const { discordId, delta, reason } = req.body;
+  const amount = Number(delta);
+  if (!discordId || !amount || !reason) return res.status(400).json({ error: "Missing fields" });
+  const users = loadUsers();
+  const rpName = users[discordId]?.rpName || discordId;
+  awardPoints(discordId, rpName, amount, reason);
+  logAudit(req.session.user.username, "points_adjusted", discordId, `${amount > 0 ? "+" : ""}${amount} — ${reason}`);
+  res.json({ ok: true });
+});
+
+// ── Audit log (read-only here; full console lands in Phase 2) ──
+app.get("/api/admin/audit", requireRole("admin"), (req, res) => {
+  const limit = Math.min(500, Math.max(1, +(req.query.limit || 100)));
+  res.json(loadAudit().slice(-limit).reverse());
+});
+
+// ══════════════════════════════════════════════════════
+// REVIEW LOGIC (shared by web + Discord buttons)
+// ══════════════════════════════════════════════════════
+async function processReview(ref, action, reviewerTag, notes) {
+  const apps = loadApps();
+  const data = apps.get(ref);
+  if (!data) throw new Error("Application not found");
+  if (data.status !== "pending") throw new Error(`Already ${data.status}`);
+
+  data.status     = action === "accept" ? "approved" : "rejected";
+  data.reviewedAt  = new Date().toISOString();
+  data.reviewedBy  = reviewerTag || "System";
+  if (notes) data.notes = safe(notes, 2000);
+  apps.set(ref, data);
+  saveApps(apps);
+
+  if (action === "accept") awardPoints(data.discordUser, data.fullName, 10, `Application ${ref} approved`);
+  logAudit(reviewerTag || "System", action === "accept" ? "application_approved" : "application_rejected", ref, data.fullName);
+
   try {
-    saveContent(req.body);
-    res.json({ ok: true });
-  } catch {
-    res.status(500).json({ error: "Failed to save content" });
+    const user  = await client.users.fetch(data.discordUser);
+    const files = [];
+    if (fs.existsSync(LOGO_FILE)) files.push(new AttachmentBuilder(LOGO_FILE, { name: "underwater-medical-center.png" }));
+    await user.send({ embeds: [buildResultEmbed(data, action, ref)], files });
+  } catch (e) { console.log("DM failed:", e.message); }
+
+  return data;
+}
+
+// ══════════════════════════════════════════════════════
+// DISCORD BUTTONS
+// ══════════════════════════════════════════════════════
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isButton()) return;
+  try {
+    if (interaction.deferred || interaction.replied) return; // already handled — likely a double-click/duplicate event
+    await interaction.deferUpdate();
+
+    const [action, ref] = interaction.customId.split("_");
+    if (!["accept", "reject"].includes(action) || !ref) return;
+
+    const data = loadApps().get(ref);
+    if (!data) return interaction.followUp({ content: "❌ Not found.", ephemeral: true });
+    if (data.status !== "pending") return interaction.followUp({ content: `⚠️ Already ${data.status}`, ephemeral: true });
+
+    let updatedData;
+    try { updatedData = await processReview(ref, action, interaction.user.tag); }
+    catch (e) { return interaction.followUp({ content: `❌ ${e.message}`, ephemeral: true }); }
+
+    const title = action === "accept" ? "✅ Underwater Medical Center — APPROVED" : "❌ Underwater Medical Center — REJECTED";
+    await interaction.editReply({
+      embeds: [buildEmbed(updatedData, title, action === "accept" ? 0x22c55e : 0xef4444)],
+      components: [makeButtons(ref, true)],
+    });
+  } catch (err) {
+    // Never let a single bad interaction (double-click, expired token, Discord API hiccup) take the whole process down.
+    console.error("Interaction handling error:", err.message);
   }
 });
 
-// ---------- Admin Dashboard HTML ----------
-app.get("/admin", (req, res) => {
-  res.send(`<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EMS Abrams — لوحة التحكم</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#080b15;font-family:'Segoe UI',system-ui,sans-serif;color:#eef2ff;min-height:100vh}
-.login-wrap{display:flex;justify-content:center;align-items:center;min-height:100vh;background:radial-gradient(circle at 20% 30%,#1e1b2e,#080b15)}
-.login-box{background:rgba(15,18,34,.95);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:44px 40px;width:100%;max-width:400px;text-align:center}
-.login-icon{font-size:52px;margin-bottom:18px}
-.login-box h1{font-size:28px;margin-bottom:8px}
-.login-box p{color:#8892b0;margin-bottom:26px;font-size:14px}
-.login-box input[type=password]{width:100%;padding:13px 14px;border-radius:12px;border:1px solid #2d3260;background:#0c1020;color:#fff;font-size:15px;margin-bottom:14px;outline:none;transition:.2s}
-.login-box input[type=password]:focus{border-color:#e11d48}
-.remember{display:flex;align-items:center;gap:8px;margin-bottom:18px;font-size:13px;color:#8892b0;cursor:pointer}
-.login-box .login-btn{width:100%;padding:13px;background:linear-gradient(135deg,#e11d48,#9b1235);border:none;border-radius:12px;color:#fff;font-weight:700;font-size:15px;cursor:pointer;transition:.2s}
-.login-box .login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(225,29,72,.3)}
-.err{color:#f87171;margin-top:12px;font-size:13px;min-height:18px}
-.dashboard{display:none;flex-direction:column;min-height:100vh}
-.topbar{background:#0c1020;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1a1f3a;position:sticky;top:0;z-index:10}
-.topbar h2{font-size:17px;color:#fff}
-.topbar-right{display:flex;align-items:center;gap:10px}
-.btn{padding:8px 16px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:.2s}
-.btn:hover{transform:translateY(-1px)}
-.btn-danger{background:#e11d48;color:#fff}
-.btn-blue{background:#3b82f6;color:#fff}
-.btn-amber{background:#f59e0b;color:#1a1200}
-.btn-green{background:#10b981;color:#fff}
-.btn-gray{background:#1e2540;color:#ccd;border:1px solid #2d3260}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;padding:20px 24px 0}
-.stat-card{background:#0c1020;border:1px solid #1a1f3a;border-radius:16px;padding:18px;text-align:center}
-.stat-val{font-size:30px;font-weight:800;color:#e11d48}
-.stat-lbl{color:#7a8ab0;margin-top:6px;font-size:12px}
-.controls{padding:16px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #1a1f3a}
-.controls input,.controls select{padding:9px 12px;border-radius:10px;background:#0c1020;border:1px solid #2d3260;color:#fff;font-size:13px;outline:none}
-.controls input:focus{border-color:#3b82f6}
-table{width:calc(100% - 48px);margin:20px 24px;border-collapse:collapse;font-size:13px}
-th,td{text-align:right;padding:11px 12px;border-bottom:1px solid #1a1f3a}
-th{color:#7a8ab0;font-weight:500;background:#0c1020;position:sticky;top:57px}
-tr:hover td{background:rgba(255,255,255,.02)}
-.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
-.badge-pending{background:rgba(245,158,11,.15);color:#f59e0b}
-.badge-approved{background:rgba(16,185,129,.15);color:#10b981}
-.badge-rejected{background:rgba(239,68,68,.15);color:#ef4444}
-.acts button{background:none;border:none;color:#7a8ab0;cursor:pointer;padding:4px 7px;border-radius:6px;font-size:12px;transition:.15s}
-.acts button:hover{background:#1a1f3a;color:#fff}
-.pagination{display:flex;justify-content:center;gap:8px;padding:20px}
-.pagination button{background:#0c1020;border:1px solid #2d3260;padding:6px 13px;border-radius:8px;color:#ccd;cursor:pointer;font-size:13px;transition:.15s}
-.pagination button.active,.pagination button:hover{background:#e11d48;border-color:#e11d48;color:#fff}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;justify-content:center;align-items:center}
-.modal-bg.open{display:flex}
-.modal{background:#0d1122;border:1px solid #1e2540;border-radius:20px;width:90%;max-width:640px;max-height:85vh;overflow:auto;padding:26px}
-.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-.modal-hdr h3{font-size:17px}
-.close-btn{background:none;border:none;color:#7a8ab0;font-size:24px;cursor:pointer;line-height:1}
-.close-btn:hover{color:#fff}
-.field-row{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
-.field-row:last-of-type{border:none}
-.field-key{color:#7a8ab0;font-size:12px}
-.field-val{color:#dce9f6;word-break:break-word;white-space:pre-wrap;line-height:1.6}
-.notes-ta{width:100%;margin-top:10px;padding:12px;border-radius:10px;background:#080b15;border:1px solid #2d3260;color:#fff;font-size:13px;resize:vertical;outline:none}
-.notes-ta:focus{border-color:#3b82f6}
-.modal-acts{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
-.content-grid{display:grid;gap:12px}
-.content-field label{font-size:11px;color:#7a8ab0;letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:6px}
-.content-field textarea{width:100%;padding:10px 12px;border-radius:10px;background:#080b15;border:1px solid #2d3260;color:#fff;font-size:13px;resize:vertical;outline:none;line-height:1.6}
-.content-field textarea:focus{border-color:#f59e0b}
-.empty-row td{text-align:center;padding:32px;color:#4a5580}
-</style>
-</head>
-<body>
+// Last-resort safety nets: log and keep running instead of crashing the whole server + bot.
+process.on("unhandledRejection", (err) => console.error("⚠️  Unhandled rejection:", err));
+process.on("uncaughtException", (err) => console.error("⚠️  Uncaught exception:", err));
 
-<div class="login-wrap" id="loginWrap">
-  <div class="login-box">
-    <div class="login-icon">🚑</div>
-    <h1>EMS Admin Panel</h1>
-    <p>أدخل كلمة المرور للدخول</p>
-    <input type="password" id="pwInput" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')doLogin()">
-    <label class="remember"><input type="checkbox" id="rememberMe"> تذكرني لمدة 7 أيام</label>
-    <button class="login-btn" onclick="doLogin()">تسجيل الدخول</button>
-    <div class="err" id="loginErr"></div>
-  </div>
-</div>
+// ══════════════════════════════════════════════════════
+// EMBED BUILDERS
+// ══════════════════════════════════════════════════════
+const MCQ_KEYS  = ["q1", "q2", "q3", "q4", "q5"];
+const OPEN_KEYS = ["q6", "q7", "q8", "q9", "q10"];
+const OPEN_LBLS = [
+  "Explain Medical RP and why EMS must respect it",
+  "Death declared + video evidence — what do you do?",
+  "Patient insults you / breaks RP rules — response?",
+  "Crash: one conscious, one unconscious — who first, why?",
+  "Treated patient flees & starts fighting — what do you do?",
+];
 
-<div class="dashboard" id="dashboard">
-  <div class="topbar">
-    <h2>🚑 EMS Abrams — لوحة التحكم</h2>
-    <div class="topbar-right">
-      <button class="btn btn-amber" onclick="openContentEditor()">✏️ تعديل المحتوى</button>
-      <button class="btn btn-blue" onclick="exportData()">⬇ تصدير JSON</button>
-      <button class="btn btn-danger" onclick="doLogout()">تسجيل الخروج</button>
-    </div>
-  </div>
-
-  <div class="stats" id="statsGrid"></div>
-
-  <div class="controls">
-    <input type="text" id="search" placeholder="بحث بالاسم، Discord، أو الرمز..." oninput="debounce()">
-    <select id="statusFilter" onchange="loadApps(1)">
-      <option value="">جميع الحالات</option>
-      <option value="pending">قيد الانتظار</option>
-      <option value="approved">مقبول</option>
-      <option value="rejected">مرفوض</option>
-    </select>
-    <button class="btn btn-gray" onclick="loadApps(1)">🔄 تحديث</button>
-  </div>
-
-  <table>
-    <thead><tr>
-      <th>الرمز</th><th>الاسم</th><th>Discord ID</th>
-      <th>الدرجة</th><th>الحالة</th><th>التاريخ</th><th>إجراءات</th>
-    </tr></thead>
-    <tbody id="appsBody"></tbody>
-  </table>
-  <div class="pagination" id="pager"></div>
-</div>
-
-<div class="modal-bg" id="detailModal">
-  <div class="modal">
-    <div class="modal-hdr">
-      <h3 id="modalTitle">تفاصيل الطلب</h3>
-      <button class="close-btn" onclick="closeModal('detailModal')">×</button>
-    </div>
-    <div id="modalBody"></div>
-    <div class="modal-acts">
-      <button class="btn btn-green" onclick="setStatus('approved')">✓ قبول</button>
-      <button class="btn btn-danger" onclick="setStatus('rejected')">✗ رفض</button>
-      <button class="btn btn-blue" onclick="saveNotes()">💾 حفظ الملاحظات</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-bg" id="contentModal">
-  <div class="modal" style="max-width:760px">
-    <div class="modal-hdr">
-      <h3>✏️ تعديل محتوى الصفحة الرئيسية</h3>
-      <button class="close-btn" onclick="closeModal('contentModal')">×</button>
-    </div>
-    <div class="content-grid" id="contentGrid"></div>
-    <div class="modal-acts" style="margin-top:20px">
-      <button class="btn btn-green" onclick="saveContent()">💾 حفظ التغييرات</button>
-    </div>
-  </div>
-</div>
-
-<script>
-const MCQ_KEYS = ['q1','q2','q3','q4','q5'];
-const OPEN_KEYS = ['q6','q7','q8','q9','q10'];
-let activeRef = null;
-let debTimer;
-
-function esc(s){
-  if(!s) return '';
-  return String(s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;');
+function makeButtons(ref, disabled = false) {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`accept_${ref}`).setLabel("✅ Accept").setStyle(ButtonStyle.Success).setDisabled(disabled),
+    new ButtonBuilder().setCustomId(`reject_${ref}`).setLabel("❌ Reject").setStyle(ButtonStyle.Danger).setDisabled(disabled),
+  );
 }
 
-async function doLogin(){
-  const pw = document.getElementById('pwInput').value;
-  const rem = document.getElementById('rememberMe').checked;
-  document.getElementById('loginErr').textContent = '';
+function buildEmbed(data, title = "🚑 New Application", color = 0x3b82f6) {
+  const scoreIcon = data.mcqScore >= 4 ? "🟢" : data.mcqScore === 3 ? "🟡" : "🔴";
+  const mcqLine = MCQ_KEYS.map(k => {
+    const given = safe(data.mcq?.[k], 10);
+    const correct = given === MCQ_ANSWER_KEY[k];
+    return `${correct ? "✅" : "❌"} **${k.toUpperCase()}:** ${given}`;
+  }).join("  |  ");
 
-  const r = await fetch('/admin/login',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({password:pw,rememberMe:rem})
+  const embed = new EmbedBuilder().setColor(color).setTitle(title)
+    .addFields(
+      { name: "👤 RP Name",    value: safe(data.fullName, 80),           inline: true },
+      { name: "💬 Discord ID", value: `\`${safe(data.discordUser, 30)}\``, inline: true },
+      { name: "🧠 MCQ Score",  value: `${scoreIcon} ${safe(data.mcqScore, 10)}/5`, inline: true },
+      { name: "🏷️ Ref",        value: `\`${safe(data.ref, 30)}\``,         inline: true },
+      { name: "📌 Status",     value: safe(data.status, 20),             inline: true },
+      { name: "🛡️ Reviewed By", value: data.reviewedBy ? safe(data.reviewedBy, 60) : "—", inline: true },
+      { name: "📝 MCQ Answers", value: safe(mcqLine, 400), inline: false },
+    );
+  OPEN_KEYS.forEach((k, i) => embed.addFields({ name: `💬 ${OPEN_LBLS[i]}`, value: safe(data.open?.[k], 500), inline: false }));
+  embed.setFooter({ text: `REF: ${safe(data.ref)} • ${new Date(data.createdAt).toLocaleString()}` }).setTimestamp();
+  return embed;
+}
+
+function buildResultEmbed(data, action, ref) {
+  const ok = action === "accept";
+  return new EmbedBuilder()
+    .setColor(ok ? 0x22c55e : 0xef4444)
+    .setAuthor({ name: "Underwater Medical Center", iconURL: "attachment://underwater-medical-center.png" })
+    .setTitle(ok ? "🎉 Application Approved!" : "📋 Application Update")
+    .setDescription(ok
+      ? `Dear **${safe(data.fullName, 80)}**,\n\nYour application has been **approved** ✅\n\nYou earned **+10 points** 🏅\n\n**Ref:** \`${ref}\`\n\nWelcome to **Underwater Medical Center**!`
+      : `Dear **${safe(data.fullName, 80)}**,\n\nYour application was **not approved** at this time.\n\n**Ref:** \`${ref}\`\n\nYou may re-apply after improving your preparation.`
+    )
+    .addFields(
+      { name: "Applicant",  value: safe(data.fullName, 80),    inline: true },
+      { name: "Discord ID", value: safe(data.discordUser, 30), inline: true },
+      { name: "Score",      value: `${safe(data.mcqScore, 10)}/5`, inline: true },
+    )
+    .setThumbnail("attachment://underwater-medical-center.png")
+    .setFooter({ text: "Underwater Medical Center • Recruitment" })
+    .setTimestamp();
+}
+
+// ══════════════════════════════════════════════════════
+// PAGES
+// ══════════════════════════════════════════════════════
+app.get("/",              (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/apply",         (_, res) => res.sendFile(path.join(__dirname, "public", "apply.html")));
+app.get("/dashboard",     requireAuth, (req, res, next) => {
+  if (!hasRole(req.session.user.id, "viewer")) return res.status(403).sendFile(path.join(__dirname, "public", "403.html"));
+  next();
+}, (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
+app.get("/personnel",     requireAuth, (req, res, next) => {
+  if (!hasRole(req.session.user.id, "viewer")) return res.status(403).sendFile(path.join(__dirname, "public", "403.html"));
+  next();
+}, (_, res) => res.sendFile(path.join(__dirname, "public", "personnel.html")));
+app.get("/handbook", (_, res) => res.sendFile(path.join(__dirname, "public", "documentation.html")));
+app.get("/documentation", (_, res) => res.redirect(301, "/handbook")); // old link, kept working
+
+// ══════════════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════════════
+client.once(Events.ClientReady, () => {
+  console.log(`✅ Bot ready: ${client.user.tag}`);
+  app.listen(PORT, () => {
+    console.log(`🚀 http://localhost:${PORT}`);
+    console.log(`📨 Review channel: ${REVIEW_CHANNEL_ID}`);
+    console.log(`🌐 Apply URL: ${APPLY_URL}`);
+    console.log(`🛡️  Owners: ${OWNER_IDS.join(", ") || "none configured"}`);
   });
-
-  const d = await r.json();
-
-  if(r.ok){
-    document.getElementById('loginWrap').style.display='none';
-    document.getElementById('dashboard').style.display='flex';
-    loadStats();
-    loadApps(1);
-  } else {
-    document.getElementById('loginErr').textContent = d.error || 'كلمة المرور خاطئة';
-    document.getElementById('pwInput').value='';
-  }
-}
-
-async function doLogout(){
-  await fetch('/admin/logout',{method:'POST'});
-  location.reload();
-}
-
-function handleUnauth(res){
-  if(res.status===401){
-    document.getElementById('dashboard').style.display='none';
-    document.getElementById('loginWrap').style.display='flex';
-    document.getElementById('loginErr').textContent='انتهت الجلسة، سجّل الدخول من جديد.';
-    return true;
-  }
-  return false;
-}
-
-async function loadStats(){
-  const r = await fetch('/admin/api/stats');
-  if(handleUnauth(r)) return;
-  const s = await r.json();
-
-  document.getElementById('statsGrid').innerHTML = \`
-    <div class="stat-card"><div class="stat-val">\${s.total}</div><div class="stat-lbl">إجمالي الطلبات</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#f59e0b">\${s.pending}</div><div class="stat-lbl">قيد الانتظار</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#10b981">\${s.approved}</div><div class="stat-lbl">مقبول</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#ef4444">\${s.rejected}</div><div class="stat-lbl">مرفوض</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#3b82f6">\${s.avgScore}/5</div><div class="stat-lbl">متوسط الدرجة</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#a78bfa">\${s.visits.total}</div><div class="stat-lbl">إجمالي الزيارات</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#f472b6">\${s.visits.today}</div><div class="stat-lbl">زيارات اليوم</div></div>
-  \`;
-}
-
-async function loadApps(page=1){
-  const search = document.getElementById('search').value;
-  const status = document.getElementById('statusFilter').value;
-
-  const r = await fetch(\`/admin/api/apps?search=\${encodeURIComponent(search)}&status=\${status}&page=\${page}&limit=20\`);
-  if(handleUnauth(r)) return;
-
-  const data = await r.json();
-  renderTable(data.items);
-  renderPager(data.total, data.page, data.pageSize);
-}
-
-function renderTable(apps){
-  const tb = document.getElementById('appsBody');
-
-  if(!apps.length){
-    tb.innerHTML = '<tr class="empty-row"><td colspan="7">لا توجد طلبات</td></tr>';
-    return;
-  }
-
-  tb.innerHTML = apps.map(a=>\`
-    <tr>
-      <td style="font-family:monospace;font-size:12px">\${a.ref}</td>
-      <td>\${esc(a.fullName)}</td>
-      <td style="font-family:monospace;font-size:12px">\${esc(a.discordUser)}</td>
-      <td><strong>\${a.mcqScore}/5</strong></td>
-      <td><span class="badge badge-\${a.status}">\${a.status==='pending'?'قيد الانتظار':a.status==='approved'?'مقبول':'مرفوض'}</span></td>
-      <td style="font-size:12px;color:#7a8ab0">\${new Date(a.submittedAt).toLocaleString('ar')}</td>
-      <td class="acts">
-        <button onclick="viewApp('\${a.ref}')">عرض</button>
-        \${a.status!=='approved'?'<button onclick="quickSet(\\''+a.ref+'\\',\\'approved\\')">قبول</button>':''}
-        \${a.status!=='rejected'?'<button onclick="quickSet(\\''+a.ref+'\\',\\'rejected\\')">رفض</button>':''}
-        <button onclick="delApp('\${a.ref}')" style="color:#f87171">حذف</button>
-      </td>
-    </tr>
-  \`).join('');
-}
-
-function renderPager(total, page, size){
-  const pages = Math.ceil(total / size);
-  if(pages <= 1){
-    document.getElementById('pager').innerHTML = '';
-    return;
-  }
-
-  let h = '';
-  if(page > 1) h += \`<button onclick="loadApps(\${page-1})">← السابق</button>\`;
-
-  for(let i=Math.max(1,page-2); i<=Math.min(pages,page+2); i++){
-    h += \`<button class="\${i===page?'active':''}" onclick="loadApps(\${i})">\${i}</button>\`;
-  }
-
-  if(page < pages) h += \`<button onclick="loadApps(\${page+1})">التالي →</button>\`;
-
-  document.getElementById('pager').innerHTML = h;
-}
-
-async function viewApp(ref){
-  const r = await fetch('/admin/api/apps/' + ref);
-  if(handleUnauth(r)) return;
-
-  const a = await r.json();
-  activeRef = ref;
-
-  document.getElementById('modalTitle').textContent = 'الطلب — ' + a.ref;
-
-  const mcqH = MCQ_KEYS.map(k => \`<div class="field-row"><div class="field-key">س\${k.slice(1)} (MCQ)</div><div class="field-val">\${esc(a.mcq?.[k]||'—')}</div></div>\`).join('');
-  const openH = OPEN_KEYS.map(k => \`<div class="field-row"><div class="field-key">س\${k.slice(1)}</div><div class="field-val">\${esc(a.open?.[k]||'—')}</div></div>\`).join('');
-
-  document.getElementById('modalBody').innerHTML = \`
-    <div class="field-row"><div class="field-key">الاسم</div><div class="field-val">\${esc(a.fullName)}</div></div>
-    <div class="field-row"><div class="field-key">Discord ID</div><div class="field-val" style="font-family:monospace">\${esc(a.discordUser)}</div></div>
-    <div class="field-row"><div class="field-key">الحالة</div><div class="field-val"><span class="badge badge-\${a.status}">\${a.status}</span></div></div>
-    <div class="field-row"><div class="field-key">الدرجة</div><div class="field-val"><strong>\${a.mcqScore}/5</strong></div></div>
-    <div class="field-row"><div class="field-key">تاريخ التقديم</div><div class="field-val">\${new Date(a.submittedAt).toLocaleString('ar')}</div></div>
-    \${mcqH}
-    \${openH}
-    <div style="margin-top:14px;font-size:12px;color:#7a8ab0">ملاحظات المشرف:</div>
-    <textarea id="adminNotes" class="notes-ta" rows="3">\${esc(a.notes||'')}</textarea>
-  \`;
-
-  document.getElementById('detailModal').classList.add('open');
-}
-
-async function setStatus(status){
-  if(!activeRef) return;
-
-  const r = await fetch('/admin/api/apps/' + activeRef, {
-    method:'PATCH',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({status})
-  });
-
-  if(r.ok){
-    closeModal('detailModal');
-    loadStats();
-    loadApps();
-  } else {
-    alert('فشل تحديث الحالة');
-  }
-}
-
-async function quickSet(ref,status){
-  const r = await fetch('/admin/api/apps/' + ref, {
-    method:'PATCH',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({status})
-  });
-
-  if(r.ok){
-    loadStats();
-    loadApps();
-  } else {
-    alert('فشل التحديث');
-  }
-}
-
-async function saveNotes(){
-  if(!activeRef) return;
-
-  const notes = document.getElementById('adminNotes').value;
-  const r = await fetch('/admin/api/apps/' + activeRef, {
-    method:'PATCH',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({notes})
-  });
-
-  if(r.ok) alert('✓ تم حفظ الملاحظات');
-  else alert('فشل الحفظ');
-}
-
-async function delApp(ref){
-  if(!confirm('هل أنت متأكد من حذف هذا الطلب نهائياً؟')) return;
-
-  const r = await fetch('/admin/api/apps/' + ref, { method:'DELETE' });
-
-  if(r.ok){
-    loadStats();
-    loadApps();
-  } else {
-    alert('فشل الحذف');
-  }
-}
-
-function exportData(){
-  window.open('/admin/api/export','_blank');
-}
-
-async function openContentEditor(){
-  const r = await fetch('/api/content');
-  if(!r.ok) return alert('فشل تحميل المحتوى');
-
-  const c = await r.json();
-  document.getElementById('contentGrid').innerHTML = Object.entries(c).map(([k,v]) => \`
-    <div class="content-field">
-      <label>\${k}</label>
-      <textarea id="cf_\${k}" rows="2">\${esc(v)}</textarea>
-    </div>
-  \`).join('');
-
-  document.getElementById('contentModal').classList.add('open');
-}
-
-async function saveContent(){
-  const updated = {};
-  document.querySelectorAll('#contentGrid textarea').forEach(ta => {
-    updated[ta.id.replace('cf_','')] = ta.value;
-  });
-
-  const r = await fetch('/api/content', {
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(updated)
-  });
-
-  if(r.ok){
-    alert('✓ تم حفظ المحتوى');
-    closeModal('contentModal');
-  } else {
-    alert('فشل الحفظ');
-  }
-}
-
-function closeModal(id){
-  document.getElementById(id).classList.remove('open');
-}
-
-function debounce(){
-  clearTimeout(debTimer);
-  debTimer = setTimeout(() => loadApps(1), 400);
-}
-
-document.addEventListener('keydown', e => {
-  if(e.key === 'Escape'){
-    closeModal('detailModal');
-    closeModal('contentModal');
-  }
-});
-</script>
-</body>
-</html>`);
 });
 
-app.use((req, res) => res.status(404).json({ error: "Not found" }));
-
-app.listen(PORT, () => {
-  console.log("╔══════════════════════════════════════╗");
-  console.log("║     EMS ABRAMS — SERVER RUNNING      ║");
-  console.log("╠══════════════════════════════════════╣");
-  console.log(`║  App    → http://localhost:${PORT}       ║`);
-  console.log(`║  Admin  → http://localhost:${PORT}/admin ║`);
-  console.log("╠══════════════════════════════════════╣");
-  if (ADMIN_PASSWORD === "EMS_CHANGE_ME") {
-    console.log("║  ⚠️  WARNING: Change ADMIN_PASSWORD!   ║");
-  }
-  console.log("╚══════════════════════════════════════╝");
-});
+client.login(TOKEN).catch(err => { console.error("❌ Login failed:", err.message); process.exit(1); });

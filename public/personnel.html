@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EMS Personnel Panel — Underwater Medical Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --abyss:#03080c;--d1:#071019;--d2:#0b1720;--line:#122130;--line2:#1c3244;
+  --teal:#14b8a6;--teal2:#5eead4;--coral:#fb7185;--amber:#f7b955;--ok:#34d399;
+  --ink:#dbe9ec;--mute:#4a6572;--mute2:#7d97a3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;background:var(--abyss);color:var(--ink);min-height:100vh;display:flex}
+.disp{font-family:'Space Grotesk',sans-serif}
+.mono{font-family:'IBM Plex Mono',monospace}
+.bg-rays{position:fixed;inset:0;z-index:0;pointer-events:none;background:
+  radial-gradient(ellipse 900px 500px at 15% -10%, rgba(20,184,166,.07), transparent 60%),
+  radial-gradient(ellipse 700px 500px at 100% 10%, rgba(251,113,133,.05), transparent 60%)}
+.sidebar{width:224px;flex-shrink:0;background:var(--d1);border-right:1px solid var(--line);display:flex;flex-direction:column;position:relative;z-index:1}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:20px 18px;border-bottom:1px solid var(--line)}
+.pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--teal);position:relative;flex-shrink:0}
+.pulse-dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--teal);animation:ping 2.4s ease-out infinite}
+@keyframes ping{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.4);opacity:0}}
+.sb-logo-text{font-size:13px;font-weight:700;letter-spacing:2.5px;color:#fff}
+.sb-logo-sub{font-size:9px;color:var(--mute2);letter-spacing:1.5px;margin-top:1px}
+.sb-nav{padding:14px 9px;flex:1}
+.sb-sec{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--mute);text-transform:uppercase;padding:10px 9px 5px}
+.sb-link{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--mute2);font-size:13px;font-weight:500;cursor:pointer;transition:.15s;text-decoration:none;border:none;background:none;width:100%}
+.sb-link:hover{background:rgba(255,255,255,.03);color:#fff}
+.sb-link.active{background:rgba(20,184,166,.1);color:var(--teal2);border:1px solid rgba(20,184,166,.18)}
+.sb-bottom{padding:10px 9px;border-top:1px solid var(--line)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:9px 10px;margin-bottom:2px}
+.sb-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--coral));display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0;color:#04141a}
+.sb-role{font-size:10px;color:var(--mute2);text-transform:capitalize}
+.content{flex:1;padding:26px 28px;overflow:auto;position:relative;z-index:1;max-width:100%}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.page-title{font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--mute2);margin-top:2px}
+.panel{background:var(--d1);border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-bottom:16px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid var(--line);gap:10px;flex-wrap:wrap}
+.panel-title{font-size:14px;font-weight:600}
+.panel-body{padding:17px}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px;margin-bottom:20px}
+.stat-card{background:var(--d1);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+.stat-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:var(--mute2);margin-bottom:5px}
+.stat-val{font-size:27px;font-weight:700;color:#fff}
+.stat-val.y{color:var(--amber)}.stat-val.g{color:var(--ok)}.stat-val.b{color:var(--teal2)}
+.doc-card{background:var(--d2);border:1px solid var(--line);border-radius:10px;padding:15px 17px;margin-bottom:10px}
+.doc-card h3{font-size:14px;margin-bottom:6px;color:#fff}
+.doc-card p{font-size:13px;color:#c7d5da;line-height:1.7}
+.tag{display:inline-flex;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--teal2);background:rgba(20,184,166,.08);border:1px solid rgba(20,184,166,.2);border-radius:20px;padding:2px 8px;margin-bottom:8px}
+.sched-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.day-col{background:var(--d2);border:1px solid var(--line);border-radius:10px;padding:11px}
+.day-col h4{font-size:12px;color:var(--teal2);margin-bottom:8px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px}
+.slot{background:var(--d1);border:1px solid var(--line);border-radius:8px;padding:8px 9px;margin-bottom:7px;font-size:11.5px}
+.slot-label{color:#dfe9ec;font-weight:600;margin-bottom:3px}
+.slot-cap{color:var(--mute2);font-size:10px;margin-bottom:6px}
+.slot-names{font-size:10px;color:var(--mute2);margin-bottom:6px;min-height:12px}
+.slot-btn{width:100%;padding:5px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid var(--line2);background:transparent;color:var(--mute2);cursor:pointer;transition:.12s}
+.slot-btn:hover{border-color:var(--teal);color:#fff}
+.slot-btn.mine{background:rgba(52,211,153,.12);color:var(--ok);border-color:rgba(52,211,153,.3)}
+.slot-btn.full{opacity:.4;cursor:not-allowed}
+.field{margin-bottom:14px}
+label{display:block;font-size:12px;color:var(--teal2);margin-bottom:5px;font-weight:600}
+input,textarea,select{width:100%;background:var(--d2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:inherit;font-size:13px;padding:9px 11px;outline:none}
+input:focus,textarea:focus{border-color:var(--teal)}
+textarea{min-height:70px;resize:vertical}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.13s;font-family:inherit}
+.btn-p{background:var(--teal);color:#04141a}
+.btn-p:hover{background:var(--teal2)}
+.btn-ghost{background:transparent;color:var(--mute2);border:1px solid var(--line)}
+.btn-ghost:hover{color:#fff;border-color:var(--line2)}
+.btn-ok{background:rgba(52,211,153,.1);color:var(--ok);border:1px solid rgba(52,211,153,.22)}
+.btn-no{background:rgba(251,113,133,.1);color:var(--coral);border:1px solid rgba(251,113,133,.22)}
+table{width:100%;border-collapse:collapse}
+th{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mute2);padding:9px 13px;text-align:left;border-bottom:1px solid var(--line);background:rgba(255,255,255,.015)}
+td{padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px}
+tr:last-child td{border-bottom:none}
+.sbadge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;text-transform:capitalize}
+.s-pending{background:rgba(247,185,85,.1);color:var(--amber);border:1px solid rgba(247,185,85,.22)}
+.s-approved{background:rgba(52,211,153,.1);color:var(--ok);border:1px solid rgba(52,211,153,.22)}
+.s-denied{background:rgba(251,113,133,.1);color:var(--coral);border:1px solid rgba(251,113,133,.22)}
+.empty{text-align:center;padding:34px 20px;color:var(--mute2);font-size:13px}
+.tab-c{display:none}.tab-c.on{display:block}
+.mono2{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute2)}
+.toast{position:fixed;bottom:18px;right:18px;z-index:999;padding:11px 16px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .22s;transform:translateY(7px)}
+.toast.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+.tok{background:var(--ok);color:#04141a}.terr{background:var(--coral);color:#2b0a10}
+.hist-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:12.5px}
+.hist-row:last-child{border-bottom:none}
+.hist-delta{font-family:'IBM Plex Mono',monospace;font-weight:700}
+.hist-delta.pos{color:var(--ok)}.hist-delta.neg{color:var(--coral)}
+.badges-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.bd{font-size:11px;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
+.lang-switch{display:flex;background:var(--d2);border:1px solid var(--line);border-radius:20px;padding:2px;margin:10px 14px 0}
+.lang-btn{flex:1;border:none;background:none;color:var(--mute2);font-size:10px;font-weight:700;padding:5px 0;border-radius:16px;cursor:pointer;font-family:'IBM Plex Mono',monospace;letter-spacing:.5px;transition:.15s}
+.lang-btn.active{background:var(--teal);color:#04141a}
+.mini-spinner{width:11px;height:11px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;display:inline-block;animation:mspin .6s linear infinite}
+@keyframes mspin{to{transform:rotate(360deg)}}
+@media(max-width:680px){.sidebar{display:none}.content{padding:14px}.stats-row{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="bg-rays"></div>
+<aside class="sidebar">
+  <div class="sb-logo"><div class="pulse-dot"></div><div><div class="sb-logo-text disp">ABRAMS</div><div class="sb-logo-sub mono">PERSONNEL</div></div></div>
+  <div class="lang-switch"><button class="lang-btn active" onclick="setLang('en')" id="langEn">EN</button><button class="lang-btn" onclick="setLang('ar')" id="langAr">عربي</button></div>
+  <nav class="sb-nav">
+    <div class="sb-sec" data-t="sec_personnel">EMS Personnel</div>
+    <button class="sb-link active" onclick="sw('handbook',this)"><span>📖</span> <span data-t="nav_handbook">Handbook</span></button>
+    <button class="sb-link" onclick="sw('sop',this)"><span>📑</span> <span data-t="nav_sop">SOP</span></button>
+    <button class="sb-link" onclick="sw('schedule',this)"><span>📅</span> <span data-t="nav_schedule">Duty Schedule</span></button>
+    <button class="sb-link" onclick="sw('loa',this)"><span>📝</span> <span data-t="nav_loa">LOA</span></button>
+    <button class="sb-link" onclick="sw('activity',this)"><span>📈</span> <span data-t="nav_activity">Activity Points</span></button>
+    <div class="sb-sec" style="margin-top:10px" data-t="sec_links">Links</div>
+    <a class="sb-link" id="consoleLink" href="/dashboard" style="display:none"><span>👑</span> <span data-t="nav_console">Admin Console</span></a>
+    <a class="sb-link" href="/"><span>🏠</span> <span data-t="nav_home">Main Site</span></a>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user"><div class="sb-av" id="sbAv">?</div><div><strong id="sbName" style="font-size:13px">…</strong><div class="sb-role mono" id="sbRole">—</div></div></div>
+    <a class="sb-link" href="/auth/logout"><span>🚪</span> <span data-t="nav_logout">Logout</span></a>
+  </div>
+</aside>
+<main class="content">
+
+  <div class="tab-c on" id="tab-handbook">
+    <div class="topbar"><div><div class="page-title disp" data-t="t_hb_title">Handbook</div><div class="page-sub" data-t="t_hb_sub">General conduct and expectations for every member</div></div></div>
+    <div id="handbookBody"></div>
+  </div>
+
+  <div class="tab-c" id="tab-sop">
+    <div class="topbar"><div><div class="page-title disp" data-t="t_sop_title">Standard Operating Procedures</div><div class="page-sub" data-t="t_sop_sub">Medical and operational SOPs</div></div></div>
+    <div id="sopBody"></div>
+  </div>
+
+  <div class="tab-c" id="tab-schedule">
+    <div class="topbar"><div><div class="page-title disp" data-t="t_sc_title">Duty Schedule</div><div class="page-sub" data-t="t_sc_sub">Claim an open shift, or drop one you can't make</div></div><button class="btn btn-ghost" onclick="loadSchedule()">🔄 <span data-t="refresh">Refresh</span></button></div>
+    <div class="sched-grid" id="schedGrid"></div>
+  </div>
+
+  <div class="tab-c" id="tab-loa">
+    <div class="topbar"><div><div class="page-title disp" data-t="t_loa_title">Leave of Absence</div><div class="page-sub" data-t="t_loa_sub">Submit a request, and track its status</div></div></div>
+    <div class="panel"><div class="panel-head"><div class="panel-title" data-t="loa_request">Request LOA</div></div>
+      <div class="panel-body">
+        <div class="field"><label data-t="lbl_reason">Reason</label><textarea id="loaReason" maxlength="500" placeholder="Why do you need leave?" data-t-ph="ph_reason"></textarea></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="field" style="flex:1;min-width:140px"><label data-t="lbl_start">Start date</label><input type="date" id="loaStart"/></div>
+          <div class="field" style="flex:1;min-width:140px"><label data-t="lbl_end">End date</label><input type="date" id="loaEnd"/></div>
+        </div>
+        <button class="btn btn-p" onclick="withLoading(this,submitLoa)" data-t="submit_req">Submit request</button>
+      </div>
+    </div>
+    <div class="panel"><div class="panel-head"><div class="panel-title" data-t="loa_mine">My Requests</div></div>
+      <div class="table-wrap"><table><thead><tr><th data-t="th_ref">Ref</th><th data-t="th_dates">Dates</th><th data-t="th_reason">Reason</th><th data-t="th_status">Status</th></tr></thead><tbody id="myLoaBody"></tbody></table></div>
+    </div>
+    <div class="panel" id="loaQueuePanel" style="display:none">
+      <div class="panel-head"><div class="panel-title" data-t="loa_pending">🕓 Pending Review — All Members</div></div>
+      <div class="table-wrap"><table><thead><tr><th data-t="th_member">Member</th><th data-t="th_dates">Dates</th><th data-t="th_reason">Reason</th><th data-t="th_actions">Actions</th></tr></thead><tbody id="loaQueueBody"></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="tab-c" id="tab-activity">
+    <div class="topbar"><div><div class="page-title disp" data-t="t_act_title">Activity Points</div><div class="page-sub" data-t="t_act_sub">Your point total and history</div></div></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label" data-t="act_total">Total Points</div><div class="stat-val y" id="myPoints">—</div></div>
+      <div class="stat-card" style="grid-column:span 2"><div class="stat-label" data-t="act_badges">Badges</div><div class="badges-row" id="myBadges"></div></div>
+    </div>
+    <div class="panel" id="adjustPanel" style="display:none">
+      <div class="panel-head"><div class="panel-title" data-t="act_adjust">Adjust Points (admin)</div></div>
+      <div class="panel-body">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="field" style="flex:1;min-width:160px"><label data-t="lbl_discord">Discord ID</label><input id="adjId" placeholder="Member's Discord ID" data-t-ph="ph_discord"/></div>
+          <div class="field" style="width:100px"><label data-t="lbl_delta">Δ Points</label><input id="adjDelta" type="number" placeholder="+10"/></div>
+        </div>
+        <div class="field"><label data-t="lbl_reason">Reason</label><input id="adjReason" placeholder="e.g. covered an extra shift" data-t-ph="ph_adjreason"/></div>
+        <button class="btn btn-p" onclick="withLoading(this,adjustPoints)" data-t="apply">Apply</button>
+      </div>
+    </div>
+    <div class="panel"><div class="panel-head"><div class="panel-title" data-t="act_history">History</div></div><div class="panel-body" id="activityHistory"></div></div>
+  </div>
+
+</main>
+<div class="toast" id="toast"></div>
+<script>
+let me;
+
+// ── i18n (chrome only) ──
+const T = {
+  en: { sec_personnel:"EMS Personnel", nav_handbook:"Handbook", nav_sop:"SOP", nav_schedule:"Duty Schedule",
+        nav_loa:"LOA", nav_activity:"Activity Points", sec_links:"Links", nav_console:"Admin Console",
+        nav_home:"Main Site", nav_logout:"Logout", refresh:"Refresh",
+        t_hb_title:"Handbook", t_hb_sub:"General conduct and expectations for every member",
+        t_sop_title:"Standard Operating Procedures", t_sop_sub:"Medical and operational SOPs",
+        t_sc_title:"Duty Schedule", t_sc_sub:"Claim an open shift, or drop one you can't make",
+        t_loa_title:"Leave of Absence", t_loa_sub:"Submit a request, and track its status",
+        loa_request:"Request LOA", lbl_reason:"Reason", ph_reason:"Why do you need leave?",
+        lbl_start:"Start date", lbl_end:"End date", submit_req:"Submit request",
+        loa_mine:"My Requests", th_ref:"Ref", th_dates:"Dates", th_reason:"Reason", th_status:"Status",
+        loa_pending:"🕓 Pending Review — All Members", th_member:"Member", th_actions:"Actions",
+        t_act_title:"Activity Points", t_act_sub:"Your point total and history",
+        act_total:"Total Points", act_badges:"Badges", act_adjust:"Adjust Points (admin)",
+        lbl_discord:"Discord ID", ph_discord:"Member's Discord ID", lbl_delta:"Δ Points",
+        ph_adjreason:"e.g. covered an extra shift", apply:"Apply", act_history:"History" },
+  ar: { sec_personnel:"طاقم EMS", nav_handbook:"الدليل", nav_sop:"إجراءات العمل", nav_schedule:"جدول المناوبات",
+        nav_loa:"الإجازات", nav_activity:"نقاط النشاط", sec_links:"روابط", nav_console:"لوحة التحكم",
+        nav_home:"الموقع الرئيسي", nav_logout:"تسجيل الخروج", refresh:"تحديث",
+        t_hb_title:"الدليل", t_hb_sub:"قواعد السلوك العامة وما يُتوقع من كل عضو",
+        t_sop_title:"إجراءات التشغيل الموحدة", t_sop_sub:"إجراءات طبية وتشغيلية",
+        t_sc_title:"جدول المناوبات", t_sc_sub:"احجز مناوبة مفتوحة، أو ألغِ واحدة لا يمكنك حضورها",
+        t_loa_title:"الإجازات", t_loa_sub:"قدّم طلباً وتابع حالته",
+        loa_request:"طلب إجازة", lbl_reason:"السبب", ph_reason:"لماذا تحتاج إجازة؟",
+        lbl_start:"تاريخ البداية", lbl_end:"تاريخ النهاية", submit_req:"إرسال الطلب",
+        loa_mine:"طلباتي", th_ref:"مرجع", th_dates:"التواريخ", th_reason:"السبب", th_status:"الحالة",
+        loa_pending:"🕓 قيد المراجعة — كل الأعضاء", th_member:"العضو", th_actions:"إجراءات",
+        t_act_title:"نقاط النشاط", t_act_sub:"إجمالي نقاطك وسجلّها",
+        act_total:"إجمالي النقاط", act_badges:"الأوسمة", act_adjust:"تعديل النقاط (إداري)",
+        lbl_discord:"معرف الديسكورد", ph_discord:"معرف ديسكورد العضو", lbl_delta:"عدد النقاط Δ",
+        ph_adjreason:"مثال: غطّى مناوبة إضافية", apply:"تطبيق", act_history:"السجل" },
+};
+function setLang(lang){
+  document.querySelectorAll("[data-t]").forEach(el=>{ const k=el.getAttribute("data-t"); if(T[lang][k]) el.textContent=T[lang][k]; });
+  document.querySelectorAll("[data-t-ph]").forEach(el=>{ const k=el.getAttribute("data-t-ph"); if(T[lang][k]) el.placeholder=T[lang][k]; });
+  document.getElementById("langEn").classList.toggle("active", lang==="en");
+  document.getElementById("langAr").classList.toggle("active", lang==="ar");
+  localStorage.setItem("ems_personnel_lang", lang);
+}
+
+// Generic loading state for any action button — disables it and shows a spinner
+// for the duration of an async action, so a double-click can't fire the request twice.
+async function withLoading(btn, fn){
+  if(!btn) return fn();
+  if(btn.disabled) return;
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="mini-spinner"></span>';
+  try { await fn(); }
+  finally { btn.disabled = false; btn.innerHTML = orig; }
+}
+
+async function init(){
+  me = await fetch("/api/me").then(r=>r.json());
+  if(!me.loggedIn){location.href="/auth/discord";return;}
+  document.getElementById("sbName").textContent=me.user.username;
+  document.getElementById("sbAv").textContent=me.user.username[0].toUpperCase();
+  document.getElementById("sbRole").textContent=me.user.role;
+  if(["reviewer","admin","owner"].includes(me.user.role)){
+    document.getElementById("consoleLink").style.display="flex";
+    document.getElementById("loaQueuePanel").style.display="block";
+    loadLoaQueue();
+  }
+  if(["admin","owner"].includes(me.user.role)) document.getElementById("adjustPanel").style.display="block";
+  loadHandbook(); loadSop(); loadSchedule(); loadMyLoa(); loadActivity();
+  setLang(localStorage.getItem("ems_personnel_lang") || "en");
+}
+function sw(id,btn){
+  document.querySelectorAll(".tab-c").forEach(t=>t.classList.remove("on"));
+  document.querySelectorAll(".sb-link").forEach(l=>l.classList.remove("active"));
+  document.getElementById("tab-"+id).classList.add("on");
+  btn.classList.add("active");
+}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function toast(msg,type){const el=document.getElementById("toast");el.textContent=msg;el.className=`toast t${type} show`;setTimeout(()=>el.classList.remove("show"),3000);}
+
+async function loadHandbook(){
+  const items=await fetch("/api/personnel/handbook").then(r=>r.json());
+  document.getElementById("handbookBody").innerHTML = items.length ? items.map(i=>`
+    <div class="doc-card"><h3>${esc(i.title)}</h3><p>${esc(i.body)}</p></div>`).join("")
+    : `<div class="empty">No handbook entries yet</div>`;
+}
+async function loadSop(){
+  const items=await fetch("/api/personnel/sop").then(r=>r.json());
+  document.getElementById("sopBody").innerHTML = items.length ? items.map(i=>`
+    <div class="doc-card"><span class="tag">${esc(i.category)}</span><h3>${esc(i.title)}</h3><p>${esc(i.body)}</p></div>`).join("")
+    : `<div class="empty">No SOPs published yet</div>`;
+}
+
+async function loadSchedule(){
+  const grid=await fetch("/api/personnel/schedule").then(r=>r.json());
+  document.getElementById("schedGrid").innerHTML = grid.map(day=>`
+    <div class="day-col"><h4>${day.day}</h4>${day.slots.map(s=>{
+      const full = s.claimedBy.length >= s.capacity && !s.mineClaimed;
+      const names = s.claimedBy.map(c=>esc(c.rpName)).join(", ") || "— open —";
+      return `<div class="slot">
+        <div class="slot-label">${esc(s.label.split(" · ")[0])}</div>
+        <div class="slot-cap">${s.label.split(" · ")[1]} · ${s.claimedBy.length}/${s.capacity}</div>
+        <div class="slot-names">${names}</div>
+        <button class="slot-btn ${s.mineClaimed?"mine":""} ${full?"full":""}" ${full&&!s.mineClaimed?"disabled":""}
+          onclick="withLoading(this,()=>${s.mineClaimed?`unclaim('${day.day}','${s.key}')`:`claim('${day.day}','${s.key}')`})">
+          ${s.mineClaimed ? "✓ Claimed — drop" : full ? "Full" : "Claim shift"}
+        </button>
+      </div>`;
+    }).join("")}</div>`).join("");
+}
+async function claim(day,slot){
+  const r=await fetch("/api/personnel/schedule/claim",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({day,slot})});
+  const d=await r.json();
+  if(d.ok){toast("Shift claimed ✅","ok");loadSchedule();} else toast(d.error,"err");
+}
+async function unclaim(day,slot){
+  await fetch("/api/personnel/schedule/unclaim",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({day,slot})});
+  toast("Shift dropped","ok"); loadSchedule();
+}
+
+async function loadMyLoa(){
+  const list=await fetch("/api/personnel/loa").then(r=>r.json());
+  document.getElementById("myLoaBody").innerHTML = list.length ? list.map(l=>`
+    <tr><td><span class="mono2">${l.id}</span></td>
+    <td>${l.startDate} → ${l.endDate}</td>
+    <td>${esc(l.reason)}</td>
+    <td><span class="sbadge s-${l.status}">${l.status}</span></td></tr>`).join("")
+    : `<tr><td colspan="4"><div class="empty">No LOA requests yet</div></td></tr>`;
+}
+async function submitLoa(){
+  const reason=document.getElementById("loaReason").value.trim();
+  const startDate=document.getElementById("loaStart").value;
+  const endDate=document.getElementById("loaEnd").value;
+  if(!reason||!startDate||!endDate)return toast("Fill in all fields","err");
+  const r=await fetch("/api/personnel/loa",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reason,startDate,endDate})});
+  const d=await r.json();
+  if(d.ok){toast("LOA submitted ✅","ok");document.getElementById("loaReason").value="";loadMyLoa();}
+  else toast(d.error,"err");
+}
+async function loadLoaQueue(){
+  const all=await fetch("/api/admin/loa").then(r=>r.json());
+  const pending=all.filter(l=>l.status==="pending");
+  document.getElementById("loaQueueBody").innerHTML = pending.length ? pending.map(l=>`
+    <tr><td><strong>${esc(l.rpName)}</strong><div class="mono2">${esc(l.discordId)}</div></td>
+    <td>${l.startDate} → ${l.endDate}</td>
+    <td>${esc(l.reason)}</td>
+    <td><button class="btn btn-ok" onclick="withLoading(this,()=>reviewLoa('${l.id}','approve'))">✅ Approve</button>
+        <button class="btn btn-no" onclick="withLoading(this,()=>reviewLoa('${l.id}','deny'))">❌ Deny</button></td></tr>`).join("")
+    : `<tr><td colspan="4"><div class="empty">Nothing pending</div></td></tr>`;
+}
+async function reviewLoa(id,action){
+  const r=await fetch("/api/admin/loa/review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,action})});
+  const d=await r.json();
+  if(d.ok){toast(action==="approve"?"Approved ✅":"Denied ❌","ok");loadLoaQueue();}
+  else toast(d.error,"err");
+}
+
+async function loadActivity(){
+  const d=await fetch("/api/personnel/activity").then(r=>r.json());
+  document.getElementById("myPoints").textContent=d.points;
+  document.getElementById("myBadges").innerHTML = d.badges.length ? d.badges.map(b=>`<span class="bd">${b}</span>`).join("") : `<span class="mono2">No badges yet</span>`;
+  document.getElementById("activityHistory").innerHTML = d.history.length ? d.history.map(h=>`
+    <div class="hist-row"><div>${esc(h.reason)}<div class="mono2">${new Date(h.ts).toLocaleString()}</div></div>
+    <div class="hist-delta ${h.delta>=0?"pos":"neg"}">${h.delta>=0?"+":""}${h.delta}</div></div>`).join("")
+    : `<div class="empty">No point history yet</div>`;
+}
+async function adjustPoints(){
+  const discordId=document.getElementById("adjId").value.trim();
+  const delta=document.getElementById("adjDelta").value;
+  const reason=document.getElementById("adjReason").value.trim();
+  if(!discordId||!delta||!reason)return toast("Fill in all fields","err");
+  const r=await fetch("/api/admin/activity/adjust",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId,delta:Number(delta),reason})});
+  const d=await r.json();
+  if(d.ok){toast("Points updated ✅","ok");document.getElementById("adjId").value="";document.getElementById("adjDelta").value="";document.getElementById("adjReason").value="";}
+  else toast(d.error,"err");
+}
+init();
+</script>
+</body>
+</html>

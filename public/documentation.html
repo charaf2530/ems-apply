@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EMS ABRAMS — Handbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Oxanium:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ══════════════════════════════════════════
+   TOKENS — نفس ألوان ABRAMS
+══════════════════════════════════════════ */
+:root{
+  --bg:#04050a;
+  --s1:#080b14;
+  --s2:#0c1019;
+  --border:#141928;
+  --bord2:#1e2540;
+  --bord3:#283060;
+  --red:#dc2626;--red2:#ef4444;--red3:#fca5a5;
+  --blue:#1d4ed8;--blue2:#3b82f6;--blue3:#93c5fd;
+  --gold:#f59e0b;--gold2:#fcd34d;
+  --green:#16a34a;--green2:#22c55e;
+  --text:#e8eaf6;
+  --muted:#3d4a6b;--muted2:#6b7fa8;--muted3:#a0aec0;
+  --sidebar-w:260px;
+  --topbar-h:56px;
+  --trans:.22s ease;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* NOISE */
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.3}
+.bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 900px 600px at -5% -10%,rgba(220,38,38,.09),transparent 60%),radial-gradient(ellipse 700px 500px at 105% 105%,rgba(29,78,216,.11),transparent 60%)}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(29,78,216,.03)1px,transparent 1px),linear-gradient(90deg,rgba(29,78,216,.03)1px,transparent 1px);background-size:52px 52px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%)}
+
+/* ══════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════ */
+.layout{display:flex;min-height:100vh;position:relative;z-index:1}
+
+/* ══════════════════════════════════════════
+   TOPBAR
+══════════════════════════════════════════ */
+.topbar{position:fixed;top:0;right:0;left:0;height:var(--topbar-h);z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 calc(var(--sidebar-w) + 20px);background:rgba(4,5,10,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-search{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:9px;padding:7px 12px;min-width:220px;transition:var(--trans)}
+.topbar-search:focus-within{border-color:rgba(59,130,246,.4);box-shadow:0 0 0 3px rgba(59,130,246,.08)}
+.topbar-search input{background:none;border:none;outline:none;color:var(--text);font:inherit;font-size:13px;width:100%}
+.topbar-search input::placeholder{color:var(--muted2)}
+.topbar-search .icon{color:var(--muted2);font-size:14px;flex-shrink:0}
+.lang-toggle{display:flex;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.lang-btn{padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;cursor:pointer;border:none;background:none;color:var(--muted2);transition:var(--trans)}
+.lang-btn.active{background:rgba(29,78,216,.2);color:var(--blue3)}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;color:var(--muted2);border:1px solid var(--border);background:transparent;cursor:pointer;text-decoration:none;transition:var(--trans);font-family:'JetBrains Mono',monospace;letter-spacing:.5px}
+.back-btn:hover{color:#fff;border-color:var(--bord2)}
+.topbar-title{font-family:'Oxanium',monospace;font-size:15px;font-weight:700;color:var(--muted2);display:flex;align-items:center;gap:8px}
+.topbar-title span{color:var(--muted)}
+
+/* ══════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════ */
+.sidebar{width:var(--sidebar-w);flex-shrink:0;position:fixed;top:0;right:0;bottom:0;z-index:100;background:var(--s1);border-left:1px solid var(--border);display:flex;flex-direction:column;transition:transform var(--trans)}
+.sidebar-logo{display:flex;align-items:center;gap:12px;padding:0 18px;height:var(--topbar-h);border-bottom:1px solid var(--border);flex-shrink:0;text-decoration:none}
+.sidebar-logo-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--red),#7f1d1d);display:grid;place-items:center;font-size:15px;flex-shrink:0;box-shadow:0 0 14px rgba(220,38,38,.3)}
+.sidebar-logo-text{font-family:'Oxanium',monospace;font-size:14px;font-weight:800;color:#fff;letter-spacing:2px}
+.sidebar-logo-sub{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted2);text-transform:uppercase}
+.sidebar-scroll{flex:1;overflow-y:auto;padding:10px 0 20px}
+.sidebar-scroll::-webkit-scrollbar{width:3px}
+.sidebar-scroll::-webkit-scrollbar-track{background:transparent}
+.sidebar-scroll::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:99px}
+
+/* nav groups */
+.nav-group{margin-bottom:4px}
+.nav-group-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);padding:12px 18px 5px;display:block}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;border:none;background:none;color:var(--muted2);font-size:13.5px;font-weight:500;width:100%;text-align:right;transition:var(--trans);position:relative;font-family:'Tajawal',sans-serif;text-decoration:none;border-radius:0}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-item.active{color:#fff;background:linear-gradient(90deg,transparent,rgba(29,78,216,.12));font-weight:700}
+.nav-item.active::before{content:'';position:absolute;right:0;top:4px;bottom:4px;width:3px;border-radius:99px 0 0 99px;background:linear-gradient(180deg,var(--blue2),var(--blue))}
+.nav-item .nav-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+.nav-item .nav-badge{margin-right:auto;font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(29,78,216,.15);color:var(--blue3);border:1px solid rgba(29,78,216,.25)}
+.nav-divider{height:1px;background:var(--border);margin:8px 14px}
+
+/* download btn */
+.nav-download{display:flex;align-items:center;gap:10px;padding:10px 18px;margin:0 12px;border-radius:10px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.18);color:var(--red3);font-size:13px;font-weight:600;cursor:pointer;transition:var(--trans);font-family:'Tajawal',sans-serif;text-decoration:none;justify-content:center}
+.nav-download:hover{background:rgba(220,38,38,.14);border-color:rgba(220,38,38,.3)}
+
+/* mobile overlay */
+.sidebar-overlay{display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.7);backdrop-filter:blur(3px)}
+
+/* ══════════════════════════════════════════
+   MAIN CONTENT
+══════════════════════════════════════════ */
+.main{flex:1;margin-right:var(--sidebar-w);margin-top:var(--topbar-h);min-height:calc(100vh - var(--topbar-h));padding:40px 48px 80px}
+
+/* ══════════════════════════════════════════
+   PAGES
+══════════════════════════════════════════ */
+.page{display:none;animation:fadeInUp .3s ease}
+.page.active{display:block}
+@keyframes fadeInUp{from{opacity:0}to{opacity:1}}
+
+/* page header */
+.page-header{margin-bottom:36px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.page-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--blue2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.page-eyebrow::before{content:'';width:20px;height:1px;background:var(--blue2)}
+.page-title{font-family:'Oxanium',monospace;font-size:clamp(26px,4vw,38px);font-weight:800;color:#fff;line-height:1.1;margin-bottom:10px}
+.page-desc{font-size:15px;color:var(--muted2);line-height:1.8;max-width:680px}
+
+/* sections */
+.section{margin-bottom:40px}
+.section-title{font-family:'Oxanium',monospace;font-size:18px;font-weight:700;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+
+/* cards */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 22px;transition:border-color var(--trans)}
+.card:hover{border-color:var(--bord2)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+
+/* info blocks */
+.info-block{background:rgba(29,78,216,.06);border:1px solid rgba(29,78,216,.2);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.info-block.warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2)}
+.info-block.danger{background:rgba(220,38,38,.06);border-color:rgba(220,38,38,.2)}
+.info-block.success{background:rgba(22,197,94,.06);border-color:rgba(22,197,94,.2)}
+.info-block-title{font-family:'Oxanium',monospace;font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.info-block.warn .info-block-title{color:var(--gold2)}
+.info-block.danger .info-block-title{color:var(--red2)}
+.info-block.success .info-block-title{color:var(--green2)}
+.info-block:not(.warn):not(.danger):not(.success) .info-block-title{color:var(--blue3)}
+.info-block p{font-size:13.5px;color:var(--muted3);line-height:1.75}
+
+/* procedure steps */
+.steps{display:grid;gap:12px}
+.step-item{display:flex;gap:14px;align-items:flex-start}
+.step-num{width:28px;height:28px;border-radius:50%;background:rgba(29,78,216,.15);border:1px solid rgba(29,78,216,.3);display:grid;place-items:center;font-family:'Oxanium',monospace;font-size:12px;font-weight:700;color:var(--blue3);flex-shrink:0;margin-top:2px}
+.step-content h4{font-size:14px;font-weight:700;color:#fff;margin-bottom:4px}
+.step-content p{font-size:13.5px;color:var(--muted2);line-height:1.7}
+
+/* table */
+.doc-table{width:100%;border-collapse:collapse;margin-top:8px}
+.doc-table th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);padding:10px 14px;text-align:right;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+.doc-table td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:13.5px;vertical-align:middle}
+.doc-table tr:last-child td{border-bottom:none}
+.doc-table tr:hover td{background:rgba(255,255,255,.02)}
+.doc-table-wrap{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.badge-blue{background:rgba(59,130,246,.1);color:var(--blue3);border:1px solid rgba(59,130,246,.2)}
+.badge-red{background:rgba(220,38,38,.1);color:var(--red2);border:1px solid rgba(220,38,38,.2)}
+.badge-green{background:rgba(22,197,94,.1);color:var(--green2);border:1px solid rgba(22,197,94,.2)}
+.badge-gold{background:rgba(245,158,11,.1);color:var(--gold2);border:1px solid rgba(245,158,11,.2)}
+.badge-gray{background:rgba(255,255,255,.06);color:var(--muted3);border:1px solid rgba(255,255,255,.1)}
+
+/* radio code */
+.radio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.radio-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;transition:var(--trans)}
+.radio-card:hover{border-color:var(--bord2);transform:translateY(-2px)}
+.radio-code{font-family:'Oxanium',monospace;font-size:17px;font-weight:800;color:var(--blue3);min-width:52px}
+.radio-meaning{font-size:13px;color:var(--muted2)}
+
+/* rank */
+.rank-list{display:grid;gap:10px}
+.rank-item{display:flex;align-items:center;gap:14px;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 18px;transition:var(--trans)}
+.rank-item:hover{border-color:var(--bord2)}
+.rank-icon{font-size:22px;flex-shrink:0}
+.rank-name{font-family:'Oxanium',monospace;font-size:15px;font-weight:700;color:#fff}
+.rank-sub{font-size:12.5px;color:var(--muted2);margin-top:2px}
+.rank-pts{margin-right:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold2);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.15);padding:3px 10px;border-radius:20px}
+.chain{display:flex;flex-direction:column;align-items:center;gap:0;max-width:420px;margin:0 auto}
+.chain-item{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px 18px;transition:var(--trans)}
+.chain-item:hover{border-color:var(--bord2)}
+.chain-item .rank-name{font-size:14px}
+.chain-arrow{color:var(--muted2);font-size:15px;line-height:1;padding:3px 0}
+.chain-item.tier-command{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.22)}
+.chain-item.tier-supervisory{background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.22)}
+.chain-item.tier-field{background:rgba(22,197,94,.06);border-color:rgba(22,197,94,.18)}
+.chain-item.tier-trainee{background:rgba(255,255,255,.03);border-color:var(--border)}
+
+/* strike */
+.strike-list{display:grid;gap:10px}
+.strike-item{display:flex;align-items:flex-start;gap:14px;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.strike-item.s1{border-right:3px solid var(--gold2)}
+.strike-item.s2{border-right:3px solid var(--red2)}
+.strike-item.s3{border-right:3px solid rgba(220,38,38,.6)}
+.strike-num{font-family:'Oxanium',monospace;font-size:22px;font-weight:800;min-width:28px;color:var(--muted2)}
+.strike-num.s1{color:var(--gold2)}.strike-num.s2{color:var(--red2)}.strike-num.s3{color:var(--red3)}
+.strike-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:4px}
+.strike-desc{font-size:13.5px;color:var(--muted2);line-height:1.7}
+
+/* search highlight */
+mark{background:rgba(245,158,11,.25);color:var(--gold2);border-radius:3px;padding:0 2px}
+
+/* search results */
+.search-results{display:none;position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--s2);border:1px solid var(--bord2);border-radius:12px;max-height:320px;overflow-y:auto;z-index:300;box-shadow:0 20px 40px rgba(0,0,0,.4)}
+.search-result-item{padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:var(--trans)}
+.search-result-item:last-child{border-bottom:none}
+.search-result-item:hover{background:rgba(255,255,255,.03)}
+.sr-title{font-size:13.5px;font-weight:600;color:#fff;margin-bottom:3px}
+.sr-excerpt{font-size:12px;color:var(--muted2)}
+.sr-page{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue3);margin-top:2px}
+.search-empty{padding:24px;text-align:center;color:var(--muted2);font-size:13px}
+.search-wrap{position:relative;flex:1;max-width:300px}
+.search-results.open{display:block}
+
+/* mobile */
+.sidebar-toggle{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:6px}
+@media(max-width:900px){
+  .sidebar{transform:translateX(100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .main{margin-right:0;padding:28px 20px 60px}
+  .topbar{padding:0 16px}
+  .topbar-search{display:none}
+  .sidebar-toggle{display:flex;align-items:center}
+  .lang-toggle{display:none}
+  .card-grid{grid-template-columns:1fr}
+  .radio-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  .radio-grid{grid-template-columns:1fr}
+  .main{padding:20px 16px 60px}
+  .page-title{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div class="bg-canvas"></div>
+<div class="bg-grid"></div>
+<div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div style="display:flex;align-items:center;gap:12px">
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="القائمة">☰</button>
+    <div class="topbar-title">
+      <span id="currentPageLabel">📚 Handbook</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="search-wrap">
+      <div class="topbar-search">
+        <span class="icon">🔍</span>
+        <input id="searchInput" type="text" placeholder="ابحث في القوانين…" oninput="doSearch(this.value)" autocomplete="off"/>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('ar',this)">عربي</button>
+      <button class="lang-btn" onclick="setLang('en',this)">EN</button>
+    </div>
+    <a href="/" class="back-btn">← الرئيسية</a>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <a href="/" class="sidebar-logo">
+    <div class="sidebar-logo-icon">🚑</div>
+    <div>
+      <div class="sidebar-logo-text">ABRAMS</div>
+      <div class="sidebar-logo-sub" data-t="sidebar-sub">Handbook</div>
+    </div>
+  </a>
+  <div class="sidebar-scroll">
+    <div class="nav-group">
+      <span class="nav-group-label" data-t="nav-group">📚 Handbook</span>
+      <button class="nav-item active" onclick="showPage('sop',this)"><span class="nav-icon">📖</span><span data-t="nav_sop">SOP</span><span class="nav-badge">v2.1</span></button>
+      <button class="nav-item" onclick="showPage('promotion',this)"><span class="nav-icon">⭐</span><span data-t="nav_promo">Promotion System</span></button>
+      <button class="nav-item" onclick="showPage('attendance',this)"><span class="nav-icon">📅</span><span data-t="nav_att">Attendance & LOA</span></button>
+      <button class="nav-item" onclick="showPage('strike',this)"><span class="nav-icon">⚠️</span><span data-t="nav_strike">Strike System</span></button>
+      <button class="nav-item" onclick="showPage('medical',this)"><span class="nav-icon">🚑</span><span data-t="nav_med">Medical Procedures</span></button>
+      <button class="nav-item" onclick="showPage('radio',this)"><span class="nav-icon">📻</span><span data-t="nav_radio">Radio Codes</span></button>
+      <button class="nav-item" onclick="showPage('uniform',this)"><span class="nav-icon">👔</span><span data-t="nav_uni">Uniform Policy</span></button>
+      <button class="nav-item" onclick="showPage('vehicle',this)"><span class="nav-icon">🚗</span><span data-t="nav_veh">Vehicle Policy</span></button>
+      <button class="nav-item" onclick="showPage('academy',this)"><span class="nav-icon">🎓</span><span data-t="nav_aca">Academy</span></button>
+      <button class="nav-item" onclick="showPage('faq',this)"><span class="nav-icon">❓</span><span data-t="nav_faq">FAQ</span></button>
+    </div>
+    <div class="nav-divider"></div>
+    <div style="padding:0 12px 12px">
+      <a href="#" class="nav-download" onclick="downloadPDF(event)">
+        <span>📥</span><span data-t="nav_pdf">تحميل PDF</span>
+      </a>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ════ SOP ════ -->
+  <div class="page active" id="page-sop">
+    <div class="page-header">
+      <div class="page-eyebrow">// STANDARD OPERATING PROCEDURES</div>
+      <h1 class="page-title" data-t="sop_title">قواعد التشغيل الموحدة</h1>
+      <p class="page-desc" data-t="sop_desc">الدليل الرسمي لجميع أعضاء فريق EMS ABRAMS. يجب قراءته والالتزام به بشكل كامل.</p>
+    </div>
+
+    <div class="info-block">
+      <div class="info-block-title">📌 ملاحظة مهمة</div>
+      <p>هذا الدليل ملزم لجميع الأعضاء من أي رتبة. عدم الاطلاع عليه لا يُعد عذراً.</p>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">المبادئ الأساسية</h2>
+      <div class="card-grid">
+        <div class="card"><div style="font-size:28px;margin-bottom:10px">🚑</div><h3 style="font-family:'Oxanium',monospace;font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">الاستجابة الفورية</h3><p style="font-size:13px;color:var(--muted2);line-height:1.7">يجب الوصول لموقع الحادث خلال دقيقتين من استلام النداء.</p></div>
+        <div class="card"><div style="font-size:28px;margin-bottom:10px">⚖️</div><h3 style="font-family:'Oxanium',monospace;font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">الحياد التام</h3><p style="font-size:13px;color:var(--muted2);line-height:1.7">EMS لا ينحاز لأي طرف. دورنا طبي بحت في جميع الأوقات.</p></div>
+        <div class="card"><div style="font-size:28px;margin-bottom:10px">🤝</div><h3 style="font-family:'Oxanium',monospace;font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">التعاون</h3><p style="font-size:13px;color:var(--muted2);line-height:1.7">التنسيق مع الشرطة والإطفاء ضروري في الحوادث الكبرى.</p></div>
+        <div class="card"><div style="font-size:28px;margin-bottom:10px">📋</div><h3 style="font-family:'Oxanium',monospace;font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">التوثيق</h3><p style="font-size:13px;color:var(--muted2);line-height:1.7">كل حادثة يجب توثيقها في نظام التقارير.</p></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">بروتوكول وصول الحادثة</h2>
+      <div class="steps">
+        <div class="step-item"><div class="step-num">1</div><div class="step-content"><h4>تأمين الموقع</h4><p>قبل الدخول، تأكد من أن الموقع آمن. إذا كان هناك إطلاق نار نشط، انتظر تأكيد الشرطة.</p></div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-content"><h4>تقييم الضحايا (Triage)</h4><p>صنّف الضحايا حسب الأولوية: حرج > خطير > متوسط > بسيط.</p></div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-content"><h4>الإسعاف الأولي</h4><p>ابدأ بالحالات الحرجة فوراً. اطلب تعزيزات إذا تجاوز عدد الضحايا قدرتك.</p></div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-content"><h4>النقل والإحالة</h4><p>نقل الحالات التي تحتاج رعاية متقدمة للمستشفى مع إشعار الطاقم المستقبِل.</p></div></div>
+        <div class="step-item"><div class="step-num">5</div><div class="step-content"><h4>التقرير</h4><p>وثّق الحادثة كاملة بعد الانتهاء في نظام التقارير الرسمي.</p></div></div>
+      </div>
+    </div>
+
+    <div class="info-block danger">
+      <div class="info-block-title">🚫 محظورات مطلقة</div>
+      <p>حمل الأسلحة • المشاركة في اشتباكات • تجاوز خط الشرطة دون إذن • مغادرة مريض في حالة حرجة</p>
+    </div>
+  </div>
+
+  <!-- ════ PROMOTION ════ -->
+  <div class="page" id="page-promotion">
+    <div class="page-header">
+      <div class="page-eyebrow">// PROMOTION SYSTEM</div>
+      <h1 class="page-title">نظام الترقيات</h1>
+      <p class="page-desc">الرتب والنقاط اللازمة للترقية داخل فريق EMS ABRAMS.</p>
+    </div>
+    <div class="info-block success">
+      <div class="info-block-title">✅ كيف تكسب النقاط</div>
+      <p>كل طلب مقبول = +10 نقاط | مشاركة في حادثة = +5 نقاط | تدريب عضو جديد = +15 نقاط</p>
+    </div>
+    <div class="section">
+      <h2 class="section-title">التسلسل القيادي</h2>
+      <div class="chain">
+        <div class="chain-item tier-command"><span class="rank-icon">⭐</span><span class="rank-name">Chief</span><span class="badge badge-gold">COMMAND</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-command"><span class="rank-icon">⭐</span><span class="rank-name">Deputy Chief</span><span class="badge badge-gold">COMMAND</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-command"><span class="rank-icon">⭐</span><span class="rank-name">Assistant Chief</span><span class="badge badge-gold">COMMAND</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-command"><span class="rank-icon">🎖️</span><span class="rank-name">Captain</span><span class="badge badge-gold">COMMAND</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-supervisory"><span class="rank-icon">🎗️</span><span class="rank-name">Lieutenant</span><span class="badge badge-blue">SUPERVISORY</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-supervisory"><span class="rank-icon">🧭</span><span class="rank-name">Supervisor</span><span class="badge badge-blue">SUPERVISORY</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-supervisory"><span class="rank-icon">🧑‍🏫</span><span class="rank-name">Field Training Officer (FTO)</span><span class="badge badge-blue">SUPERVISORY</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-field"><span class="rank-icon">👨‍⚕️</span><span class="rank-name">Senior Paramedic</span><span class="badge badge-green">FIELD</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-field"><span class="rank-icon">👨‍⚕️</span><span class="rank-name">Paramedic</span><span class="badge badge-green">FIELD</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-field"><span class="rank-icon">🩺</span><span class="rank-name">Advanced EMT</span><span class="badge badge-green">FIELD</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-field"><span class="rank-icon">🩹</span><span class="rank-name">EMT</span><span class="badge badge-green">FIELD</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-field"><span class="rank-icon">🚑</span><span class="rank-name">EMR</span><span class="badge badge-green">FIELD</span></div>
+        <div class="chain-arrow">↓</div>
+        <div class="chain-item tier-trainee"><span class="rank-icon">🎓</span><span class="rank-name">Trainee</span><span class="badge badge-gray">ENTRY</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <h2 class="section-title">سلم الرتب</h2>
+      <div class="rank-list">
+        <div class="rank-item"><div class="rank-icon">🩺</div><div><div class="rank-name">Recruit</div><div class="rank-sub">عضو جديد — مرحلة الاختبار</div></div><span class="rank-pts">0 pts</span><span class="badge badge-gray">ENTRY</span></div>
+        <div class="rank-item"><div class="rank-icon">👨‍⚕️</div><div><div class="rank-name">Paramedic I</div><div class="rank-sub">مسعف ميداني — الخط الأول</div></div><span class="rank-pts">50 pts</span><span class="badge badge-blue">P1</span></div>
+        <div class="rank-item"><div class="rank-icon">👨‍⚕️</div><div><div class="rank-name">Paramedic II</div><div class="rank-sub">مسعف متقدم — خبرة ثلاثة أشهر</div></div><span class="rank-pts">120 pts</span><span class="badge badge-blue">P2</span></div>
+        <div class="rank-item"><div class="rank-icon">🩺</div><div><div class="rank-name">Doctor</div><div class="rank-sub">طبيب — اجتياز اختبار المستوى</div></div><span class="rank-pts">250 pts</span><span class="badge badge-green">MD</span></div>
+        <div class="rank-item"><div class="rank-icon">🚁</div><div><div class="rank-name">Air Medic</div><div class="rank-sub">طبيب جوي — وحدة خاصة</div></div><span class="rank-pts">400 pts</span><span class="badge badge-red">AIR</span></div>
+        <div class="rank-item"><div class="rank-icon">🎓</div><div><div class="rank-name">Trainer</div><div class="rank-sub">مدرب معتمد</div></div><span class="rank-pts">500 pts</span><span class="badge badge-gold">TRN</span></div>
+        <div class="rank-item"><div class="rank-icon">⭐</div><div><div class="rank-name">Chief Medical Officer</div><div class="rank-sub">رئيس الفريق الطبي — تعيين فقط</div></div><span class="rank-pts">High Command</span><span class="badge badge-gold">CMO</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <h2 class="section-title">شروط الترقية</h2>
+      <div class="doc-table-wrap"><table class="doc-table">
+        <thead><tr><th>الشرط</th><th>التفاصيل</th></tr></thead>
+        <tbody>
+          <tr><td>الحضور</td><td>لا يقل عن 80% في الشهر السابق</td></tr>
+          <tr><td>السلوك</td><td>بدون strikes نشطة</td></tr>
+          <tr><td>الأداء</td><td>تقييم إيجابي من المشرف</td></tr>
+          <tr><td>الاختبار</td><td>اجتياز MCQ بـ 80% على الأقل</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ════ ATTENDANCE ════ -->
+  <div class="page" id="page-attendance">
+    <div class="page-header">
+      <div class="page-eyebrow">// ATTENDANCE & LOA</div>
+      <h1 class="page-title">الحضور والإجازات</h1>
+      <p class="page-desc">سياسة الحضور وكيفية طلب إجازة رسمية (LOA).</p>
+    </div>
+    <div class="card-grid" style="margin-bottom:28px">
+      <div class="card" style="border-right:3px solid var(--green2)"><h3 style="font-family:'Oxanium',monospace;font-size:14px;font-weight:700;color:var(--green2);margin-bottom:6px">✅ حضور ممتاز</h3><p style="font-size:13px;color:var(--muted2)">90%+ شهرياً — نقاط bonus</p></div>
+      <div class="card" style="border-right:3px solid var(--gold2)"><h3 style="font-family:'Oxanium',monospace;font-size:14px;font-weight:700;color:var(--gold2);margin-bottom:6px">⚠️ حضور مقبول</h3><p style="font-size:13px;color:var(--muted2)">80–89% — لا عواقب</p></div>
+      <div class="card" style="border-right:3px solid var(--red2)"><h3 style="font-family:'Oxanium',monospace;font-size:14px;font-weight:700;color:var(--red2);margin-bottom:6px">❌ حضور ضعيف</h3><p style="font-size:13px;color:var(--muted2)">أقل من 80% — تحذير أو strike</p></div>
+    </div>
+    <div class="section">
+      <h2 class="section-title">طلب LOA (إجازة رسمية)</h2>
+      <div class="steps">
+        <div class="step-item"><div class="step-num">1</div><div class="step-content"><h4>تقديم الطلب مسبقاً</h4><p>يجب تقديم طلب الإجازة قبل 48 ساعة على الأقل عبر قناة Discord المخصصة.</p></div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-content"><h4>تحديد المدة</h4><p>الحد الأقصى للـ LOA العادية: 14 يوماً. يمكن التمديد في حالات استثنائية.</p></div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-content"><h4>انتظار الموافقة</h4><p>يحتاج الطلب موافقة Trainer أو ما فوق. الرد خلال 24 ساعة.</p></div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-content"><h4>العودة</h4><p>أشعر المشرف بعودتك لتحديث حالة الحضور.</p></div></div>
+      </div>
+    </div>
+    <div class="info-block warn">
+      <div class="info-block-title">⚠️ غياب بدون إشعار</div>
+      <p>الغياب أكثر من 7 أيام متتالية بدون LOA يُعرّض العضوية للخطر.</p>
+    </div>
+  </div>
+
+  <!-- ════ STRIKE ════ -->
+  <div class="page" id="page-strike">
+    <div class="page-header">
+      <div class="page-eyebrow">// STRIKE SYSTEM</div>
+      <h1 class="page-title">نظام المخالفات</h1>
+      <p class="page-desc">الإجراءات التأديبية داخل فريق EMS ABRAMS.</p>
+    </div>
+    <div class="section">
+      <h2 class="section-title">مراحل المخالفات</h2>
+      <div class="strike-list">
+        <div class="strike-item s1"><div class="strike-num s1">01</div><div><div class="strike-title">تحذير شفهي</div><div class="strike-desc">للمخالفات البسيطة وغير المتكررة. تُسجَّل في ملف العضو لمدة 30 يوماً.</div></div></div>
+        <div class="strike-item s1"><div class="strike-num s1">02</div><div><div class="strike-title">Strike رسمي</div><div class="strike-desc">تجميد الترقيات لمدة 30 يوماً. يتطلب 3 strikes للطرد مباشرة.</div></div></div>
+        <div class="strike-item s2"><div class="strike-num s2">03</div><div><div class="strike-title">Strike ثقيل</div><div class="strike-desc">تخفيض رتبة + تجميد الترقيات لمدة 60 يوماً.</div></div></div>
+        <div class="strike-item s3"><div class="strike-num s3">🚫</div><div><div class="strike-title">طرد فوري</div><div class="strike-desc">في حالات: حمل سلاح كـ EMS، مشاركة في جرائم، RDM، عدم الاحترام الصريح للقيادة.</div></div></div>
+      </div>
+    </div>
+    <div class="section">
+      <h2 class="section-title">أسباب المخالفات الشائعة</h2>
+      <div class="doc-table-wrap"><table class="doc-table">
+        <thead><tr><th>المخالفة</th><th>الإجراء</th></tr></thead>
+        <tbody>
+          <tr><td>التغيب بدون إشعار</td><td><span class="badge badge-gold">Strike #1</span></td></tr>
+          <tr><td>عدم احترام زميل</td><td><span class="badge badge-gold">Strike #1</span></td></tr>
+          <tr><td>كسر قواعد RP</td><td><span class="badge badge-red">Strike #2</span></td></tr>
+          <tr><td>حمل سلاح</td><td><span class="badge badge-red">طرد فوري</span></td></tr>
+          <tr><td>تسريب معلومات</td><td><span class="badge badge-red">طرد فوري</span></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ════ MEDICAL ════ -->
+  <div class="page" id="page-medical">
+    <div class="page-header">
+      <div class="page-eyebrow">// MEDICAL PROCEDURES</div>
+      <h1 class="page-title">الإجراءات الطبية</h1>
+      <p class="page-desc">بروتوكولات الإسعاف والعلاج داخل الـ Roleplay.</p>
+    </div>
+    <div class="section">
+      <h2 class="section-title">نظام Triage</h2>
+      <div class="card-grid">
+        <div class="card" style="border-top:3px solid #ef4444"><h3 style="font-family:'Oxanium',monospace;font-size:14px;font-weight:700;color:#ef4444;margin-bottom:6px">🔴 حرج</h3><p style="font-size:13px;color:var(--muted2)">فقدان الوعي، توقف التنفس، نزيف حاد. أولوية قصوى.</p></div>
+        <div class="card" style="border-top:3px solid var(--gold2)"><h3 style="font-family:'Oxanium',monospace;font-size:14px;font-weight:700;color:var(--gold2);margin-bottom:6px">🟡 خطير</h3><p style="font-size:13px;color:var(--muted2)">كسور، جروح عميقة، ألم شديد. علاج عاجل.</p></div>
+        <div class="card" style="border-top:3px solid var(--green2)"><h3 style="font-family:'Oxanium',monospace;font-size:14px;font-weight:700;color:var(--green2);margin-bottom:6px">🟢 متوسط/بسيط</h3><p style="font-size:13px;color:var(--muted2)">رضوض، خدوش، حالة مستقرة. علاج عادي.</p></div>
+      </div>
+    </div>
+    <div class="section">
+      <h2 class="section-title">بروتوكول CPR</h2>
+      <div class="steps">
+        <div class="step-item"><div class="step-num">1</div><div class="step-content"><h4>تحقق من الوعي</h4><p>ناد الضحية وانقر على كتفه. إذا لم يستجب — ابدأ البروتوكول.</p></div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-content"><h4>اتصل بالدعم</h4><p>اطلب دعماً طبياً إضافياً إذا كنت وحدك.</p></div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-content"><h4>ضغطات الصدر</h4><p>30 ضغطة بعمق 5-6 سم بوتيرة 100-120 ضغطة/دقيقة.</p></div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-content"><h4>التنفس الاصطناعي</h4><p>نفسان كل 30 ضغطة. استمر حتى الاستجابة أو وصول الدعم.</p></div></div>
+      </div>
+    </div>
+    <div class="info-block">
+      <div class="info-block-title">💊 الأدوية المتاحة في RP</div>
+      <p>مسكنات الألم • ضمادات • محاليل IV • أوكسجين محمول • Defib للحالات القلبية</p>
+    </div>
+  </div>
+
+  <!-- ════ RADIO ════ -->
+  <div class="page" id="page-radio">
+    <div class="page-header">
+      <div class="page-eyebrow">// RADIO CODES</div>
+      <h1 class="page-title">أكواد الراديو</h1>
+      <p class="page-desc">الأكواد الرسمية المستخدمة في التواصل اللاسلكي داخل الـ Roleplay.</p>
+    </div>
+    <div class="section">
+      <h2 class="section-title">أكواد الحالة (Status)</h2>
+      <div class="radio-grid">
+        <div class="radio-card"><span class="radio-code">10-4</span><span class="radio-meaning">استلمت الرسالة / موافق</span></div>
+        <div class="radio-card"><span class="radio-code">10-6</span><span class="radio-meaning">مشغول في مهمة</span></div>
+        <div class="radio-card"><span class="radio-code">10-8</span><span class="radio-meaning">جاهز واستقبال</span></div>
+        <div class="radio-card"><span class="radio-code">10-7</span><span class="radio-meaning">خارج الخدمة</span></div>
+        <div class="radio-card"><span class="radio-code">10-23</span><span class="radio-meaning">في انتظار على الموقع</span></div>
+        <div class="radio-card"><span class="radio-code">10-97</span><span class="radio-meaning">وصلت الموقع</span></div>
+        <div class="radio-card"><span class="radio-code">10-98</span><span class="radio-meaning">انتهيت من المهمة</span></div>
+        <div class="radio-card"><span class="radio-code">10-19</span><span class="radio-meaning">عودة للمقر</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <h2 class="section-title">أكواد الطوارئ</h2>
+      <div class="radio-grid">
+        <div class="radio-card"><span class="radio-code" style="color:var(--red2)">CODE 1</span><span class="radio-meaning">عادي — بدون إشارات</span></div>
+        <div class="radio-card"><span class="radio-code" style="color:var(--gold2)">CODE 2</span><span class="radio-meaning">مستعجل — أضواء فقط</span></div>
+        <div class="radio-card"><span class="radio-code" style="color:var(--red2)">CODE 3</span><span class="radio-meaning">طارئ — أضواء وصفارة</span></div>
+        <div class="radio-card"><span class="radio-code" style="color:var(--red3)">MAYDAY</span><span class="radio-meaning">استغاثة عضو EMS</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <h2 class="section-title">أكواد EMS الخاصة</h2>
+      <div class="radio-grid">
+        <div class="radio-card"><span class="radio-code">EMS-1</span><span class="radio-meaning">الوصول للموقع</span></div>
+        <div class="radio-card"><span class="radio-code">EMS-2</span><span class="radio-meaning">بدء العلاج</span></div>
+        <div class="radio-card"><span class="radio-code">EMS-3</span><span class="radio-meaning">نقل للمستشفى</span></div>
+        <div class="radio-card"><span class="radio-code">EMS-4</span><span class="radio-meaning">طلب دعم طبي</span></div>
+        <div class="radio-card"><span class="radio-code">EMS-DOA</span><span class="radio-meaning">وفاة في الموقع</span></div>
+        <div class="radio-card"><span class="radio-code">EMS-CLR</span><span class="radio-meaning">الموقع آمن ومنتهي</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ UNIFORM ════ -->
+  <div class="page" id="page-uniform">
+    <div class="page-header">
+      <div class="page-eyebrow">// UNIFORM POLICY</div>
+      <h1 class="page-title">سياسة الزي الرسمي</h1>
+      <p class="page-desc">الزي المعتمد لكل رتبة داخل EMS ABRAMS.</p>
+    </div>
+    <div class="info-block warn">
+      <div class="info-block-title">⚠️ إلزامي</div>
+      <p>ارتداء الزي الرسمي إلزامي في جميع المهام الرسمية. المخالفة = تحذير.</p>
+    </div>
+    <div class="doc-table-wrap" style="margin-top:16px"><table class="doc-table">
+      <thead><tr><th>الرتبة</th><th>الزي</th><th>اللون</th><th>الشارة</th></tr></thead>
+      <tbody>
+        <tr><td>Recruit</td><td>بدلة EMS أساسية</td><td>أبيض وأزرق</td><td>بدون شارة</td></tr>
+        <tr><td>Paramedic</td><td>بدلة ميدانية</td><td>أبيض وأخضر</td><td>شارة P</td></tr>
+        <tr><td>Doctor</td><td>معطف أبيض</td><td>أبيض</td><td>شارة MD</td></tr>
+        <tr><td>Air Medic</td><td>بدلة طيران طبية</td><td>أزرق داكن</td><td>شارة AIR</td></tr>
+        <tr><td>Trainer / CMO</td><td>بدلة القيادة</td><td>أسود وذهبي</td><td>شارة خاصة</td></tr>
+      </tbody>
+    </table></div>
+    <div class="section" style="margin-top:28px">
+      <h2 class="section-title">قواعد إضافية</h2>
+      <div class="steps">
+        <div class="step-item"><div class="step-num">✓</div><div class="step-content"><h4>البطاقة التعريفية</h4><p>يجب ارتداء البطاقة الرسمية في جميع الأوقات أثناء الخدمة.</p></div></div>
+        <div class="step-item"><div class="step-num">✓</div><div class="step-content"><h4>الحقيبة الطبية</h4><p>حقيبة الإسعاف إلزامية في المهام الميدانية.</p></div></div>
+        <div class="step-item"><div class="step-num">✗</div><div class="step-content"><h4>ممنوع</h4><p>لا يُسمح بالزي العسكري أو حمل أسلحة مع الزي الطبي.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ VEHICLE ════ -->
+  <div class="page" id="page-vehicle">
+    <div class="page-header">
+      <div class="page-eyebrow">// VEHICLE POLICY</div>
+      <h1 class="page-title">سياسة المركبات</h1>
+      <p class="page-desc">قواعد استخدام مركبات EMS الرسمية.</p>
+    </div>
+    <div class="section">
+      <h2 class="section-title">المركبات المتاحة</h2>
+      <div class="card-grid">
+        <div class="card"><div style="font-size:26px;margin-bottom:8px">🚑</div><h3 style="font-family:'Oxanium',monospace;font-size:14px;font-weight:700;color:#fff;margin-bottom:4px">Ambulance</h3><p style="font-size:12.5px;color:var(--muted2)">للحوادث الأرضية — متاحة لجميع الرتب</p></div>
+        <div class="card"><div style="font-size:26px;margin-bottom:8px">🚁</div><h3 style="font-family:'Oxanium',monospace;font-size:14px;font-weight:700;color:#fff;margin-bottom:4px">Medical Helicopter</h3><p style="font-size:12.5px;color:var(--muted2)">Air Medic فقط — يتطلب رخصة خاصة</p></div>
+        <div class="card"><div style="font-size:26px;margin-bottom:8px">🚐</div><h3 style="font-family:'Oxanium',monospace;font-size:14px;font-weight:700;color:#fff;margin-bottom:4px">Mobile Unit</h3><p style="font-size:12.5px;color:var(--muted2)">لمواقع الكوارث — Doctor وما فوق</p></div>
+      </div>
+    </div>
+    <div class="section">
+      <h2 class="section-title">قواعد القيادة</h2>
+      <div class="info-block success">
+        <div class="info-block-title">✅ مسموح</div>
+        <p>Code 3 في الحوادث الطارئة • الوقوف في المناطق الطبية المخصصة • استخدام المسارات الخاصة بموافقة</p>
+      </div>
+      <div class="info-block danger">
+        <div class="info-block-title">🚫 ممنوع</div>
+        <p>القيادة المتهورة • استخدام المركبة لأغراض شخصية • إقراض المركبة لغير EMS</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ ACADEMY ════ -->
+  <div class="page" id="page-academy">
+    <div class="page-header">
+      <div class="page-eyebrow">// ACADEMY</div>
+      <h1 class="page-title">الأكاديمية</h1>
+      <p class="page-desc">برنامج تدريب الأعضاء الجدد في EMS ABRAMS.</p>
+    </div>
+    <div class="section">
+      <h2 class="section-title">مراحل التدريب</h2>
+      <div class="steps">
+        <div class="step-item"><div class="step-num">1</div><div class="step-content"><h4>Orientation (يوم 1-3)</h4><p>التعرف على الفريق والقواعد العامة وكيفية العمل في الـ Roleplay.</p></div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-content"><h4>Medical Basics (يوم 4-7)</h4><p>أساسيات الإسعاف الأولي وبروتوكول Triage والأدوية المتاحة.</p></div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-content"><h4>Field Training (يوم 8-14)</h4><p>تدريب ميداني مع مرافقة Trainer معتمد في مهام حقيقية.</p></div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-content"><h4>Final Exam</h4><p>اختبار MCQ + سيناريو عملي. النجاح بـ 80%+ للانتقال لرتبة Paramedic I.</p></div></div>
+      </div>
+    </div>
+    <div class="info-block success">
+      <div class="info-block-title">🎓 مدة الأكاديمية</div>
+      <p>14 يوماً كاملة. يجب إكمال جميع المراحل والاختبار النهائي. الرسوب = إعادة من المرحلة 2.</p>
+    </div>
+  </div>
+
+  <!-- ════ FAQ ════ -->
+  <div class="page" id="page-faq">
+    <div class="page-header">
+      <div class="page-eyebrow">// FREQUENTLY ASKED QUESTIONS</div>
+      <h1 class="page-title">الأسئلة الشائعة</h1>
+      <p class="page-desc">إجابات على أكثر الأسئلة تكراراً.</p>
+    </div>
+    <div class="section">
+      <div id="faqList" style="display:grid;gap:10px"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const FAQ = [
+  {q:"كيف أقدم طلب الانضمام؟",a:"اذهب للرئيسية ← Apply Now، أكمل النموذج الكامل وانتظر الرد خلال 48 ساعة."},
+  {q:"كم تستغرق مراجعة الطلب؟",a:"عادةً 24-48 ساعة. ستتلقى رسالة على Discord عند تغيير الحالة."},
+  {q:"هل يمكنني حمل سلاح كـ EMS؟",a:"لا. ممنوع منعاً باتاً. دور EMS طبي بحت. المخالفة = طرد فوري."},
+  {q:"ماذا أفعل إذا أسيء إليّ أثناء مهمة؟",a:"حافظ على احترافيتك، وثّق الموقف، وأبلغ المشرف. لا ترد بنفس الأسلوب."},
+  {q:"كيف أطلب إجازة LOA؟",a:"اذهب لقناة LOA في Discord وأرسل نموذج الطلب مع المدة والسبب. انتظر الموافقة."},
+  {q:"ما الفرق بين Strike و Warning؟",a:"Warning شفهي غير رسمي. Strike رسمي يُسجَّل ويؤثر على الترقيات."},
+  {q:"هل يمكنني الانتقال لرتبة Air Medic؟",a:"نعم، بعد الوصول لـ 400 نقطة واجتياز اختبار الطيران الخاص وموافقة القيادة."},
+  {q:"أين تجري التدريبات الأسبوعية؟",a:"يُعلن عنها في قناة Announcements في Discord. عادةً كل جمعة."},
+];
+
+// ══════════════════════════════════════════
+// SEARCH INDEX
+// ══════════════════════════════════════════
+const SEARCH_INDEX = [
+  {page:'sop',     title:'SOP — قواعد التشغيل الموحدة',    content:'استجابة فورية حياد تام تعاون توثيق triage ضحايا نقل تقرير محظورات اشتباك'},
+  {page:'promotion',title:'Promotion — نظام الترقيات',    content:'نقاط ترقية رتبة recruit paramedic doctor air medic trainer CMO حضور سلوك اختبار'},
+  {page:'attendance',title:'Attendance — الحضور والإجازات',content:'LOA إجازة غياب حضور 80% discord طلب موافقة تمديد'},
+  {page:'strike',  title:'Strike — نظام المخالفات',        content:'تحذير strike طرد RDM سلاح تسريب عقوبة مخالفة تأديب'},
+  {page:'medical', title:'Medical — الإجراءات الطبية',     content:'triage CPR إنعاش حرج خطير أدوية أوكسجين defib نزيف كسور'},
+  {page:'radio',   title:'Radio — أكواد الراديو',          content:'10-4 10-8 code mayday EMS-DOA EMS-CLR راديو تواصل'},
+  {page:'uniform', title:'Uniform — الزي الرسمي',          content:'بدلة زي رسمي معطف بطاقة حقيبة طبية ممنوع سلاح'},
+  {page:'vehicle', title:'Vehicle — المركبات',              content:'سيارة إسعاف هيليكوبتر helicopter code 3 رخصة قيادة ممنوع'},
+  {page:'academy', title:'Academy — الأكاديمية',           content:'تدريب orientation field training اختبار paramedic أكاديمية 14 يوم'},
+  {page:'faq',     title:'FAQ — الأسئلة الشائعة',          content:'طلب LOA سلاح strike تدريب إجازة رتبة air medic'},
+];
+
+// ══════════════════════════════════════════
+// PAGE NAVIGATION
+// ══════════════════════════════════════════
+const PAGE_LABELS = {
+  sop:'📖 SOP', promotion:'⭐ Promotion', attendance:'📅 Attendance',
+  strike:'⚠️ Strike', medical:'🚑 Medical', radio:'📻 Radio Codes',
+  uniform:'👔 Uniform', vehicle:'🚗 Vehicle', academy:'🎓 Academy', faq:'❓ FAQ'
+};
+
+function showPage(id, btn) {
+  // swap visible page
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + id);
+  if (target) target.classList.add('active');
+
+  // update active nav item
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else {
+    const match = document.querySelector(`.nav-item[onclick*="'${id}'"]`);
+    if (match) match.classList.add('active');
+  }
+
+  // update topbar label
+  const label = document.getElementById('currentPageLabel');
+  if (label) label.textContent = PAGE_LABELS[id] || id;
+
+  // lazy-render FAQ the first time it's opened
+  if (id === 'faq') renderFAQ();
+
+  // close mobile sidebar + scroll content to top
+  closeSidebar();
+  document.querySelector('.main')?.scrollTo({ top: 0, behavior: 'instant' });
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+// ══════════════════════════════════════════
+// FAQ
+// ══════════════════════════════════════════
+function renderFAQ() {
+  const list = document.getElementById('faqList');
+  if (list.innerHTML) return;
+  list.innerHTML = FAQ.map((f, i) => `
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <button onclick="toggleFAQ(${i})" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:none;border:none;cursor:pointer;color:var(--text);font-size:14px;font-weight:600;font-family:'Tajawal',sans-serif;text-align:right;gap:12px">
+        <span>${f.q}</span>
+        <span id="faqArrow${i}" style="color:var(--muted2);font-size:16px;flex-shrink:0;transition:.2s">▼</span>
+      </button>
+      <div id="faqBody${i}" style="display:none;padding:0 18px 16px;font-size:13.5px;color:var(--muted2);line-height:1.75;border-top:1px solid var(--border)">${f.a}</div>
+    </div>`).join('');
+}
+
+function toggleFAQ(i) {
+  const body  = document.getElementById('faqBody' + i);
+  const arrow = document.getElementById('faqArrow' + i);
+  const open  = body.style.display !== 'none' && body.style.display !== '';
+  body.style.display  = open ? 'none' : 'block';
+  arrow.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+// ══════════════════════════════════════════
+// SEARCH
+// ══════════════════════════════════════════
+let searchTimeout;
+function doSearch(val) {
+  clearTimeout(searchTimeout);
+  const results = document.getElementById('searchResults');
+  if (!val.trim()) { results.classList.remove('open'); return; }
+  searchTimeout = setTimeout(() => {
+    const q   = val.toLowerCase();
+    const hits = SEARCH_INDEX.filter(i => i.title.toLowerCase().includes(q) || i.content.toLowerCase().includes(q));
+    if (!hits.length) {
+      results.innerHTML = `<div class="search-empty">لا نتائج لـ "${val}"</div>`;
+    } else {
+      results.innerHTML = hits.map(h => `
+        <div class="search-result-item" onclick="showPageFromSearch('${h.page}')">
+          <div class="sr-title">${h.title}</div>
+          <div class="sr-page">// ${h.page.toUpperCase()}</div>
+        </div>`).join('');
+    }
+    results.classList.add('open');
+  }, 200);
+}
+
+function showPageFromSearch(id) {
+  document.getElementById('searchResults').classList.remove('open');
+  document.getElementById('searchInput').value = '';
+  const btn = document.querySelector(`.nav-item[onclick*="'${id}'"]`);
+  showPage(id, btn);
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) document.getElementById('searchResults').classList.remove('open');
+});
+
+// ══════════════════════════════════════════
+// SIDEBAR MOBILE
+// ══════════════════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+// ══════════════════════════════════════════
+// LANGUAGE
+// ══════════════════════════════════════════
+const T_EN = {
+  nav_sop:'SOP', nav_promo:'Promotion System', nav_att:'Attendance & LOA',
+  nav_strike:'Strike System', nav_med:'Medical Procedures', nav_radio:'Radio Codes',
+  nav_uni:'Uniform Policy', nav_veh:'Vehicle Policy', nav_aca:'Academy',
+  nav_faq:'FAQ', nav_pdf:'Download PDF',
+  sop_title:'Standard Operating Procedures',
+  sop_desc:'The official guide for all EMS ABRAMS members. Must be read and followed at all times.',
+  'sidebar-sub':'Handbook', 'nav-group':'📚 Handbook',
+};
+const T_AR = {
+  nav_sop:'SOP', nav_promo:'نظام الترقيات', nav_att:'الحضور والإجازات',
+  nav_strike:'نظام المخالفات', nav_med:'الإجراءات الطبية', nav_radio:'أكواد الراديو',
+  nav_uni:'الزي الرسمي', nav_veh:'سياسة المركبات', nav_aca:'الأكاديمية',
+  nav_faq:'الأسئلة الشائعة', nav_pdf:'تحميل PDF',
+  sop_title:'قواعد التشغيل الموحدة',
+  sop_desc:'الدليل الرسمي لجميع أعضاء فريق EMS ABRAMS. يجب قراءته والالتزام به بشكل كامل.',
+  'sidebar-sub':'الدليل', 'nav-group':'📚 الدليل',
+};
+
+function setLang(l, btn) {
+  const t = l === 'en' ? T_EN : T_AR;
+  document.documentElement.lang = l;
+  document.documentElement.dir  = l === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.trim().toLowerCase() === l || (l === 'ar' && b.textContent.trim() === 'عربي')));
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const k = el.getAttribute('data-t');
+    if (t[k]) el.textContent = t[k];
+  });
+}
+
+// ══════════════════════════════════════════
+// PDF DOWNLOAD (placeholder)
+// ══════════════════════════════════════════
+function downloadPDF(e) {
+  e.preventDefault();
+  alert('📥 سيتوفر PDF قريباً! راقب قناة Discord للتحديثات.');
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+renderFAQ();
+</script>
+</body>
+</html>

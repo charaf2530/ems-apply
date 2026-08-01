@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Underwater Medical Center — Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --abyss:#03080c;--d1:#071019;--d2:#0b1720;--line:#122130;--line2:#1c3244;
+  --teal:#14b8a6;--teal2:#5eead4;--coral:#fb7185;--amber:#f7b955;--ok:#34d399;
+  --ink:#dbe9ec;--mute:#4a6572;--mute2:#7d97a3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;background:var(--abyss);color:var(--ink);min-height:100vh;display:flex}
+.disp{font-family:'Space Grotesk',sans-serif}
+.mono{font-family:'IBM Plex Mono',monospace}
+.bg-rays{position:fixed;inset:0;z-index:0;background:
+  radial-gradient(ellipse 900px 500px at 15% -10%, rgba(20,184,166,.07), transparent 60%),
+  radial-gradient(ellipse 700px 500px at 100% 10%, rgba(251,113,133,.05), transparent 60%);
+  pointer-events:none}
+.sidebar{width:224px;flex-shrink:0;background:var(--d1);border-right:1px solid var(--line);display:flex;flex-direction:column;position:relative;z-index:1}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:20px 18px;border-bottom:1px solid var(--line)}
+.pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--teal);position:relative;flex-shrink:0}
+.pulse-dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--teal);animation:ping 2.4s ease-out infinite}
+@keyframes ping{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.4);opacity:0}}
+.sb-logo-text{font-size:13px;font-weight:700;letter-spacing:2.5px;color:#fff}
+.sb-logo-sub{font-size:9px;color:var(--mute2);letter-spacing:1.5px;margin-top:1px}
+.sb-nav{padding:14px 9px;flex:1}
+.sb-sec{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--mute);text-transform:uppercase;padding:10px 9px 5px}
+.sb-link{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--mute2);font-size:13px;font-weight:500;cursor:pointer;transition:.15s;text-decoration:none;border:none;background:none;width:100%}
+.sb-link:hover{background:rgba(255,255,255,.03);color:#fff}
+.sb-link.active{background:rgba(20,184,166,.1);color:var(--teal2);border:1px solid rgba(20,184,166,.18)}
+.sb-link .kbd{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--mute);border:1px solid var(--line2);border-radius:4px;padding:1px 5px}
+.sb-bottom{padding:10px 9px;border-top:1px solid var(--line)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:9px 10px;margin-bottom:2px}
+.sb-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--coral));display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0;color:#04141a}
+.sb-role{font-size:10px;color:var(--mute2);text-transform:capitalize}
+.content{flex:1;padding:26px 28px;overflow:auto;position:relative;z-index:1;max-width:100%}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.page-title{font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--mute2);margin-top:2px}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px;margin-bottom:20px}
+.stat-card{background:var(--d1);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+.stat-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:var(--mute2);margin-bottom:5px}
+.stat-val{font-size:27px;font-weight:700;color:#fff}
+.stat-val.y{color:var(--amber)}.stat-val.g{color:var(--ok)}.stat-val.r{color:var(--coral)}.stat-val.b{color:var(--teal2)}
+.panel{background:var(--d1);border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-bottom:16px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid var(--line);gap:10px;flex-wrap:wrap}
+.panel-title{font-size:14px;font-weight:600}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.srch{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:7px;padding:6px 9px}
+.srch input{background:none;border:none;outline:none;color:var(--ink);font:inherit;font-size:12px;width:160px}
+.srch input::placeholder{color:var(--mute)}
+.fsel{background:var(--d2);border:1px solid var(--line);border-radius:7px;padding:6px 9px;color:var(--ink);font:inherit;font-size:12px;cursor:pointer;outline:none}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mute2);padding:9px 13px;text-align:left;border-bottom:1px solid var(--line);background:rgba(255,255,255,.015)}
+td{padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;vertical-align:middle}
+tr.row{cursor:pointer;transition:.1s}
+tr.row:hover td{background:rgba(255,255,255,.012)}
+tr.row.focused td{background:rgba(20,184,166,.06)}
+tr:last-child td{border-bottom:none}
+.mono2{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute2)}
+.sbadge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;text-transform:capitalize}
+.s-pending{background:rgba(247,185,85,.1);color:var(--amber);border:1px solid rgba(247,185,85,.22)}
+.s-approved{background:rgba(52,211,153,.1);color:var(--ok);border:1px solid rgba(52,211,153,.22)}
+.s-rejected{background:rgba(251,113,133,.1);color:var(--coral);border:1px solid rgba(251,113,133,.22)}
+.sbar{width:44px;height:5px;border-radius:3px;background:var(--line2);overflow:hidden;display:inline-block;vertical-align:middle;margin-right:5px}
+.sfill{height:100%;background:linear-gradient(90deg,var(--teal),var(--teal2));border-radius:3px}
+.abts{display:flex;gap:4px}
+.ab{padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:.12s}
+.abv{background:rgba(20,184,166,.08);color:var(--teal2);border:1px solid rgba(20,184,166,.2)}
+.abv:hover{background:rgba(20,184,166,.18)}
+.aba{background:rgba(52,211,153,.1);color:var(--ok);border:1px solid rgba(52,211,153,.22)}
+.aba:hover{background:rgba(52,211,153,.2)}
+.abr{background:rgba(251,113,133,.1);color:var(--coral);border:1px solid rgba(251,113,133,.22)}
+.abr:hover{background:rgba(251,113,133,.2)}
+.pgn{display:flex;align-items:center;gap:5px;padding:11px 17px;border-top:1px solid var(--line);justify-content:flex-end}
+.pgb{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;font-size:11px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--mute2);transition:.12s}
+.pgb:hover{border-color:var(--line2);color:#fff}
+.pgb.on{background:var(--teal);border-color:var(--teal);color:#04141a}
+.pgi{font-size:11px;color:var(--mute2);font-family:'IBM Plex Mono',monospace}
+.bulkbar{display:none;align-items:center;gap:10px;padding:10px 17px;border-bottom:1px solid var(--line);background:rgba(20,184,166,.05)}
+.bulkbar.show{display:flex}
+.bulkbar span{font-size:12px;color:var(--teal2);font-weight:600}
+.modal-ov{display:none;position:fixed;inset:0;z-index:200;background:rgba(1,4,6,.82);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
+.modal-ov.open{display:flex}
+.modal{background:var(--d1);border:1px solid var(--line2);border-radius:17px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;padding:22px}
+.mhead{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.mtitle{font-size:17px;font-weight:700}
+.mclose{background:none;border:none;color:var(--mute2);font-size:19px;cursor:pointer;padding:2px 5px}
+.mclose:hover{color:#fff}
+.msec{margin-bottom:14px}
+.msec h4{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--teal2);margin-bottom:7px}
+.mrow{display:grid;grid-template-columns:130px 1fr;gap:9px;padding:7px 0;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:none}
+.mkey{font-size:11px;color:var(--mute2);font-family:'IBM Plex Mono',monospace}
+.mval{font-size:13px;color:#dde5f3;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.mnotes{width:100%;background:var(--d2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:inherit;font-size:12px;padding:8px 10px;resize:vertical;min-height:60px}
+.lb-row{display:flex;align-items:center;gap:12px;padding:10px 17px;border-bottom:1px solid rgba(255,255,255,.03)}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{font-size:19px;font-weight:700;min-width:30px;color:var(--mute)}
+.r1{color:var(--amber)}.r2{color:#a8bfc9}.r3{color:#c98a52}
+.lb-name{flex:1;font-size:13px;font-weight:600}
+.lb-badges{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px}
+.lb-badge{font-size:10px;padding:2px 5px;border-radius:4px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.lb-pts{font-size:17px;font-weight:700;color:var(--amber)}
+.toast{position:fixed;bottom:18px;right:18px;z-index:999;padding:11px 16px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .22s;transform:translateY(7px)}
+.toast.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+.tok{background:var(--ok);color:#04141a}.terr{background:var(--coral);color:#2b0a10}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:.13s;font-family:inherit;text-decoration:none}
+.btn:hover{transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--mute2);border:1px solid var(--line)}
+.btn-ghost:hover{color:#fff;border-color:var(--line2)}
+.btn-ok{background:rgba(52,211,153,.1);color:var(--ok);border:1px solid rgba(52,211,153,.22)}
+.btn-no{background:rgba(251,113,133,.1);color:var(--coral);border:1px solid rgba(251,113,133,.22)}
+.empty{text-align:center;padding:44px 20px;color:var(--mute2);font-size:13px}
+.tab-c{display:none}.tab-c.on{display:block}
+.chart-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.roleSel{background:var(--d2);border:1px solid var(--line);border-radius:6px;color:var(--ink);font:inherit;font-size:11px;padding:4px 7px}
+.kbd-hint{position:fixed;bottom:14px;left:238px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mute);z-index:2}
+.lang-switch{display:flex;background:var(--d2);border:1px solid var(--line);border-radius:20px;padding:2px;margin:10px 14px 0}
+.lang-btn{flex:1;border:none;background:none;color:var(--mute2);font-size:10px;font-weight:700;padding:5px 0;border-radius:16px;cursor:pointer;font-family:'IBM Plex Mono',monospace;letter-spacing:.5px;transition:.15s}
+.lang-btn.active{background:var(--teal);color:#04141a}
+.mini-spinner{width:11px;height:11px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;display:inline-block;animation:mspin .6s linear infinite}
+@keyframes mspin{to{transform:rotate(360deg)}}
+@media(max-width:800px){.chart-grid{grid-template-columns:1fr}.kbd-hint{display:none}}
+@media(max-width:680px){.sidebar{display:none}.stats-row{grid-template-columns:1fr 1fr}.content{padding:14px}}
+</style>
+</head>
+<body>
+<div class="bg-rays"></div>
+<aside class="sidebar">
+  <div class="sb-logo"><div class="pulse-dot"></div><div><div class="sb-logo-text disp">ABRAMS</div><div class="sb-logo-sub mono">EMS CONSOLE</div></div></div>
+  <div class="lang-switch"><button class="lang-btn active" onclick="setLang('en')" id="langEn">EN</button><button class="lang-btn" onclick="setLang('ar')" id="langAr">عربي</button></div>
+  <nav class="sb-nav">
+    <div class="sb-sec" data-t="sec_ops">Operations</div>
+    <button class="sb-link active" onclick="sw('apps',this)"><span>📋</span> <span data-t="nav_apps">Applications</span> <span class="kbd">1</span></button>
+    <button class="sb-link" onclick="sw('analytics',this)"><span>📊</span> <span data-t="nav_analytics">Analytics</span> <span class="kbd">2</span></button>
+    <button class="sb-link" onclick="sw('lb',this)"><span>🏆</span> <span data-t="nav_lb">Leaderboard</span> <span class="kbd">3</span></button>
+    <button class="sb-link" id="navMembers" style="display:none" onclick="sw('members',this)"><span>🧑‍🤝‍🧑</span> <span data-t="nav_members">Members</span> <span class="kbd">4</span></button>
+    <div class="sb-sec" style="margin-top:10px" data-t="sec_links">Links</div>
+    <a class="sb-link" href="/personnel"><span>🚑</span> <span data-t="nav_personnel">Personnel Panel</span></a>
+    <a class="sb-link" href="/"><span>🏠</span> <span data-t="nav_home">Main Site</span></a>
+    <a class="sb-link" href="/apply"><span>📝</span> <span data-t="nav_apply">Apply</span></a>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user"><div class="sb-av" id="sbAv">?</div><div><strong id="sbName" style="font-size:13px">…</strong><div class="sb-role mono" id="sbRole">—</div></div></div>
+    <a class="sb-link" href="/auth/logout"><span>🚪</span> <span data-t="nav_logout">Logout</span></a>
+  </div>
+</aside>
+<main class="content">
+
+  <div class="tab-c on" id="tab-apps">
+    <div class="topbar"><div><div class="page-title disp" data-t="t_apps_title">Applications</div><div class="page-sub" data-t="t_apps_sub">Review, filter, and act on EMS applications</div></div><button class="btn btn-ghost" onclick="loadAll()">🔄 <span data-t="refresh">Refresh</span></button></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label" data-t="st_total">Total</div><div class="stat-val" id="st-t">—</div></div>
+      <div class="stat-card"><div class="stat-label" data-t="st_pending">Pending</div><div class="stat-val y" id="st-p">—</div></div>
+      <div class="stat-card"><div class="stat-label" data-t="st_approved">Approved</div><div class="stat-val g" id="st-a">—</div></div>
+      <div class="stat-card"><div class="stat-label" data-t="st_rejected">Rejected</div><div class="stat-val r" id="st-r">—</div></div>
+      <div class="stat-card"><div class="stat-label" data-t="st_avg">Avg Score</div><div class="stat-val b" id="st-s">—</div></div>
+      <div class="stat-card"><div class="stat-label" data-t="st_members">Members</div><div class="stat-val" id="st-m">—</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title" data-t="pt_allapps">All Applications</div>
+        <div class="filters">
+          <div class="srch"><span style="color:var(--mute2);font-size:11px">🔍</span><input id="si" placeholder="Name / ID / ref… ( / )" data-t-ph="ph_search" oninput="dbc()"/></div>
+          <select class="fsel" id="sf" onchange="loadApps()"><option value="all" data-t="opt_all">All</option><option value="pending" data-t="opt_pending">Pending</option><option value="approved" data-t="opt_approved">Approved</option><option value="rejected" data-t="opt_rejected">Rejected</option></select>
+          <select class="fsel" id="ss" onchange="loadApps()"><option value="new" data-t="opt_new">Newest</option><option value="old" data-t="opt_old">Oldest</option><option value="score" data-t="opt_score">Highest score</option></select>
+        </div>
+      </div>
+      <div class="bulkbar" id="bulkbar">
+        <span id="bulkCount">0 selected</span>
+        <button class="btn btn-ok" onclick="withLoading(this,()=>bulkRev('accept'))">✅ <span data-t="bulk_accept">Accept selected</span></button>
+        <button class="btn btn-no" onclick="withLoading(this,()=>bulkRev('reject'))">❌ <span data-t="bulk_reject">Reject selected</span></button>
+        <button class="btn btn-ghost" onclick="clearSel()" data-t="clear">Clear</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th style="width:30px"><input type="checkbox" id="ckAll" onchange="toggleAll(this)"/></th><th data-t="th_ref">Ref</th><th data-t="th_name">Name</th><th data-t="th_discord">Discord ID</th><th data-t="th_score">Score</th><th data-t="th_status">Status</th><th data-t="th_date">Date</th><th data-t="th_actions">Actions</th></tr></thead><tbody id="tbody"></tbody></table></div>
+      <div class="pgn" id="pgn"></div>
+    </div>
+  </div>
+
+  <div class="tab-c" id="tab-analytics">
+    <div class="topbar"><div><div class="page-title disp" data-t="t_an_title">Analytics</div><div class="page-sub" data-t="t_an_sub">Recruitment trends and reviewer activity</div></div><button class="btn btn-ghost" onclick="loadAnalytics()">🔄 <span data-t="refresh">Refresh</span></button></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label" data-t="an_rate">Approval Rate</div><div class="stat-val g" id="an-approval">—</div></div>
+      <div class="stat-card"><div class="stat-label" data-t="an_turn">Avg Review Time</div><div class="stat-val b" id="an-turn">—</div></div>
+      <div class="stat-card"><div class="stat-label" data-t="an_subs">Submissions (30d)</div><div class="stat-val" id="an-total">—</div></div>
+    </div>
+    <div class="chart-grid">
+      <div class="panel"><div class="panel-head"><div class="panel-title" data-t="an_chart1">Submissions — last 30 days</div></div><div style="padding:16px" id="chartDays"></div></div>
+      <div class="panel"><div class="panel-head"><div class="panel-title" data-t="an_chart2">MCQ Score Distribution</div></div><div style="padding:16px" id="chartScore"></div></div>
+    </div>
+    <div class="panel"><div class="panel-head"><div class="panel-title" data-t="an_reviewers">🎖️ Top Reviewers</div></div><div id="reviewerBody"></div></div>
+  </div>
+
+  <div class="tab-c" id="tab-lb">
+    <div class="topbar"><div><div class="page-title disp" data-t="t_lb_title">Leaderboard</div><div class="page-sub" data-t="t_lb_sub">Top members by points</div></div><button class="btn btn-ghost" onclick="loadLb()">🔄 <span data-t="refresh">Refresh</span></button></div>
+    <div class="panel"><div class="panel-head"><div class="panel-title" data-t="lb_rankings">🏆 Rankings</div></div><div id="lbBody"></div></div>
+  </div>
+
+  <div class="tab-c" id="tab-members">
+    <div class="topbar"><div><div class="page-title disp" data-t="t_mem_title">Members &amp; Roles</div><div class="page-sub" data-t="t_mem_sub">Manage console access levels</div></div><button class="btn btn-ghost" onclick="loadMembers()">🔄 <span data-t="refresh">Refresh</span></button></div>
+    <div class="panel"><div class="panel-head"><div class="panel-title" data-t="mem_all">All Members</div></div>
+      <div class="table-wrap"><table><thead><tr><th data-t="th_rpname">RP Name</th><th data-t="th_discord">Discord ID</th><th data-t="th_points">Points</th><th data-t="th_badges">Badges</th><th data-t="th_role">Role</th></tr></thead><tbody id="memBody"></tbody></table></div>
+    </div>
+  </div>
+
+</main>
+<div class="modal-ov" id="mo" onclick="cmo(event)">
+  <div class="modal"><div class="mhead"><div class="mtitle" id="mt">Details</div><button class="mclose" onclick="cmon()">✕</button></div><div id="mb"></div></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="kbd-hint">j/k navigate · a accept · r reject · x select · / search · esc close</div>
+<script>
+let cp=1,st,me,curApps=[],focusIdx=-1,selected=new Set();
+
+// ── i18n (chrome only — table data, toasts, and dynamic content stay in English) ──
+const T = {
+  en: { sec_ops:"Operations", nav_apps:"Applications", nav_analytics:"Analytics", nav_lb:"Leaderboard", nav_members:"Members",
+        sec_links:"Links", nav_personnel:"Personnel Panel", nav_home:"Main Site", nav_apply:"Apply", nav_logout:"Logout",
+        t_apps_title:"Applications", t_apps_sub:"Review, filter, and act on EMS applications", refresh:"Refresh",
+        st_total:"Total", st_pending:"Pending", st_approved:"Approved", st_rejected:"Rejected", st_avg:"Avg Score", st_members:"Members",
+        pt_allapps:"All Applications", ph_search:"Name / ID / ref… ( / )",
+        opt_all:"All", opt_pending:"Pending", opt_approved:"Approved", opt_rejected:"Rejected",
+        opt_new:"Newest", opt_old:"Oldest", opt_score:"Highest score",
+        bulk_accept:"Accept selected", bulk_reject:"Reject selected", clear:"Clear",
+        th_ref:"Ref", th_name:"Name", th_discord:"Discord ID", th_score:"Score", th_status:"Status", th_date:"Date", th_actions:"Actions",
+        t_an_title:"Analytics", t_an_sub:"Recruitment trends and reviewer activity",
+        an_rate:"Approval Rate", an_turn:"Avg Review Time", an_subs:"Submissions (30d)",
+        an_chart1:"Submissions — last 30 days", an_chart2:"MCQ Score Distribution", an_reviewers:"🎖️ Top Reviewers",
+        t_lb_title:"Leaderboard", t_lb_sub:"Top members by points", lb_rankings:"🏆 Rankings",
+        t_mem_title:"Members & Roles", t_mem_sub:"Manage console access levels", mem_all:"All Members",
+        th_rpname:"RP Name", th_points:"Points", th_badges:"Badges", th_role:"Role" },
+  ar: { sec_ops:"العمليات", nav_apps:"الطلبات", nav_analytics:"الإحصائيات", nav_lb:"المتصدرون", nav_members:"الأعضاء",
+        sec_links:"روابط", nav_personnel:"لوحة الطاقم الطبي", nav_home:"الموقع الرئيسي", nav_apply:"التقديم", nav_logout:"تسجيل الخروج",
+        t_apps_title:"الطلبات", t_apps_sub:"راجع، صفِّ، وتعامل مع طلبات EMS", refresh:"تحديث",
+        st_total:"الإجمالي", st_pending:"قيد الانتظار", st_approved:"مقبول", st_rejected:"مرفوض", st_avg:"متوسط النقاط", st_members:"الأعضاء",
+        pt_allapps:"كل الطلبات", ph_search:"اسم / معرف / رقم مرجعي… ( / )",
+        opt_all:"الكل", opt_pending:"قيد الانتظار", opt_approved:"مقبول", opt_rejected:"مرفوض",
+        opt_new:"الأحدث", opt_old:"الأقدم", opt_score:"أعلى نقاط",
+        bulk_accept:"قبول المحدد", bulk_reject:"رفض المحدد", clear:"مسح",
+        th_ref:"مرجع", th_name:"الاسم", th_discord:"معرف الديسكورد", th_score:"النقاط", th_status:"الحالة", th_date:"التاريخ", th_actions:"إجراءات",
+        t_an_title:"الإحصائيات", t_an_sub:"اتجاهات التوظيف ونشاط المراجعين",
+        an_rate:"نسبة القبول", an_turn:"متوسط وقت المراجعة", an_subs:"الطلبات (٣٠ يوم)",
+        an_chart1:"الطلبات — آخر ٣٠ يوم", an_chart2:"توزيع نقاط الاختبار", an_reviewers:"🎖️ أفضل المراجعين",
+        t_lb_title:"المتصدرون", t_lb_sub:"الأعضاء الأعلى نقاطاً", lb_rankings:"🏆 الترتيب",
+        t_mem_title:"الأعضاء والرتب", t_mem_sub:"إدارة صلاحيات لوحة التحكم", mem_all:"كل الأعضاء",
+        th_rpname:"اسم الشخصية", th_points:"النقاط", th_badges:"الأوسمة", th_role:"الرتبة" },
+};
+function setLang(lang){
+  document.querySelectorAll("[data-t]").forEach(el=>{ const k=el.getAttribute("data-t"); if(T[lang][k]) el.textContent=T[lang][k]; });
+  document.querySelectorAll("[data-t-ph]").forEach(el=>{ const k=el.getAttribute("data-t-ph"); if(T[lang][k]) el.placeholder=T[lang][k]; });
+  document.getElementById("langEn").classList.toggle("active", lang==="en");
+  document.getElementById("langAr").classList.toggle("active", lang==="ar");
+  localStorage.setItem("ems_dash_lang", lang);
+}
+
+// Generic loading state for any action button — disables it and shows a spinner
+// for the duration of an async action, so a double-click can't fire the request twice.
+async function withLoading(btn, fn){
+  if(!btn) return fn();
+  if(btn.disabled) return; // already in flight
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="mini-spinner"></span>';
+  try { await fn(); }
+  finally { btn.disabled = false; btn.innerHTML = orig; }
+}
+
+
+async function init(){
+  me=await fetch("/api/me").then(r=>r.json());
+  if(!me.loggedIn){location.href="/auth/discord";return;}
+  document.getElementById("sbName").textContent=me.user.username;
+  document.getElementById("sbAv").textContent=me.user.username[0].toUpperCase();
+  document.getElementById("sbRole").textContent=me.user.role;
+  if(["admin","owner"].includes(me.user.role)) document.getElementById("navMembers").style.display="flex";
+  loadAll();
+  setLang(localStorage.getItem("ems_dash_lang") || "en");
+}
+function sw(id,btn){
+  document.querySelectorAll(".tab-c").forEach(t=>t.classList.remove("on"));
+  document.querySelectorAll(".sb-link").forEach(l=>l.classList.remove("active"));
+  document.getElementById("tab-"+id).classList.add("on");
+  btn.classList.add("active");
+  if(id==="lb")loadLb();
+  if(id==="analytics")loadAnalytics();
+  if(id==="members")loadMembers();
+}
+function loadAll(){loadStats();loadApps();}
+async function loadStats(){
+  const s=await fetch("/api/admin/stats").then(r=>r.json());
+  document.getElementById("st-t").textContent=s.total;
+  document.getElementById("st-p").textContent=s.pending;
+  document.getElementById("st-a").textContent=s.approved;
+  document.getElementById("st-r").textContent=s.rejected;
+  document.getElementById("st-s").textContent=s.avgScore+"/5";
+  document.getElementById("st-m").textContent=s.members;
+}
+async function loadApps(p){
+  if(p!==undefined)cp=p;
+  const sr=si.value.trim(),sf_=sf.value,ss_=ss.value;
+  const d=await fetch(`/api/admin/apps?page=${cp}&limit=20&status=${sf_}&sort=${ss_}&search=${encodeURIComponent(sr)}`).then(r=>r.json());
+  curApps=d.data; focusIdx=-1; selected.clear(); updateBulkbar();
+  renderT(d);
+}
+function dbc(){clearTimeout(st);st=setTimeout(()=>loadApps(1),350);}
+function toggleAll(cb){
+  if(cb.checked) curApps.forEach(a=>selected.add(a.ref)); else selected.clear();
+  updateBulkbar(); renderT({data:curApps,total:curApps.length,page:cp});
+}
+function toggleSel(ref,ev){
+  ev.stopPropagation();
+  if(selected.has(ref)) selected.delete(ref); else selected.add(ref);
+  updateBulkbar();
+}
+function updateBulkbar(){
+  const n=selected.size;
+  bulkbar.classList.toggle("show",n>0);
+  bulkCount.textContent=`${n} selected`;
+}
+function clearSel(){selected.clear();updateBulkbar();renderT({data:curApps,total:curApps.length,page:cp});}
+async function bulkRev(action){
+  if(!selected.size)return;
+  if(!confirm(`${action==="accept"?"✅ Accept":"❌ Reject"} ${selected.size} application(s)?`))return;
+  const r=await fetch("/api/admin/bulk-review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({refs:[...selected],action})});
+  const d=await r.json();
+  toast(`${d.ok.length} updated${d.failed.length?`, ${d.failed.length} failed`:""}`,d.failed.length?"err":"ok");
+  loadAll();
+}
+function renderT({data,total,page}){
+  curApps=data;
+  const tb=document.getElementById("tbody");
+  if(!data.length){tb.innerHTML=`<tr><td colspan="8"><div class="empty">No applications found</div></td></tr>`;document.getElementById("pgn").innerHTML="";return;}
+  tb.innerHTML=data.map((a,i)=>`<tr class="row${i===focusIdx?" focused":""}" onclick="viewApp('${a.ref}')">
+    <td onclick="event.stopPropagation()"><input type="checkbox" ${selected.has(a.ref)?"checked":""} onclick="toggleSel('${a.ref}',event)"/></td>
+    <td><span class="mono2">${a.ref}</span></td>
+    <td><strong>${esc(a.fullName)}</strong></td>
+    <td><span class="mono2">${esc(a.discordUser)}</span></td>
+    <td><div class="sbar"><div class="sfill" style="width:${(a.mcqScore/5)*100}%"></div></div><span style="font-size:11px">${a.mcqScore}/5</span></td>
+    <td><span class="sbadge s-${a.status}">${a.status}</span></td>
+    <td><span class="mono2" style="font-size:10px">${new Date(a.createdAt).toLocaleDateString()}</span></td>
+    <td><div class="abts" onclick="event.stopPropagation()">
+      <button class="ab abv" onclick="viewApp('${a.ref}')">👁</button>
+      ${a.status==="pending"?`<button class="ab aba" onclick="withLoading(this,()=>rev('${a.ref}','accept'))">✅</button><button class="ab abr" onclick="withLoading(this,()=>rev('${a.ref}','reject'))">❌</button>`:""}
+    </div></td></tr>`).join("");
+  const pages=Math.ceil(total/20),pgn=document.getElementById("pgn");
+  if(pages<=1){pgn.innerHTML="";return;}
+  let h=`<span class="pgi">${(page-1)*20+1}–${Math.min(page*20,total)} / ${total}</span>`;
+  for(let i=1;i<=pages;i++)h+=`<button class="pgb${i===page?" on":""}" onclick="loadApps(${i})">${i}</button>`;
+  pgn.innerHTML=h;
+}
+async function rev(ref,action){
+  if(!confirm(`${action==="accept"?"✅ Accept":"❌ Reject"} ${ref}?`))return;
+  const r=await fetch("/api/admin/review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ref,action})});
+  const d=await r.json();
+  if(d.ok){toast(action==="accept"?"Approved ✅":"Rejected ❌",action==="accept"?"ok":"err");loadAll();cmon();}
+  else toast(d.error||"Error","err");
+}
+async function saveNotes(ref){
+  const notes=document.getElementById("notesArea").value;
+  await fetch(`/api/admin/apps/${ref}/notes`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({notes})});
+  toast("Notes saved","ok");
+}
+async function viewApp(ref){
+  const d=await fetch(`/api/admin/apps?search=${ref}&limit=1`).then(r=>r.json());
+  const a=d.data[0];if(!a)return;
+  const LBLS=["Explain Medical RP","Death + video?","Patient breaks RP?","Crash — who first?","Patient flees & fights?"];
+  const mq=[1,2,3,4,5].map(i=>`<div class="mrow"><div class="mkey">Q${i}</div><div class="mval">${esc(a.mcq?.["q"+i]||"—")}</div></div>`).join("");
+  const op=[6,7,8,9,10].map((n,i)=>`<div class="mrow"><div class="mkey">${LBLS[i]}</div><div class="mval">${esc(a.open?.["q"+n]||"—")}</div></div>`).join("");
+  document.getElementById("mt").textContent=`${a.fullName} — ${a.ref}`;
+  document.getElementById("mb").innerHTML=`
+    <div class="msec"><h4>Basic Info</h4>
+      <div class="mrow"><div class="mkey">RP Name</div><div class="mval">${esc(a.fullName)}</div></div>
+      <div class="mrow"><div class="mkey">Discord ID</div><div class="mval" style="font-family:monospace">${esc(a.discordUser)}</div></div>
+      <div class="mrow"><div class="mkey">Score</div><div class="mval">${a.mcqScore}/5</div></div>
+      <div class="mrow"><div class="mkey">Status</div><div class="mval"><span class="sbadge s-${a.status}">${a.status}</span></div></div>
+      <div class="mrow"><div class="mkey">Date</div><div class="mval">${new Date(a.createdAt).toLocaleString()}</div></div>
+      ${a.reviewedBy?`<div class="mrow"><div class="mkey">Reviewed by</div><div class="mval">${esc(a.reviewedBy)}</div></div>`:""}
+    </div>
+    <div class="msec"><h4>MCQ</h4>${mq}</div>
+    <div class="msec"><h4>Open Answers</h4>${op}</div>
+    <div class="msec"><h4>Reviewer Notes</h4><textarea class="mnotes" id="notesArea">${esc(a.notes||"")}</textarea>
+      <div style="margin-top:6px"><button class="btn btn-ghost" onclick="saveNotes('${a.ref}')">💾 Save notes</button></div></div>
+    ${a.status==="pending"?`<div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-ok" style="flex:1" onclick="withLoading(this,()=>rev('${a.ref}','accept'))">✅ Accept</button>
+      <button class="btn btn-no" style="flex:1" onclick="withLoading(this,()=>rev('${a.ref}','reject'))">❌ Reject</button>
+    </div>`:""}`;
+  document.getElementById("mo").classList.add("open");
+}
+function cmo(e){if(e.target===document.getElementById("mo"))cmon();}
+function cmon(){document.getElementById("mo").classList.remove("open");}
+
+async function loadLb(){
+  const board=await fetch("/api/leaderboard").then(r=>r.json());
+  const el=document.getElementById("lbBody");
+  if(!board.length){el.innerHTML='<div class="empty">No ranked members yet</div>';return;}
+  el.innerHTML=board.map(u=>`<div class="lb-row">
+    <div class="lb-rank ${u.rank<=3?["r1","r2","r3"][u.rank-1]:""}">#${u.rank}</div>
+    <div style="flex:1"><div class="lb-name">${esc(u.rpName)}</div><div class="lb-badges">${(u.badges||[]).map(b=>`<span class="lb-badge">${b}</span>`).join("")}</div></div>
+    <div class="lb-pts">${u.points} pts</div>
+  </div>`).join("");
+}
+
+async function loadMembers(){
+  const users=await fetch("/api/admin/users").then(r=>r.json());
+  const canEdit=me.user.role==="owner";
+  document.getElementById("memBody").innerHTML=users.map(u=>`<tr>
+    <td><strong>${esc(u.rpName||"—")}</strong></td>
+    <td><span class="mono2">${esc(u.discordId)}</span></td>
+    <td>${u.points||0}</td>
+    <td>${(u.badges||[]).map(b=>`<span class="lb-badge">${b}</span>`).join(" ")}</td>
+    <td>${canEdit?`<select class="roleSel" onchange="this.disabled=true;setRole('${u.discordId}',this.value).finally(()=>this.disabled=false)">
+        ${["none","viewer","reviewer","admin","owner"].map(r=>`<option value="${r}" ${r===u.role?"selected":""}>${r}</option>`).join("")}
+      </select>`:`<span class="sbadge s-approved">${u.role||"none"}</span>`}</td>
+  </tr>`).join("") || `<tr><td colspan="5"><div class="empty">No members yet</div></td></tr>`;
+}
+async function setRole(id,role){
+  const r=await fetch(`/api/admin/users/${id}/role`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({role})});
+  const d=await r.json();
+  if(d.ok)toast("Role updated","ok"); else toast(d.error,"err");
+}
+
+// ── Analytics: dependency-free SVG bar charts ──
+async function loadAnalytics(){
+  const a=await fetch("/api/admin/analytics").then(r=>r.json());
+  document.getElementById("an-approval").textContent=a.approvalRate+"%";
+  document.getElementById("an-turn").textContent=a.avgTurnaroundH!==null?a.avgTurnaroundH+"h":"—";
+  document.getElementById("an-total").textContent=a.submissionsPerDay.reduce((s,d)=>s+d.count,0);
+  chartDays.innerHTML=barChart(a.submissionsPerDay.map(d=>d.count), a.submissionsPerDay.map(d=>d.date.slice(5)), "#5eead4");
+  chartScore.innerHTML=barChart(a.scoreDist, a.scoreDist.map((_,i)=>i+"/5"), "#f7b955");
+  reviewerBody.innerHTML=a.reviewerLeaderboard.length
+    ? a.reviewerLeaderboard.map((r,i)=>`<div class="lb-row"><div class="lb-rank ${i<3?["r1","r2","r3"][i]:""}">#${i+1}</div><div style="flex:1" class="lb-name">${esc(r.name)}</div><div class="lb-pts">${r.count} reviews</div></div>`).join("")
+    : `<div class="empty">No reviews logged yet</div>`;
+}
+function barChart(values,labels,color){
+  const w=560,h=140,pad=20,max=Math.max(1,...values),bw=(w-pad*2)/values.length;
+  const bars=values.map((v,i)=>{
+    const bh=(v/max)*(h-30), x=pad+i*bw, y=h-20-bh;
+    return `<rect x="${x+bw*0.15}" y="${y}" width="${bw*0.7}" height="${bh}" rx="2" fill="${color}" opacity="0.85"><title>${labels[i]}: ${v}</title></rect>`;
+  }).join("");
+  const showEvery=Math.ceil(values.length/10);
+  const ticks=labels.map((l,i)=>i%showEvery===0?`<text x="${pad+i*bw+bw/2}" y="${h-6}" font-size="8" fill="#7d97a3" text-anchor="middle" font-family="IBM Plex Mono, monospace">${l}</text>`:"").join("");
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:100%">${bars}${ticks}</svg>`;
+}
+
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function toast(msg,type){const el=document.getElementById("toast");el.textContent=msg;el.className=`toast t${type} show`;setTimeout(()=>el.classList.remove("show"),3000);}
+
+// ── keyboard shortcuts ──
+document.addEventListener("keydown",e=>{
+  const tag=(e.target.tagName||"").toLowerCase();
+  if(tag==="input"||tag==="textarea"||tag==="select"){ if(e.key==="Escape") e.target.blur(); return; }
+  if(e.key==="Escape"){cmon();return;}
+  if(e.key==="/"){e.preventDefault();document.getElementById("si").focus();return;}
+  if(document.getElementById("mo").classList.contains("open")) return;
+  if(e.key==="1")document.querySelectorAll(".sb-link")[0].click();
+  if(e.key==="2")document.querySelectorAll(".sb-link")[1].click();
+  if(e.key==="3")document.querySelectorAll(".sb-link")[2].click();
+  if(e.key==="4"&&document.getElementById("navMembers").style.display!=="none")document.getElementById("navMembers").click();
+  if(!document.getElementById("tab-apps").classList.contains("on"))return;
+  if(e.key==="j"){focusIdx=Math.min(curApps.length-1,focusIdx+1);renderT({data:curApps,total:curApps.length,page:cp});}
+  if(e.key==="k"){focusIdx=Math.max(0,focusIdx-1);renderT({data:curApps,total:curApps.length,page:cp});}
+  if(e.key==="x"&&focusIdx>=0){toggleSel(curApps[focusIdx].ref,e);renderT({data:curApps,total:curApps.length,page:cp});}
+  if(e.key==="a"&&focusIdx>=0&&curApps[focusIdx].status==="pending")rev(curApps[focusIdx].ref,"accept");
+  if(e.key==="r"&&focusIdx>=0&&curApps[focusIdx].status==="pending")rev(curApps[focusIdx].ref,"reject");
+  if(e.key==="Enter"&&focusIdx>=0)viewApp(curApps[focusIdx].ref);
+});
+init();
+</script>
+</body>
+</html>
