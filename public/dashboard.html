@@ -140,6 +140,7 @@ tr:last-child td{border-bottom:none}
     <button class="sb-link" onclick="sw('analytics',this)"><span>📊</span> <span data-t="nav_analytics">Analytics</span> <span class="kbd">2</span></button>
     <button class="sb-link" onclick="sw('lb',this)"><span>🏆</span> <span data-t="nav_lb">Leaderboard</span> <span class="kbd">3</span></button>
     <button class="sb-link" id="navMembers" style="display:none" onclick="sw('members',this)"><span>🧑‍🤝‍🧑</span> <span data-t="nav_members">Members</span> <span class="kbd">4</span></button>
+    <button class="sb-link" id="navControls" style="display:none" onclick="sw('controls',this)"><span>⚡</span> <span data-t="nav_controls">Controls</span> <span class="kbd">5</span></button>
     <div class="sb-sec" style="margin-top:10px" data-t="sec_links">Links</div>
     <a class="sb-link" href="/personnel"><span>🚑</span> <span data-t="nav_personnel">Personnel Panel</span></a>
     <a class="sb-link" href="/"><span>🏠</span> <span data-t="nav_home">Main Site</span></a>
@@ -208,12 +209,58 @@ tr:last-child td{border-bottom:none}
     </div>
   </div>
 
+  <div class="tab-c" id="tab-controls">
+    <div class="topbar"><div><div class="page-title disp" data-t="t_ctl_title">Controls</div><div class="page-sub" data-t="t_ctl_sub">Site-wide switches — use with care</div></div></div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title" data-t="ctl_maint_title">🚧 Maintenance Mode</div></div>
+      <div class="panel-body">
+        <p style="font-size:12.5px;color:var(--mute2);margin-bottom:14px" data-t="ctl_maint_desc">When enabled, the public site (home + apply) shows a "closed for maintenance" page and new submissions are blocked. The console stays reachable so staff can turn it back off.</p>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <button id="maintToggle" class="btn btn-ghost" onclick="withLoading(this,toggleMaintenance)">
+            <span id="maintStatus" data-t="ctl_maint_off">🟢 Site is live — click to enable maintenance</span>
+          </button>
+        </div>
+        <div class="field"><label data-t="ctl_maint_msg_lbl">Message shown to visitors (optional)</label><textarea id="maintMsg" maxlength="300" placeholder="e.g. Back at 8PM server time"></textarea></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title" data-t="ctl_export_title">⬇️ Export Applications</div></div>
+      <div class="panel-body">
+        <p style="font-size:12.5px;color:var(--mute2);margin-bottom:14px" data-t="ctl_export_desc">Download every application (including MCQ and open answers) as a CSV file.</p>
+        <a class="btn btn-p" href="/api/admin/export/applications.csv" style="display:inline-flex;text-decoration:none" data-t="ctl_export_btn">⬇️ Download CSV</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title" data-t="ctl_bcast_title">📢 Emergency Broadcast</div></div>
+      <div class="panel-body">
+        <p style="font-size:12.5px;color:var(--mute2);margin-bottom:14px" data-t="ctl_bcast_desc">Posts an @here message to the Discord announce channel. Use for urgent, time-sensitive notices only.</p>
+        <div class="field"><textarea id="bcastMsg" maxlength="1800" placeholder="e.g. Server restart in 10 minutes — please wrap up active calls."></textarea></div>
+        <button class="btn btn-no" onclick="withLoading(this,sendBroadcast)" data-t="ctl_bcast_btn">📢 Send Broadcast</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title" data-t="ctl_backup_title">💾 Database Backups</div>
+        <button class="btn btn-p" onclick="withLoading(this,runBackup)" data-t="ctl_backup_btn">💾 Backup Now</button>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:12.5px;color:var(--mute2);margin-bottom:10px" data-t="ctl_backup_desc">Automatic backups run on a schedule (see server console/README for interval). The last 30 are kept.</p>
+        <div class="table-wrap"><table><thead><tr><th data-t="th_file">File</th><th data-t="th_size">Size</th><th data-t="th_created">Created</th></tr></thead><tbody id="backupBody"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
 </main>
 <div class="modal-ov" id="mo" onclick="cmo(event)">
   <div class="modal"><div class="mhead"><div class="mtitle" id="mt">Details</div><button class="mclose" onclick="cmon()">✕</button></div><div id="mb"></div></div>
 </div>
 <div class="toast" id="toast"></div>
 <div class="kbd-hint">j/k navigate · a accept · r reject · x select · / search · esc close</div>
+<script src="/socket.io/socket.io.js"></script>
 <script>
 let cp=1,st,me,curApps=[],focusIdx=-1,selected=new Set();
 
@@ -233,7 +280,17 @@ const T = {
         an_chart1:"Submissions — last 30 days", an_chart2:"MCQ Score Distribution", an_reviewers:"🎖️ Top Reviewers",
         t_lb_title:"Leaderboard", t_lb_sub:"Top members by points", lb_rankings:"🏆 Rankings",
         t_mem_title:"Members & Roles", t_mem_sub:"Manage console access levels", mem_all:"All Members",
-        th_rpname:"RP Name", th_points:"Points", th_badges:"Badges", th_role:"Role" },
+        th_rpname:"RP Name", th_points:"Points", th_badges:"Badges", th_role:"Role",
+        nav_controls:"Controls", t_ctl_title:"Controls", t_ctl_sub:"Site-wide switches — use with care",
+        ctl_maint_title:"🚧 Maintenance Mode",
+        ctl_maint_desc:"When enabled, the public site (home + apply) shows a \"closed for maintenance\" page and new submissions are blocked. The console stays reachable so staff can turn it back off.",
+        ctl_maint_off:"🟢 Site is live — click to enable maintenance", ctl_maint_on:"🔴 Maintenance is ON — click to restore the site",
+        ctl_maint_msg_lbl:"Message shown to visitors (optional)",
+        ctl_export_title:"⬇️ Export Applications", ctl_export_desc:"Download every application (including MCQ and open answers) as a CSV file.", ctl_export_btn:"⬇️ Download CSV",
+        ctl_bcast_title:"📢 Emergency Broadcast", ctl_bcast_desc:"Posts an @here message to the Discord announce channel. Use for urgent, time-sensitive notices only.", ctl_bcast_btn:"📢 Send Broadcast",
+        ctl_backup_title:"💾 Database Backups", ctl_backup_btn:"💾 Backup Now",
+        ctl_backup_desc:"Automatic backups run on a schedule (see server console/README for interval). The last 30 are kept.",
+        th_file:"File", th_size:"Size", th_created:"Created" },
   ar: { sec_ops:"العمليات", nav_apps:"الطلبات", nav_analytics:"الإحصائيات", nav_lb:"المتصدرون", nav_members:"الأعضاء",
         sec_links:"روابط", nav_personnel:"لوحة الطاقم الطبي", nav_home:"الموقع الرئيسي", nav_apply:"التقديم", nav_logout:"تسجيل الخروج",
         t_apps_title:"الطلبات", t_apps_sub:"راجع، صفِّ، وتعامل مع طلبات EMS", refresh:"تحديث",
@@ -248,7 +305,17 @@ const T = {
         an_chart1:"الطلبات — آخر ٣٠ يوم", an_chart2:"توزيع نقاط الاختبار", an_reviewers:"🎖️ أفضل المراجعين",
         t_lb_title:"المتصدرون", t_lb_sub:"الأعضاء الأعلى نقاطاً", lb_rankings:"🏆 الترتيب",
         t_mem_title:"الأعضاء والرتب", t_mem_sub:"إدارة صلاحيات لوحة التحكم", mem_all:"كل الأعضاء",
-        th_rpname:"اسم الشخصية", th_points:"النقاط", th_badges:"الأوسمة", th_role:"الرتبة" },
+        th_rpname:"اسم الشخصية", th_points:"النقاط", th_badges:"الأوسمة", th_role:"الرتبة",
+        nav_controls:"التحكم", t_ctl_title:"لوحة التحكم", t_ctl_sub:"إعدادات على مستوى الموقع — استخدمها بحذر",
+        ctl_maint_title:"🚧 وضع الصيانة",
+        ctl_maint_desc:"عند التفعيل، يظهر للزوار صفحة \"الموقع تحت الصيانة\" ويتم منع الطلبات الجديدة. تبقى لوحة التحكم متاحة للطاقم لإيقاف الوضع لاحقاً.",
+        ctl_maint_off:"🟢 الموقع يعمل — اضغط لتفعيل الصيانة", ctl_maint_on:"🔴 وضع الصيانة مفعّل — اضغط لإعادة تشغيل الموقع",
+        ctl_maint_msg_lbl:"رسالة تظهر للزوار (اختياري)",
+        ctl_export_title:"⬇️ تصدير الطلبات", ctl_export_desc:"تحميل كل الطلبات (متضمنة إجابات الاختيار والأسئلة المفتوحة) كملف CSV.", ctl_export_btn:"⬇️ تحميل CSV",
+        ctl_bcast_title:"📢 إشعار طارئ", ctl_bcast_desc:"ينشر رسالة بمنشن @here في قناة الإعلانات على ديسكورد. للاستخدام في الحالات العاجلة فقط.", ctl_bcast_btn:"📢 إرسال الإشعار",
+        ctl_backup_title:"💾 نسخ احتياطية لقاعدة البيانات", ctl_backup_btn:"💾 نسخ احتياطي الآن",
+        ctl_backup_desc:"تعمل النسخ الاحتياطية التلقائية حسب جدول زمني (راجع README لمعرفة الفاصل الزمني). يتم الاحتفاظ بآخر 30 نسخة.",
+        th_file:"الملف", th_size:"الحجم", th_created:"تاريخ الإنشاء" },
 };
 function setLang(lang){
   document.querySelectorAll("[data-t]").forEach(el=>{ const k=el.getAttribute("data-t"); if(T[lang][k]) el.textContent=T[lang][k]; });
@@ -277,9 +344,35 @@ async function init(){
   document.getElementById("sbName").textContent=me.user.username;
   document.getElementById("sbAv").textContent=me.user.username[0].toUpperCase();
   document.getElementById("sbRole").textContent=me.user.role;
-  if(["admin","owner"].includes(me.user.role)) document.getElementById("navMembers").style.display="flex";
+  if(["admin","owner"].includes(me.user.role)){
+    document.getElementById("navMembers").style.display="flex";
+    document.getElementById("navControls").style.display="flex";
+  }
   loadAll();
   setLang(localStorage.getItem("ems_dash_lang") || "en");
+  initLiveUpdates();
+}
+
+// ── Live updates via Socket.IO ──
+function initLiveUpdates(){
+  const socket = io();
+  socket.on("connect", ()=>console.log("🔌 Live updates connected"));
+  socket.on("application:new", (d)=>{
+    toast(`📋 New application — ${d.fullName}`,"ok");
+    loadStats();
+    if(document.getElementById("tab-apps").classList.contains("on")) loadApps();
+  });
+  socket.on("application:updated", (d)=>{
+    loadStats();
+    if(document.getElementById("tab-apps").classList.contains("on")) loadApps();
+    if(document.getElementById("tab-analytics").classList.contains("on")) loadAnalytics();
+  });
+  socket.on("role:updated", ()=>{ if(document.getElementById("tab-members").classList.contains("on")) loadMembers(); });
+  socket.on("points:updated", ()=>{ if(document.getElementById("tab-lb").classList.contains("on")) loadLb(); });
+  socket.on("loa:new", (d)=>toast(`📝 New LOA request — ${d.rpName}`,"ok"));
+  socket.on("loa:updated", ()=>{});
+  socket.on("schedule:updated", ()=>{});
+  socket.on("maintenance:updated", (d)=>{ if(document.getElementById("tab-controls").classList.contains("on")) loadMaintenanceStatus(); });
 }
 function sw(id,btn){
   document.querySelectorAll(".tab-c").forEach(t=>t.classList.remove("on"));
@@ -289,6 +382,7 @@ function sw(id,btn){
   if(id==="lb")loadLb();
   if(id==="analytics")loadAnalytics();
   if(id==="members")loadMembers();
+  if(id==="controls"){loadMaintenanceStatus();loadBackups();}
 }
 function loadAll(){loadStats();loadApps();}
 async function loadStats(){
@@ -407,21 +501,73 @@ async function loadLb(){
 
 async function loadMembers(){
   const users=await fetch("/api/admin/users").then(r=>r.json());
-  const canEdit=me.user.role==="owner";
-  document.getElementById("memBody").innerHTML=users.map(u=>`<tr>
+  const isOwner=me.user.role==="owner";
+  const canEdit=["admin","owner"].includes(me.user.role);
+  const roleChoices=isOwner?["none","viewer","reviewer","admin","owner"]:["none","viewer","reviewer","admin"];
+  document.getElementById("memBody").innerHTML=users.map(u=>{
+    // Admins (not owners) can't touch anyone who currently holds the owner role, and can't grant it either.
+    const lockedForMe = !isOwner && u.role==="owner";
+    const editable = canEdit && !lockedForMe;
+    return `<tr>
     <td><strong>${esc(u.rpName||"—")}</strong></td>
     <td><span class="mono2">${esc(u.discordId)}</span></td>
     <td>${u.points||0}</td>
     <td>${(u.badges||[]).map(b=>`<span class="lb-badge">${b}</span>`).join(" ")}</td>
-    <td>${canEdit?`<select class="roleSel" onchange="this.disabled=true;setRole('${u.discordId}',this.value).finally(()=>this.disabled=false)">
-        ${["none","viewer","reviewer","admin","owner"].map(r=>`<option value="${r}" ${r===u.role?"selected":""}>${r}</option>`).join("")}
-      </select>`:`<span class="sbadge s-approved">${u.role||"none"}</span>`}</td>
-  </tr>`).join("") || `<tr><td colspan="5"><div class="empty">No members yet</div></td></tr>`;
+    <td>${editable?`<select class="roleSel" onchange="this.disabled=true;setRole('${u.discordId}',this.value).finally(()=>this.disabled=false)">
+        ${roleChoices.map(r=>`<option value="${r}" ${r===u.role?"selected":""}>${r}</option>`).join("")}
+      </select>`:`<span class="sbadge s-approved">${u.role||"none"}</span>${lockedForMe?` <span class="mono2" title="Only an owner can change an owner's role">🔒</span>`:""}`}</td>
+  </tr>`;
+  }).join("") || `<tr><td colspan="5"><div class="empty">No members yet</div></td></tr>`;
 }
 async function setRole(id,role){
   const r=await fetch(`/api/admin/users/${id}/role`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({role})});
   const d=await r.json();
-  if(d.ok)toast("Role updated","ok"); else toast(d.error,"err");
+  if(d.ok){toast("Role updated","ok");loadMembers();} else toast(d.error,"err");
+}
+
+// ── Controls: maintenance mode + CSV export + emergency broadcast ──
+async function loadMaintenanceStatus(){
+  const s=await fetch("/api/maintenance").then(r=>r.json());
+  const lang = document.getElementById("langAr")?.classList.contains("active") ? "ar" : "en";
+  const statusEl=document.getElementById("maintStatus");
+  if(s.maintenance){
+    statusEl.textContent = T[lang].ctl_maint_on;
+    document.getElementById("maintToggle").classList.add("btn-no");
+  } else {
+    statusEl.textContent = T[lang].ctl_maint_off;
+    document.getElementById("maintToggle").classList.remove("btn-no");
+  }
+  document.getElementById("maintMsg").value = s.maintenanceMessage || "";
+}
+async function toggleMaintenance(){
+  const s=await fetch("/api/maintenance").then(r=>r.json());
+  const enabled = !s.maintenance;
+  if(enabled && !confirm("This will take the public site offline for everyone except staff. Continue?")) return;
+  const message = document.getElementById("maintMsg").value.trim();
+  const r=await fetch("/api/admin/maintenance",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({enabled,message})});
+  const d=await r.json();
+  if(d.ok){toast(enabled?"Maintenance mode ON":"Maintenance mode OFF","ok");loadMaintenanceStatus();}
+  else toast(d.error,"err");
+}
+async function sendBroadcast(){
+  const message=document.getElementById("bcastMsg").value.trim();
+  if(!message)return toast("Write a message first","err");
+  if(!confirm("Send this as an @here announcement to the Discord channel now?"))return;
+  const r=await fetch("/api/admin/broadcast",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message})});
+  const d=await r.json();
+  if(d.ok){toast("Broadcast sent 📢","ok");document.getElementById("bcastMsg").value="";}
+  else toast(d.error,"err");
+}
+async function loadBackups(){
+  const list=await fetch("/api/admin/backups").then(r=>r.json());
+  document.getElementById("backupBody").innerHTML = list.length ? list.map(b=>`
+    <tr><td><span class="mono2">${b.file}</span></td><td>${(b.size/1024).toFixed(0)} KB</td><td>${new Date(b.createdAt).toLocaleString()}</td></tr>`).join("")
+    : `<tr><td colspan="3"><div class="empty">No backups yet</div></td></tr>`;
+}
+async function runBackup(){
+  const r=await fetch("/api/admin/backup",{method:"POST"});
+  const d=await r.json();
+  if(d.ok){toast("Backup created 💾","ok");loadBackups();} else toast(d.error,"err");
 }
 
 // ── Analytics: dependency-free SVG bar charts ──
@@ -461,6 +607,7 @@ document.addEventListener("keydown",e=>{
   if(e.key==="2")document.querySelectorAll(".sb-link")[1].click();
   if(e.key==="3")document.querySelectorAll(".sb-link")[2].click();
   if(e.key==="4"&&document.getElementById("navMembers").style.display!=="none")document.getElementById("navMembers").click();
+  if(e.key==="5"&&document.getElementById("navControls").style.display!=="none")document.getElementById("navControls").click();
   if(!document.getElementById("tab-apps").classList.contains("on"))return;
   if(e.key==="j"){focusIdx=Math.min(curApps.length-1,focusIdx+1);renderT({data:curApps,total:curApps.length,page:cp});}
   if(e.key==="k"){focusIdx=Math.max(0,focusIdx-1);renderT({data:curApps,total:curApps.length,page:cp});}

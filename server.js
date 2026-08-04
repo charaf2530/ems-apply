@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const express = require("express");
 const session = require("express-session");
+const http = require("http");
+const { Server: SocketIOServer } = require("socket.io");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -10,104 +12,68 @@ const {
   ActionRowBuilder, ButtonBuilder, ButtonStyle,
   EmbedBuilder, AttachmentBuilder,
 } = require("discord.js");
+const db = require("./db");
 
 // ══════════════════════════════════════════════════════
 // ENV
 // ══════════════════════════════════════════════════════
-const PORT              = process.env.PORT || 3000;
-const TOKEN              = process.env.TOKEN;
-const REVIEW_CHANNEL_ID  = process.env.REVIEW_CHANNEL_ID;
-const CLIENT_ID          = process.env.CLIENT_ID;
-const CLIENT_SECRET      = process.env.CLIENT_SECRET;
-const REDIRECT_URI       = process.env.REDIRECT_URI || `http://localhost:${PORT}/auth/callback`;
-const APPLY_URL          = process.env.APPLY_URL || `http://localhost:${PORT}/apply`;
-const SESSION_SECRET     = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+const PORT               = process.env.PORT || 3000;
+const TOKEN               = process.env.TOKEN;
+const REVIEW_CHANNEL_ID   = process.env.REVIEW_CHANNEL_ID;
+const CLIENT_ID           = process.env.CLIENT_ID;
+const CLIENT_SECRET       = process.env.CLIENT_SECRET;
+const REDIRECT_URI        = process.env.REDIRECT_URI || `http://localhost:${PORT}/auth/callback`;
+const APPLY_URL           = process.env.APPLY_URL || `http://localhost:${PORT}/apply`;
+const ANNOUNCE_CHANNEL_ID = process.env.ANNOUNCE_CHANNEL_ID || REVIEW_CHANNEL_ID;
+const SESSION_SECRET      = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+const BACKUP_INTERVAL_HOURS = Number(process.env.BACKUP_INTERVAL_HOURS || 6);
 // Comma-separated Discord IDs that get the "owner" role the first time they log in.
-const OWNER_IDS          = (process.env.OWNER_IDS || process.env.ADMIN_IDS || "").split(",").map(s => s.trim()).filter(Boolean);
+const OWNER_IDS = (process.env.OWNER_IDS || process.env.ADMIN_IDS || "").split(",").map(s => s.trim()).filter(Boolean);
 
-const DATA_DIR   = path.join(__dirname, "data");
-const APPS_FILE  = path.join(DATA_DIR, "applications.json");
-const USERS_FILE = path.join(DATA_DIR, "users.json");
-const HANDBOOK_FILE = path.join(DATA_DIR, "handbook.json");
-const SOP_FILE      = path.join(DATA_DIR, "sop.json");
-const SCHEDULE_FILE = path.join(DATA_DIR, "schedule.json");
-const LOA_FILE       = path.join(DATA_DIR, "loa.json");
-const ACTIVITY_FILE = path.join(DATA_DIR, "activity.json");
-const AUDIT_FILE     = path.join(DATA_DIR, "audit.json");
-const LOGO_FILE  = path.join(__dirname, "assets", "underwater-medical-center.png");
+const LOGO_FILE = path.join(__dirname, "assets", "underwater-medical-center.png");
 
 if (!TOKEN || !REVIEW_CHANNEL_ID) {
   console.error("❌  Missing TOKEN or REVIEW_CHANNEL_ID in .env — copy .env.example to .env and fill it in.");
   process.exit(1);
 }
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 // ══════════════════════════════════════════════════════
-// EXPRESS
+// EXPRESS + SOCKET.IO (sharing one HTTP server + one session)
 // ══════════════════════════════════════════════════════
 const app = express();
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
-app.use(session({
+const httpServer = http.createServer(app);
+const io = new SocketIOServer(httpServer);
+
+const sessionMiddleware = session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: "lax" },
-}));
+});
+
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(sessionMiddleware);
+io.engine.use(sessionMiddleware); // reuse the same session for socket handshakes
 
 // ══════════════════════════════════════════════════════
 // DISCORD BOT
 // ══════════════════════════════════════════════════════
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-// ══════════════════════════════════════════════════════
-// DATA HELPERS
-// ══════════════════════════════════════════════════════
-function loadJSON(file, fallback) {
-  try {
-    if (!fs.existsSync(file)) return fallback;
-    const raw = fs.readFileSync(file, "utf8").trim();
-    return raw ? JSON.parse(raw) : fallback;
-  } catch (e) { console.error(`loadJSON(${file}):`, e.message); return fallback; }
-}
-function saveJSON(file, data) {
-  const tmp = file + ".tmp";
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), "utf8");
-  fs.renameSync(tmp, file);
-}
-function loadApps()    { return new Map(Object.entries(loadJSON(APPS_FILE, {}))); }
-function saveApps(map) { saveJSON(APPS_FILE, Object.fromEntries(map)); }
-function loadUsers()   { return loadJSON(USERS_FILE, {}); }
-function saveUsers(u)  { saveJSON(USERS_FILE, u); }
+function safe(v, max = 1000) { return String(v ?? "—").trim().slice(0, max) || "—"; }
+function genRef() { return "EMS-" + crypto.randomBytes(4).toString("hex").toUpperCase(); }
+function logAudit(actor, action, target, details) { db.addAuditEntry(safe(actor, 100), safe(action, 60), safe(target, 100), safe(details, 500)); }
 
-function loadHandbook() { return loadJSON(HANDBOOK_FILE, []); }
-function loadSop()       { return loadJSON(SOP_FILE, []); }
-function loadSchedule()  { return loadJSON(SCHEDULE_FILE, {}); }
-function saveSchedule(s) { saveJSON(SCHEDULE_FILE, s); }
-function loadLoa()       { return loadJSON(LOA_FILE, {}); }
-function saveLoa(l)      { saveJSON(LOA_FILE, l); }
-function loadActivity()  { return loadJSON(ACTIVITY_FILE, {}); }
-function saveActivity(a) { saveJSON(ACTIVITY_FILE, a); }
-function loadAudit()     { return loadJSON(AUDIT_FILE, []); }
-function logAudit(actor, action, target, details) {
-  const audit = loadAudit();
-  audit.push({ ts: new Date().toISOString(), actor: safe(actor, 100), action: safe(action, 60), target: safe(target, 100), details: safe(details, 500) });
-  if (audit.length > 5000) audit.splice(0, audit.length - 5000); // keep it bounded
-  saveJSON(AUDIT_FILE, audit);
-}
-
-// Fixed weekly duty shift structure. schedule.json only stores who claimed what: { shiftId: [discordId, ...] }
-const DUTY_DAYS   = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const DUTY_SLOTS  = [
+// Fixed weekly duty shift structure.
+const DUTY_DAYS  = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DUTY_SLOTS = [
   { key: "morning", label: "Morning · 08:00–14:00", capacity: 4 },
   { key: "evening", label: "Evening · 14:00–20:00", capacity: 4 },
   { key: "night",   label: "Night · 20:00–02:00",   capacity: 3 },
 ];
 function dutyShiftId(day, slotKey) { return `${day}-${slotKey}`; }
-
-function safe(v, max = 1000) { return String(v ?? "—").trim().slice(0, max) || "—"; }
-function genRef() { return "EMS-" + crypto.randomBytes(4).toString("hex").toUpperCase(); }
 
 // ══════════════════════════════════════════════════════
 // ROLES  (owner > admin > reviewer > viewer > none)
@@ -115,26 +81,20 @@ function genRef() { return "EMS-" + crypto.randomBytes(4).toString("hex").toUppe
 const ROLE_WEIGHT = { owner: 4, admin: 3, reviewer: 2, viewer: 1, none: 0 };
 
 function getUserRole(discordId) {
-  const users = loadUsers();
-  const u = users[discordId];
+  const u = db.getUser(discordId);
   if (u?.role) return u.role;
   if (OWNER_IDS.includes(discordId)) return "owner";
   return "none";
 }
 function ensureUserRecord(discordId, rpName) {
-  const users = loadUsers();
-  if (!users[discordId]) {
-    users[discordId] = {
-      discordId, rpName, points: 0, badges: [],
-      role: OWNER_IDS.includes(discordId) ? "owner" : "none",
-    };
-    saveUsers(users);
+  let u = db.getUser(discordId);
+  if (!u) {
+    u = { discordId, rpName, points: 0, badges: [], role: OWNER_IDS.includes(discordId) ? "owner" : "none" };
+    db.upsertUser(u);
   }
-  return users[discordId];
+  return u;
 }
-function hasRole(discordId, minRole) {
-  return ROLE_WEIGHT[getUserRole(discordId)] >= ROLE_WEIGHT[minRole];
-}
+function hasRole(discordId, minRole) { return ROLE_WEIGHT[getUserRole(discordId)] >= ROLE_WEIGHT[minRole]; }
 
 // ══════════════════════════════════════════════════════
 // RATE LIMITER — 1 submission / 24h / discord id
@@ -160,22 +120,17 @@ const BADGES = [
   { pts: 100, label: "💎 Diamond" },
 ];
 function awardPoints(discordId, rpName, amount, reason) {
-  const users = loadUsers();
-  if (!users[discordId]) users[discordId] = { discordId, rpName, points: 0, badges: [], role: "none" };
-  users[discordId].points += amount;
-  users[discordId].rpName = rpName;
+  let u = db.getUser(discordId);
+  if (!u) { u = { discordId, rpName, points: 0, badges: [], role: "none" }; db.upsertUser(u); }
+  const updated = db.addUserPoints(discordId, amount);
+  updated.rpName = rpName || updated.rpName;
   for (const b of BADGES) {
-    if (users[discordId].points >= b.pts && !users[discordId].badges.includes(b.label))
-      users[discordId].badges.push(b.label);
+    if (updated.points >= b.pts && !updated.badges.includes(b.label)) updated.badges.push(b.label);
   }
-  saveUsers(users);
-
-  const activity = loadActivity();
-  if (!activity[discordId]) activity[discordId] = [];
-  activity[discordId].push({ ts: new Date().toISOString(), delta: amount, reason: safe(reason || "Points adjustment", 200) });
-  saveActivity(activity);
-
-  return users[discordId];
+  db.upsertUser(updated);
+  db.addActivityEntry(discordId, amount, safe(reason || "Points adjustment", 200));
+  io.to("staff").emit("points:updated", { discordId, points: updated.points });
+  return updated;
 }
 
 // ══════════════════════════════════════════════════════
@@ -236,24 +191,22 @@ function requireRole(minRole) {
 // ══════════════════════════════════════════════════════
 // PUBLIC API
 // ══════════════════════════════════════════════════════
-app.get("/api/content", (_, res) => res.json(loadJSON(path.join(__dirname, "content.json"), {})));
+app.get("/api/content", (_, res) => {
+  try { res.json(JSON.parse(fs.readFileSync(path.join(__dirname, "content.json"), "utf8"))); }
+  catch { res.json({}); }
+});
 
 app.get("/api/me", (req, res) => {
   if (!req.session.user) return res.json({ loggedIn: false });
-  const u = loadUsers()[req.session.user.id] || {};
+  const u = db.getUser(req.session.user.id) || {};
   res.json({
     loggedIn: true,
-    user: {
-      ...req.session.user,
-      points: u.points || 0,
-      badges: u.badges || [],
-      role: getUserRole(req.session.user.id),
-    },
+    user: { ...req.session.user, points: u.points || 0, badges: u.badges || [], role: getUserRole(req.session.user.id) },
   });
 });
 
 app.get("/api/leaderboard", (req, res) => {
-  const board = Object.values(loadUsers())
+  const board = db.getAllUsers()
     .filter(u => u.points > 0)
     .sort((a, b) => b.points - a.points)
     .slice(0, 10)
@@ -262,11 +215,11 @@ app.get("/api/leaderboard", (req, res) => {
 });
 
 app.get("/api/my-apps", requireAuth, (req, res) => {
-  const mine = [];
-  for (const a of loadApps().values())
-    if (a.discordUser === req.session.user.id)
-      mine.push({ ref: a.ref, status: a.status, createdAt: a.createdAt, mcqScore: a.mcqScore, fullName: a.fullName });
-  res.json(mine.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+  const mine = db.getAllApplications()
+    .filter(a => a.discordUser === req.session.user.id)
+    .map(a => ({ ref: a.ref, status: a.status, createdAt: a.createdAt, mcqScore: a.mcqScore, fullName: a.fullName }))
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json(mine);
 });
 
 // Server-side answer key — never trust a client-computed score.
@@ -278,14 +231,13 @@ function scoreMcq(mcq) {
 // ── Submit ──
 app.post("/submit", async (req, res) => {
   try {
+    if (db.getSettings().maintenance) return res.status(503).json({ error: "maintenance" });
     if (!req.session.user) return res.status(401).json({ error: "login_required" });
 
     const body = req.body || {};
-    if (!body.fullName)
-      return res.status(400).json({ error: "Missing fullName" });
+    if (!body.fullName) return res.status(400).json({ error: "Missing fullName" });
 
-    // The Discord identity always comes from the authenticated session, never from client input —
-    // otherwise anyone could submit under someone else's Discord ID.
+    // The Discord identity always comes from the authenticated session, never from client input.
     const discordUser = req.session.user.id;
 
     const rl = checkRate(discordUser);
@@ -304,10 +256,9 @@ app.post("/submit", async (req, res) => {
       createdAt:   new Date().toISOString(),
     };
 
-    const apps = loadApps();
-    apps.set(ref, appData);
-    saveApps(apps);
+    db.upsertApplication(appData);
     recordRate(discordUser);
+    io.to("staff").emit("application:new", { ref: appData.ref, fullName: appData.fullName, mcqScore: appData.mcqScore });
 
     const channel = await client.channels.fetch(REVIEW_CHANNEL_ID);
     if (channel?.isTextBased())
@@ -328,104 +279,52 @@ app.post("/submit", async (req, res) => {
 // ADMIN API
 // ══════════════════════════════════════════════════════
 app.get("/api/admin/stats", requireRole("viewer"), (req, res) => {
-  const list  = Array.from(loadApps().values());
-  const users = loadUsers();
-  res.json({
-    total:    list.length,
-    pending:  list.filter(a => a.status === "pending").length,
-    approved: list.filter(a => a.status === "approved").length,
-    rejected: list.filter(a => a.status === "rejected").length,
-    members:  Object.keys(users).length,
-    avgScore: list.length ? (list.reduce((s, a) => s + (a.mcqScore || 0), 0) / list.length).toFixed(1) : 0,
-  });
+  const stats = db.applicationStats();
+  res.json({ ...stats, members: db.getAllUsers().length });
 });
 
 app.get("/api/admin/analytics", requireRole("viewer"), (req, res) => {
-  const list = Array.from(loadApps().values());
+  const list = db.getAllApplications();
 
-  // submissions per day, last 30 days
   const days = [];
   const now = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(now); d.setDate(d.getDate() - i);
-    days.push(d.toISOString().slice(0, 10));
-  }
+  for (let i = 29; i >= 0; i--) { const d = new Date(now); d.setDate(d.getDate() - i); days.push(d.toISOString().slice(0, 10)); }
   const perDay = Object.fromEntries(days.map(d => [d, 0]));
-  for (const a of list) {
-    const d = (a.createdAt || "").slice(0, 10);
-    if (d in perDay) perDay[d]++;
-  }
+  for (const a of list) { const d = (a.createdAt || "").slice(0, 10); if (d in perDay) perDay[d]++; }
 
-  // score distribution 0-5
   const scoreDist = [0, 0, 0, 0, 0, 0];
-  for (const a of list) {
-    const s = Math.max(0, Math.min(5, Number(a.mcqScore) || 0));
-    scoreDist[s]++;
-  }
+  for (const a of list) { const s = Math.max(0, Math.min(5, Number(a.mcqScore) || 0)); scoreDist[s]++; }
 
-  // reviewer leaderboard
   const byReviewer = {};
-  for (const a of list) {
-    if (!a.reviewedBy) continue;
-    byReviewer[a.reviewedBy] = (byReviewer[a.reviewedBy] || 0) + 1;
-  }
+  for (const a of list) { if (!a.reviewedBy) continue; byReviewer[a.reviewedBy] = (byReviewer[a.reviewedBy] || 0) + 1; }
 
-  // avg review turnaround (hours)
-  const turnarounds = list
-    .filter(a => a.createdAt && a.reviewedAt)
-    .map(a => (new Date(a.reviewedAt) - new Date(a.createdAt)) / 3.6e6);
-  const avgTurnaroundH = turnarounds.length
-    ? (turnarounds.reduce((s, v) => s + v, 0) / turnarounds.length).toFixed(1)
-    : null;
-
-  const approvalRate = list.length
-    ? ((list.filter(a => a.status === "approved").length / list.length) * 100).toFixed(1)
-    : "0.0";
+  const turnarounds = list.filter(a => a.createdAt && a.reviewedAt).map(a => (new Date(a.reviewedAt) - new Date(a.createdAt)) / 3.6e6);
+  const avgTurnaroundH = turnarounds.length ? (turnarounds.reduce((s, v) => s + v, 0) / turnarounds.length).toFixed(1) : null;
+  const approvalRate = list.length ? ((list.filter(a => a.status === "approved").length / list.length) * 100).toFixed(1) : "0.0";
 
   res.json({
     submissionsPerDay: days.map(d => ({ date: d, count: perDay[d] })),
     scoreDist,
-    reviewerLeaderboard: Object.entries(byReviewer).sort((a, b) => b[1] - a[1]).slice(0, 8)
-      .map(([name, count]) => ({ name, count })),
-    avgTurnaroundH,
-    approvalRate,
+    reviewerLeaderboard: Object.entries(byReviewer).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, count]) => ({ name, count })),
+    avgTurnaroundH, approvalRate,
   });
 });
 
 app.get("/api/admin/apps", requireRole("viewer"), (req, res) => {
   const { status = "all", search = "", page = 1, limit = 20, sort = "new" } = req.query;
-  let list = Array.from(loadApps().values());
-  if (status !== "all") list = list.filter(a => a.status === status.toLowerCase());
-  if (search) {
-    const s = search.toLowerCase();
-    list = list.filter(a =>
-      (a.fullName || "").toLowerCase().includes(s) ||
-      (a.discordUser || "").includes(s) ||
-      (a.ref || "").toLowerCase().includes(s)
-    );
-  }
-  if (sort === "new") list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  else if (sort === "old") list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  else if (sort === "score") list.sort((a, b) => (b.mcqScore || 0) - (a.mcqScore || 0));
-
-  const p = Math.max(1, +page), lim = Math.min(100, Math.max(1, +limit));
-  res.json({ total: list.length, page: p, data: list.slice((p - 1) * lim, p * lim) });
+  res.json(db.queryApplications({ status, search, sort, page, limit }));
 });
 
 app.post("/api/admin/review", requireRole("reviewer"), async (req, res) => {
   const { ref, action, notes } = req.body;
   if (!ref || !["accept", "reject"].includes(action)) return res.status(400).json({ error: "Invalid" });
-  try {
-    await processReview(ref, action, req.session.user.username, notes);
-    res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  try { await processReview(ref, action, req.session.user.username, notes); res.json({ ok: true }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
 });
 
 app.post("/api/admin/bulk-review", requireRole("reviewer"), async (req, res) => {
   const { refs, action } = req.body;
-  if (!Array.isArray(refs) || !refs.length || !["accept", "reject"].includes(action))
-    return res.status(400).json({ error: "Invalid" });
-
+  if (!Array.isArray(refs) || !refs.length || !["accept", "reject"].includes(action)) return res.status(400).json({ error: "Invalid" });
   const results = { ok: [], failed: [] };
   for (const ref of refs) {
     try { await processReview(ref, action, req.session.user.username); results.ok.push(ref); }
@@ -435,42 +334,48 @@ app.post("/api/admin/bulk-review", requireRole("reviewer"), async (req, res) => 
 });
 
 app.patch("/api/admin/apps/:ref/notes", requireRole("reviewer"), (req, res) => {
-  const apps = loadApps();
-  const data = apps.get(req.params.ref);
+  const data = db.getApplication(req.params.ref);
   if (!data) return res.status(404).json({ error: "Not found" });
-  data.notes = safe(req.body.notes, 2000);
-  apps.set(req.params.ref, data);
-  saveApps(apps);
-  logAudit(req.session.user.username, "notes_updated", req.params.ref, data.notes.slice(0, 120));
+  const notes = safe(req.body.notes, 2000);
+  db.updateApplicationNotes(req.params.ref, notes);
+  logAudit(req.session.user.username, "notes_updated", req.params.ref, notes.slice(0, 120));
   res.json({ ok: true });
 });
 
 // ── Members & role management (admin+) ──
 app.get("/api/admin/users", requireRole("admin"), (req, res) => {
-  const users = Object.values(loadUsers()).sort((a, b) => (b.points || 0) - (a.points || 0));
-  res.json(users);
+  res.json(db.getAllUsers().sort((a, b) => (b.points || 0) - (a.points || 0)));
 });
 
-app.patch("/api/admin/users/:id/role", requireRole("owner"), (req, res) => {
+app.patch("/api/admin/users/:id/role", requireRole("admin"), (req, res) => {
   const { role } = req.body;
-  if (!["owner", "admin", "reviewer", "viewer", "none"].includes(role))
-    return res.status(400).json({ error: "Invalid role" });
-  const users = loadUsers();
-  if (!users[req.params.id]) return res.status(404).json({ error: "User not found" });
-  const prevRole = users[req.params.id].role || "none";
+  if (!["owner", "admin", "reviewer", "viewer", "none"].includes(role)) return res.status(400).json({ error: "Invalid role" });
+
+  const actingRole = getUserRole(req.session.user.id);
+  const target = db.getUser(req.params.id);
+  if (!target) return res.status(404).json({ error: "User not found" });
+  const prevRole = target.role || "none";
+
+  if (actingRole !== "owner" && (role === "owner" || prevRole === "owner")) {
+    return res.status(403).json({ error: "Only an owner can grant or change the owner role" });
+  }
+
+  db.setUserRole(req.params.id, role);
+  logAudit(req.session.user.username, "role_changed", req.params.id, `${prevRole} → ${role}`);
+  io.to("staff").emit("role:updated", { discordId: req.params.id, role });
+  res.json({ ok: true });
 });
 
 // ══════════════════════════════════════════════════════
 // PERSONNEL API (Phase 3 — EMS Personnel Panel)
-// Available to any logged-in user holding an EMS rank (role >= viewer).
 // ══════════════════════════════════════════════════════
-app.get("/api/personnel/handbook", requireRole("viewer"), (req, res) => res.json(loadHandbook()));
-app.get("/api/personnel/sop",       requireRole("viewer"), (req, res) => res.json(loadSop()));
+app.get("/api/personnel/handbook", requireRole("viewer"), (req, res) => res.json(db.getHandbook()));
+app.get("/api/personnel/sop",       requireRole("viewer"), (req, res) => res.json(db.getSop()));
 
 // ── Duty schedule ──
 app.get("/api/personnel/schedule", requireRole("viewer"), (req, res) => {
-  const claims = loadSchedule();
-  const users  = loadUsers();
+  const claims = db.getScheduleClaims();
+  const usersMap = db.getAllUsersMap();
   const grid = DUTY_DAYS.map(day => ({
     day,
     slots: DUTY_SLOTS.map(s => {
@@ -478,7 +383,7 @@ app.get("/api/personnel/schedule", requireRole("viewer"), (req, res) => {
       const ids = claims[id] || [];
       return {
         id, key: s.key, label: s.label, capacity: s.capacity,
-        claimedBy: ids.map(uid => ({ discordId: uid, rpName: users[uid]?.rpName || uid })),
+        claimedBy: ids.map(uid => ({ discordId: uid, rpName: usersMap[uid]?.rpName || uid })),
         mineClaimed: ids.includes(req.session.user.id),
       };
     }),
@@ -491,114 +396,162 @@ app.post("/api/personnel/schedule/claim", requireRole("viewer"), (req, res) => {
   const slotDef = DUTY_SLOTS.find(s => s.key === slot);
   if (!DUTY_DAYS.includes(day) || !slotDef) return res.status(400).json({ error: "Invalid shift" });
   const id = dutyShiftId(day, slot);
-  const claims = loadSchedule();
-  const list = claims[id] || [];
-  if (list.includes(req.session.user.id)) return res.status(400).json({ error: "Already claimed" });
-  if (list.length >= slotDef.capacity) return res.status(400).json({ error: "Shift is full" });
-  list.push(req.session.user.id);
-  claims[id] = list;
-  saveSchedule(claims);
+  if (db.isShiftClaimedBy(id, req.session.user.id)) return res.status(400).json({ error: "Already claimed" });
+  if (db.shiftClaimCount(id) >= slotDef.capacity) return res.status(400).json({ error: "Shift is full" });
+  db.claimShift(id, req.session.user.id);
+  io.to("staff").emit("schedule:updated", { shiftId: id });
   res.json({ ok: true });
 });
 
 app.post("/api/personnel/schedule/unclaim", requireRole("viewer"), (req, res) => {
   const { day, slot } = req.body;
   const id = dutyShiftId(day, slot);
-  const claims = loadSchedule();
-  claims[id] = (claims[id] || []).filter(uid => uid !== req.session.user.id);
-  saveSchedule(claims);
+  db.unclaimShift(id, req.session.user.id);
+  io.to("staff").emit("schedule:updated", { shiftId: id });
   res.json({ ok: true });
 });
 
 // ── LOA (Leave of Absence) ──
-app.get("/api/personnel/loa", requireAuth, (req, res) => {
-  const mine = Object.values(loadLoa())
-    .filter(l => l.discordId === req.session.user.id)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  res.json(mine);
-});
+app.get("/api/personnel/loa", requireAuth, (req, res) => res.json(db.getLoaForUser(req.session.user.id)));
 
 app.post("/api/personnel/loa", requireRole("viewer"), (req, res) => {
   const { reason, startDate, endDate } = req.body;
   if (!reason || !startDate || !endDate) return res.status(400).json({ error: "Missing fields" });
-  const users = loadUsers();
+  const u = db.getUser(req.session.user.id);
   const id = "LOA-" + crypto.randomBytes(3).toString("hex").toUpperCase();
-  const loa = loadLoa();
-  loa[id] = {
-    id,
-    discordId: req.session.user.id,
-    rpName: users[req.session.user.id]?.rpName || req.session.user.username,
+  const rec = {
+    id, discordId: req.session.user.id, rpName: u?.rpName || req.session.user.username,
     reason: safe(reason, 500), startDate: safe(startDate, 20), endDate: safe(endDate, 20),
-    status: "pending", createdAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
   };
-  saveLoa(loa);
+  db.insertLoa(rec);
   logAudit(req.session.user.username, "loa_submitted", id, safe(reason, 120));
+  io.to("staff").emit("loa:new", { id, rpName: rec.rpName });
   res.json({ ok: true, id });
 });
 
-app.get("/api/admin/loa", requireRole("reviewer"), (req, res) => {
-  res.json(Object.values(loadLoa()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-});
+app.get("/api/admin/loa", requireRole("reviewer"), (req, res) => res.json(db.getAllLoa()));
 
 app.post("/api/admin/loa/review", requireRole("reviewer"), (req, res) => {
   const { id, action } = req.body;
   if (!["approve", "deny"].includes(action)) return res.status(400).json({ error: "Invalid action" });
-  const loa = loadLoa();
-  const rec = loa[id];
+  const rec = db.getLoa(id);
   if (!rec) return res.status(404).json({ error: "Not found" });
   if (rec.status !== "pending") return res.status(400).json({ error: `Already ${rec.status}` });
-  rec.status = action === "approve" ? "approved" : "denied";
-  rec.reviewedAt = new Date().toISOString();
-  rec.reviewedBy = req.session.user.username;
-  loa[id] = rec;
-  saveLoa(loa);
+  const status = action === "approve" ? "approved" : "denied";
+  db.reviewLoaRecord(id, status, req.session.user.username);
   logAudit(req.session.user.username, action === "approve" ? "loa_approved" : "loa_denied", id, rec.rpName);
+  io.to("staff").emit("loa:updated", { id, status });
   res.json({ ok: true });
 });
 
 // ── Activity points ──
 app.get("/api/personnel/activity", requireAuth, (req, res) => {
-  const users = loadUsers();
-  const u = users[req.session.user.id] || { points: 0, badges: [] };
-  const history = (loadActivity()[req.session.user.id] || []).slice().reverse();
-  res.json({ points: u.points || 0, badges: u.badges || [], history });
+  const u = db.getUser(req.session.user.id) || { points: 0, badges: [] };
+  res.json({ points: u.points || 0, badges: u.badges || [], history: db.getActivityForUser(req.session.user.id) });
 });
 
 app.post("/api/admin/activity/adjust", requireRole("admin"), (req, res) => {
   const { discordId, delta, reason } = req.body;
   const amount = Number(delta);
   if (!discordId || !amount || !reason) return res.status(400).json({ error: "Missing fields" });
-  const users = loadUsers();
-  const rpName = users[discordId]?.rpName || discordId;
-  awardPoints(discordId, rpName, amount, reason);
+  const target = db.getUser(discordId);
+  awardPoints(discordId, target?.rpName || discordId, amount, reason);
   logAudit(req.session.user.username, "points_adjusted", discordId, `${amount > 0 ? "+" : ""}${amount} — ${reason}`);
   res.json({ ok: true });
 });
 
-// ── Audit log (read-only here; full console lands in Phase 2) ──
+// ── Audit log ──
 app.get("/api/admin/audit", requireRole("admin"), (req, res) => {
   const limit = Math.min(500, Math.max(1, +(req.query.limit || 100)));
-  res.json(loadAudit().slice(-limit).reverse());
+  res.json(db.getRecentAudit(limit));
+});
+
+// ══════════════════════════════════════════════════════
+// CONTROLS — maintenance mode, CSV export, emergency broadcast, backups
+// ══════════════════════════════════════════════════════
+app.get("/api/maintenance", (req, res) => res.json(db.getSettings()));
+
+app.post("/api/admin/maintenance", requireRole("admin"), (req, res) => {
+  const { enabled, message } = req.body;
+  const settings = { maintenance: !!enabled, maintenanceMessage: safe(message || "", 300) };
+  db.setSettings(settings);
+  logAudit(req.session.user.username, enabled ? "maintenance_enabled" : "maintenance_disabled", "site", settings.maintenanceMessage);
+  io.emit("maintenance:updated", settings); // public — visitors' pages may want to know too
+  res.json({ ok: true });
+});
+
+function csvEscape(v) {
+  const s = String(v ?? "");
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+app.get("/api/admin/export/applications.csv", requireRole("reviewer"), (req, res) => {
+  const rows = db.getAllApplications();
+  const cols = ["ref","fullName","discordUser","mcqScore","status","createdAt","reviewedAt","reviewedBy","notes",
+                "mcq.q1","mcq.q2","mcq.q3","mcq.q4","mcq.q5","open.q6","open.q7","open.q8","open.q9","open.q10"];
+  const lines = [cols.join(",")];
+  for (const a of rows) {
+    const flat = cols.map(c => {
+      if (c.startsWith("mcq.")) return csvEscape(a.mcq?.[c.slice(4)]);
+      if (c.startsWith("open.")) return csvEscape(a.open?.[c.slice(5)]);
+      return csvEscape(a[c]);
+    });
+    lines.push(flat.join(","));
+  }
+  logAudit(req.session.user.username, "applications_exported", "csv", `${rows.length} rows`);
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="applications-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.send("\uFEFF" + lines.join("\r\n"));
+});
+
+app.post("/api/admin/broadcast", requireRole("admin"), async (req, res) => {
+  const { message } = req.body;
+  if (!message || !message.trim()) return res.status(400).json({ error: "Message required" });
+  try {
+    const channel = await client.channels.fetch(ANNOUNCE_CHANNEL_ID);
+    if (!channel?.isTextBased()) throw new Error("Announce channel not found or not text based");
+    const embed = new EmbedBuilder()
+      .setColor(0xf59e0b).setTitle("📢 EMS Broadcast").setDescription(safe(message, 1800))
+      .setFooter({ text: `Sent by ${req.session.user.username}` }).setTimestamp();
+    await channel.send({ content: "@here", embeds: [embed] });
+    logAudit(req.session.user.username, "broadcast_sent", "discord", safe(message, 200));
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Broadcast error:", err.message);
+    res.status(500).json({ error: "Failed to send broadcast" });
+  }
+});
+
+// ── Backups ──
+app.get("/api/admin/backups", requireRole("admin"), (req, res) => res.json(db.listBackups()));
+app.post("/api/admin/backup", requireRole("admin"), (req, res) => {
+  try {
+    const result = db.backupNow("manual");
+    logAudit(req.session.user.username, "backup_created", result.file, "manual");
+    res.json({ ok: true, ...result });
+  } catch (e) {
+    console.error("Manual backup failed:", e.message);
+    res.status(500).json({ error: "Backup failed" });
+  }
 });
 
 // ══════════════════════════════════════════════════════
 // REVIEW LOGIC (shared by web + Discord buttons)
 // ══════════════════════════════════════════════════════
 async function processReview(ref, action, reviewerTag, notes) {
-  const apps = loadApps();
-  const data = apps.get(ref);
+  const data = db.getApplication(ref);
   if (!data) throw new Error("Application not found");
   if (data.status !== "pending") throw new Error(`Already ${data.status}`);
 
   data.status     = action === "accept" ? "approved" : "rejected";
-  data.reviewedAt  = new Date().toISOString();
-  data.reviewedBy  = reviewerTag || "System";
+  data.reviewedAt = new Date().toISOString();
+  data.reviewedBy = reviewerTag || "System";
   if (notes) data.notes = safe(notes, 2000);
-  apps.set(ref, data);
-  saveApps(apps);
+  db.upsertApplication(data);
 
   if (action === "accept") awardPoints(data.discordUser, data.fullName, 10, `Application ${ref} approved`);
   logAudit(reviewerTag || "System", action === "accept" ? "application_approved" : "application_rejected", ref, data.fullName);
+  io.to("staff").emit("application:updated", { ref, status: data.status });
 
   try {
     const user  = await client.users.fetch(data.discordUser);
@@ -616,13 +569,13 @@ async function processReview(ref, action, reviewerTag, notes) {
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
   try {
-    if (interaction.deferred || interaction.replied) return; // already handled — likely a double-click/duplicate event
+    if (interaction.deferred || interaction.replied) return;
     await interaction.deferUpdate();
 
     const [action, ref] = interaction.customId.split("_");
     if (!["accept", "reject"].includes(action) || !ref) return;
 
-    const data = loadApps().get(ref);
+    const data = db.getApplication(ref);
     if (!data) return interaction.followUp({ content: "❌ Not found.", ephemeral: true });
     if (data.status !== "pending") return interaction.followUp({ content: `⚠️ Already ${data.status}`, ephemeral: true });
 
@@ -636,14 +589,21 @@ client.on(Events.InteractionCreate, async (interaction) => {
       components: [makeButtons(ref, true)],
     });
   } catch (err) {
-    // Never let a single bad interaction (double-click, expired token, Discord API hiccup) take the whole process down.
     console.error("Interaction handling error:", err.message);
   }
 });
 
-// Last-resort safety nets: log and keep running instead of crashing the whole server + bot.
 process.on("unhandledRejection", (err) => console.error("⚠️  Unhandled rejection:", err));
 process.on("uncaughtException", (err) => console.error("⚠️  Uncaught exception:", err));
+
+// ══════════════════════════════════════════════════════
+// SOCKET.IO — live updates for staff
+// ══════════════════════════════════════════════════════
+io.on("connection", (socket) => {
+  const sessUser = socket.request.session?.user;
+  if (!sessUser || !hasRole(sessUser.id, "viewer")) { socket.disconnect(true); return; }
+  socket.join("staff");
+});
 
 // ══════════════════════════════════════════════════════
 // EMBED BUILDERS
@@ -711,8 +671,12 @@ function buildResultEmbed(data, action, ref) {
 // ══════════════════════════════════════════════════════
 // PAGES
 // ══════════════════════════════════════════════════════
-app.get("/",              (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
-app.get("/apply",         (_, res) => res.sendFile(path.join(__dirname, "public", "apply.html")));
+function maintenanceGate(req, res, next) {
+  if (db.getSettings().maintenance) return res.status(503).sendFile(path.join(__dirname, "public", "maintenance.html"));
+  next();
+}
+app.get("/",              maintenanceGate, (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/apply",         maintenanceGate, (_, res) => res.sendFile(path.join(__dirname, "public", "apply.html")));
 app.get("/dashboard",     requireAuth, (req, res, next) => {
   if (!hasRole(req.session.user.id, "viewer")) return res.status(403).sendFile(path.join(__dirname, "public", "403.html"));
   next();
@@ -722,18 +686,22 @@ app.get("/personnel",     requireAuth, (req, res, next) => {
   next();
 }, (_, res) => res.sendFile(path.join(__dirname, "public", "personnel.html")));
 app.get("/handbook", (_, res) => res.sendFile(path.join(__dirname, "public", "documentation.html")));
-app.get("/documentation", (_, res) => res.redirect(301, "/handbook")); // old link, kept working
+app.get("/documentation", (_, res) => res.redirect(301, "/handbook"));
 
 // ══════════════════════════════════════════════════════
 // START
 // ══════════════════════════════════════════════════════
 client.once(Events.ClientReady, () => {
   console.log(`✅ Bot ready: ${client.user.tag}`);
-  app.listen(PORT, () => {
+  httpServer.listen(PORT, () => {
     console.log(`🚀 http://localhost:${PORT}`);
     console.log(`📨 Review channel: ${REVIEW_CHANNEL_ID}`);
     console.log(`🌐 Apply URL: ${APPLY_URL}`);
     console.log(`🛡️  Owners: ${OWNER_IDS.join(", ") || "none configured"}`);
+    console.log(`🗄️  Database: ${db.DB_PATH}`);
+    console.log(`💾 Auto-backup every ${BACKUP_INTERVAL_HOURS}h → ${db.BACKUP_DIR}`);
+    db.backupNow("startup");
+    db.scheduleAutoBackups(BACKUP_INTERVAL_HOURS * 60 * 60 * 1000);
   });
 });
 

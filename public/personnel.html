@@ -183,6 +183,7 @@ tr:last-child td{border-bottom:none}
 
 </main>
 <div class="toast" id="toast"></div>
+<script src="/socket.io/socket.io.js"></script>
 <script>
 let me;
 
@@ -253,6 +254,18 @@ async function init(){
   if(["admin","owner"].includes(me.user.role)) document.getElementById("adjustPanel").style.display="block";
   loadHandbook(); loadSop(); loadSchedule(); loadMyLoa(); loadActivity();
   setLang(localStorage.getItem("ems_personnel_lang") || "en");
+  initLiveUpdates();
+}
+
+function initLiveUpdates(){
+  const socket = io();
+  socket.on("schedule:updated", ()=>{ if(document.getElementById("tab-schedule").classList.contains("on")) loadSchedule(); });
+  socket.on("loa:updated", (d)=>{
+    toast(`Your LOA was ${d.status}`,"ok");
+    if(document.getElementById("tab-loa").classList.contains("on")) loadMyLoa();
+  });
+  socket.on("loa:new", ()=>{ if(document.getElementById("loaQueuePanel").style.display!=="none") loadLoaQueue(); });
+  socket.on("points:updated", (d)=>{ if(d.discordId===me.user.id && document.getElementById("tab-activity").classList.contains("on")) loadActivity(); });
 }
 function sw(id,btn){
   document.querySelectorAll(".tab-c").forEach(t=>t.classList.remove("on"));

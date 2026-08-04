@@ -160,7 +160,7 @@ function buildResultEmbed(data, action, ref) {
   return new EmbedBuilder()
     .setColor(accepted ? 0x2ecc71 : 0xe74c3c)
     .setAuthor({
-      name: "Underwater Medical Center",
+      name: "Los Santos Medical Center",
       iconURL: "attachment://underwater-medical-center.png",
     })
     .setTitle(accepted ? "Application Approved" : "Application Update")
@@ -177,12 +177,12 @@ function buildResultEmbed(data, action, ref) {
             "",
             "Please contact the management team for the next steps of your recruitment process.",
             "",
-            "Welcome to **Underwater Medical Center**.",
+            "Welcome to **Los Santos Medical Center**.",
           ].join("\n")
         : [
             `Dear **${safe(data.fullName, 80)}**,`,
             "",
-            "Thank you for your interest in joining **Underwater Medical Center**.",
+            "Thank you for your interest in joining **Los Santos Medical Center**.",
             "",
             "After carefully reviewing your application, we regret to inform you that your application was **not approved** at this time.",
             "",
@@ -201,8 +201,8 @@ function buildResultEmbed(data, action, ref) {
     .setThumbnail("attachment://underwater-medical-center.png")
     .setFooter({
       text: accepted
-        ? "Underwater Medical Center • Recruitment Department"
-        : "Underwater Medical Center • Application Review",
+        ? "Los Santos Medical Center • Recruitment Department"
+        : "Los Santos Medical Center • Application Review",
     })
     .setTimestamp();
 }
@@ -241,7 +241,7 @@ app.post("/submit", async (req, res) => {
     }
 
     await channel.send({
-      embeds: [buildEmbed(appData, "🚑 Underwater Medical Center — New Application", 0x3b82f6)],
+      embeds: [buildEmbed(appData, "🚑 Los Santos Medical Center — New Application", 0x3b82f6)],
       components: makeButtons(ref),
     });
 
@@ -286,8 +286,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
   const title =
     action === "accept"
-      ? "✅ Underwater Medical Center — APPROVED"
-      : "❌ Underwater Medical Center — REJECTED";
+      ? "✅ Los Santos Medical Center — APPROVED"
+      : "❌ Los Santos Medical Center — REJECTED";
 
   const color = action === "accept" ? 0x22c55e : 0xef4444;
 

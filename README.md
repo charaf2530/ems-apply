@@ -84,6 +84,63 @@ Available at `/personnel` to anyone with a role of `viewer` or above (i.e. anyon
   both languages. The route moved to `/handbook`; the old `/documentation` URL still works and 301-redirects
   to it, so nothing that already links to `/documentation` breaks.
 
+### Role management fix + admins can now manage roles
+- **Found and fixed a real bug**: `PATCH /api/admin/users/:id/role` was silently broken — the handler
+  computed the previous role and then returned without ever saving the change or sending a response. Any
+  role change made through the console appeared to work in the moment but was never persisted, which is
+  exactly why it "disappeared" after a refresh.
+- While fixing it, extended role management from owner-only to **admin and owner**, per your request —
+  with a guardrail: only an `owner` can grant the `owner` role or change an existing owner's role. An
+  `admin` sees a 🔒 read-only badge instead of a dropdown on any row that's currently an `owner`, and the
+  `owner` option is hidden from their dropdown entirely, both in the UI and enforced again server-side
+  (`403` if bypassed). This prevents an admin from promoting themselves or anyone else to owner.
+
+### New "⚡ Controls" tab (admin + owner)
+A new tab in the console, visible to `admin`+, for site-wide actions:
+- **🚧 Maintenance Mode** — one click takes the public site (`/` and `/apply`) offline behind a bilingual
+  "closed for maintenance" page and rejects new submissions (`503`) at `POST /submit`, while `/dashboard`,
+  `/personnel`, `/handbook`, and login stay reachable so staff can turn it back off. Optional custom message
+  shown to visitors. State lives in `data/settings.json`.
+- **⬇️ Export Applications** — downloads every application (core fields + all MCQ/open answers) as a CSV,
+  UTF-8 BOM included so Arabic text opens correctly in Excel.
+- **📢 Emergency Broadcast** — posts an `@here` embed to a Discord channel (`ANNOUNCE_CHANNEL_ID` in `.env`,
+  falls back to `REVIEW_CHANNEL_ID` if unset). Confirmation dialog before sending since it's a real ping to
+  everyone in the channel.
+
+All three are logged to the audit trail (`data/audit.json`).
+
+### Real database, live updates, automatic backups
+- **Real database** — storage moved from flat JSON files to **SQLite** (`data/ems.db`), via Node's
+  built-in `node:sqlite` module (no native dependency to compile, no separate DB server to run). Real
+  transactions, indexed lookups, and atomic point-updates (the old JSON version had a real race: two
+  simultaneous point awards could silently clobber each other since it read-modified-wrote the *entire*
+  file each time — that's gone now).
+  **Migration is automatic and one-time**: on first launch, `db.js` checks whether each table is empty and,
+  if so, imports the matching `data/*.json` file. Your existing applications, users, roles, points, LOA
+  history, and audit log all carry over. The old JSON files are left untouched on disk afterward (harmless,
+  just unused) — **back them up somewhere separate before your first run of this version anyway**, since a
+  persistence-layer change is exactly the kind of update worth having a fallback for.
+  Requires **Node 22.5+** (Node 24 recommended, which is what you're already running).
+- **Live updates (Socket.IO)** — the console and personnel panel now update in real time instead of needing
+  a manual refresh: new applications, review decisions, role changes, LOA submissions/decisions, point
+  changes, and schedule claims all push to connected staff immediately, each with a toast where relevant.
+  Socket connections are authenticated using the same session as the rest of the site (via
+  `io.engine.use(sessionMiddleware)`) and only users with an EMS role (`viewer`+) are allowed to join the
+  live-update room — logged-out or unranked connections are dropped immediately.
+- **Automatic backups** — a full copy of `data/ems.db` is taken on startup and then every
+  `BACKUP_INTERVAL_HOURS` (default 6, configurable in `.env`), written to `data/backups/` with a timestamped
+  filename. The last 30 are kept, older ones are pruned automatically. A **💾 Backup Now** button in the
+  Controls tab triggers one on demand, and the same tab lists recent backups with size and timestamp.
+  To restore one: stop the server, copy the desired `data/backups/ems-<timestamp>.db` over `data/ems.db`,
+  restart.
+
+**⚠️ A note on testing this specific change**: I verified the SQLite layer thoroughly in isolation (every
+query path, migration logic, backup/restore) and syntax-checked the full server, but I could not run a full
+live end-to-end test of the Express + Socket.IO server in the environment I built this in (no network
+access to install dependencies there). Please do a supervised first run — watch the console output on
+startup for the migration/backup log lines, and confirm your existing applications and members show up
+correctly in the console — before relying on it unattended.
+
 ## Setup
 ```bash
 npm install
@@ -96,14 +153,18 @@ account listed in `OWNER_IDS` to reach `/dashboard` with owner access.
 
 ## File layout
 ```
-server.js              — Express + discord.js bot, OAuth, roles, admin API
+server.js              — Express + Socket.IO + discord.js bot, OAuth, roles, admin API
+db.js                    — SQLite persistence layer (schema, JSON migration, queries, backups)
 content.json            — landing page copy (Arabic)
-data/applications.json  — application records (starts empty)
-data/users.json          — points/badges/roles (starts empty)
+data/ems.db              — the actual database (created on first run)
+data/backups/            — timestamped database backups (created automatically)
+data/*.json              — legacy data, only read once for migration on first run
 public/index.html        — landing page
-public/apply.html        — application form (server-graded MCQ)
-public/dashboard.html    — admin console
-public/documentation.html — this info, in-app
+public/apply.html        — application form (server-graded MCQ, login required)
+public/dashboard.html    — admin console (live-updating)
+public/personnel.html    — EMS personnel panel (live-updating)
+public/documentation.html — Handbook / SOP site
 public/403.html          — shown to logged-in users without a role
+public/maintenance.html  — shown to visitors while maintenance mode is on
 assets/                  — put underwater-medical-center.png here for DM branding (optional)
 ```

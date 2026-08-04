@@ -1,7 +1,10 @@
 {
   "name": "ems-apply",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "main": "server.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "scripts": {
     "start": "node server.js"
   },
@@ -12,8 +15,9 @@
     "discord.js": "^14.26.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "express-session": "^1.19.0"
+    "express-session": "^1.19.0",
+    "socket.io": "^4.8.3"
   },
-  "description": "EMS Underwater Medical Center — application portal, Discord review bot, and admin panel.",
+  "description": "EMS Underwater Medical Center — application portal, Discord review bot, and admin panel. Backed by SQLite, with live updates over Socket.IO and scheduled backups.",
   "type": "commonjs"
 }
